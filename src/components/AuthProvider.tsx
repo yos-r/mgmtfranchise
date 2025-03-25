@@ -18,7 +18,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check current auth state
     getCurrentUser().then((user) => {
       if (user) {
         setUser({
@@ -30,7 +29,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Subscribe to auth changes
     const { data: { subscription } } = onAuthStateChange((user) => {
       setUser(user);
       if (!user) {
