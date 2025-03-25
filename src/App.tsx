@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/components/AuthProvider';
 import { LoginPage } from '@/pages/Login';
+import { FranchiseCard } from './components/franchises/franchise-card';
+import { FranchiseMap } from './components/franchises/franchise-map';
 import { Toaster } from '@/components/ui/toaster';
 import { Building2, Settings2, Search, BellRing } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -59,83 +61,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 
-const franchises = [
-  {
-    id: 1,
-    name: "CENTURY 21 Saint-Germain",
-    owner: "Marie Laurent",
-    location: "Paris",
-    coordinates: { lat: 48.8566, lng: 2.3522 },
-    revenue: "€890,000",
-    status: "active",
-    performance: "excellent",
-    agents: 12,
-    email: "saint-germain@century21.fr",
-    phone: "+33 1 42 86 00 00",
-  },
-  {
-    id: 2,
-    name: "CENTURY 21 Confluence",
-    owner: "Thomas Bernard",
-    location: "Lyon",
-    coordinates: { lat: 45.7640, lng: 4.8357 },
-    revenue: "€720,000",
-    status: "active",
-    performance: "good",
-    agents: 8,
-    email: "confluence@century21.fr",
-    phone: "+33 4 72 40 00 00",
-  },
-  {
-    id: 3,
-    name: "CENTURY 21 Vieux Port",
-    owner: "Sophie Martin",
-    location: "Marseille",
-    coordinates: { lat: 43.2965, lng: 5.3698 },
-    revenue: "€650,000",
-    status: "active",
-    performance: "good",
-    agents: 10,
-    email: "vieux-port@century21.fr",
-    phone: "+33 4 91 00 00 00",
-  },
-  {
-    id: 4,
-    name: "CENTURY 21 Bordeaux Centre",
-    owner: "Pierre Dubois",
-    location: "Bordeaux",
-    coordinates: { lat: 44.8378, lng: -0.5792 },
-    revenue: "€580,000",
-    status: "pending",
-    performance: "average",
-    agents: 6,
-    email: "bordeaux-centre@century21.fr",
-    phone: "+33 5 56 00 00 00",
-  },
-];
-function getStatusColor(status: string) {
-  switch (status) {
-    case "active":
-      return "bg-green-100 text-green-800";
-    case "pending":
-      return "bg-yellow-100 text-yellow-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
 
-function getPerformanceBadge(performance: string) {
-  switch (performance) {
-    case "excellent":
-      return <Badge className="bg-green-500">Excellent</Badge>;
-    case "good":
-      return <Badge className="bg-blue-500">Good</Badge>;
-    case "average":
-      return <Badge className="bg-yellow-500">Average</Badge>;
-    default:
-      return <Badge className="bg-gray-500">Unknown</Badge>;
-  }
-}
 function App() {
   return (
     <Router>
@@ -152,6 +78,83 @@ function App() {
 }
 
 function Dashboard() {
+  const franchises = [
+    {
+      id: 1,
+      name: "CENTURY 21 Saint-Germain",
+      owner: "Marie Laurent",
+      location: "Paris",
+      coordinates: { lat: 48.8566, lng: 2.3522 },
+      revenue: "€890,000",
+      status: "active",
+      performance: "excellent",
+      agents: 12,
+      email: "saint-germain@century21.fr",
+      phone: "+33 1 42 86 00 00",
+    },
+    {
+      id: 2,
+      name: "CENTURY 21 Confluence",
+      owner: "Thomas Bernard",
+      location: "Lyon",
+      coordinates: { lat: 45.7640, lng: 4.8357 },
+      revenue: "€720,000",
+      status: "active",
+      performance: "good",
+      agents: 8,
+      email: "confluence@century21.fr",
+      phone: "+33 4 72 40 00 00",
+    },
+    {
+      id: 3,
+      name: "CENTURY 21 Vieux Port",
+      owner: "Sophie Martin",
+      location: "Marseille",
+      coordinates: { lat: 43.2965, lng: 5.3698 },
+      revenue: "€650,000",
+      status: "active",
+      performance: "good",
+      agents: 10,
+      email: "vieux-port@century21.fr",
+      phone: "+33 4 91 00 00 00",
+    },
+    {
+      id: 4,
+      name: "CENTURY 21 Bordeaux Centre",
+      owner: "Pierre Dubois",
+      location: "Bordeaux",
+      coordinates: { lat: 44.8378, lng: -0.5792 },
+      revenue: "€580,000",
+      status: "pending",
+      performance: "average",
+      agents: 6,
+      email: "bordeaux-centre@century21.fr",
+      phone: "+33 5 56 00 00 00",
+    },
+  ];
+  function getStatusColor(status: string) {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  }
+  
+  function getPerformanceBadge(performance: string) {
+    switch (performance) {
+      case "excellent":
+        return <Badge className="bg-green-500">Excellent</Badge>;
+      case "good":
+        return <Badge className="bg-blue-500">Good</Badge>;
+      case "average":
+        return <Badge className="bg-yellow-500">Average</Badge>;
+      default:
+        return <Badge className="bg-gray-500">Unknown</Badge>;
+    }
+  }
   const [selectedFranchise, setSelectedFranchise] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
   const [isAddingFranchise, setIsAddingFranchise] = useState(false);
