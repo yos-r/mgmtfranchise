@@ -42,13 +42,13 @@ const companyFormSchema = z.object({
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 const defaultValues: Partial<CompanyFormValues> = {
-  name: "CENTURY 21 Corporate",
+  name: "CENTURY 21 Corporateeee",
   registrationNumber: "123456789",
   vatNumber: "FR12345678901",
   address: "123 Avenue des Champs-Élysées, 75008 Paris",
   phone: "+33 1 23 45 67 89",
-  email: "contact@century21.fr",
-  website: "https://century21.fr",
+  email: "contact@century21.be",
+  website: "https://century21.be",
 };
 
 export function CompanyForm() {
