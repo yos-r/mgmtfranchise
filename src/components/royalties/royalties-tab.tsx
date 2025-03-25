@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { RoyaltiesHeader } from "./royalties/royalties-header";
-import { StatsCards } from "./royalties/stats-cards";
-import { PaymentsTable } from "./royalties/payments-table";
-import { PaymentDetailsDialog } from "./royalties/payment-details-dialog";
-import { RecordPaymentDialog } from "./royalties/record-payment-dialog";
+import { RoyaltiesHeader } from "./royalties-header";
+import { StatsCards } from "./stats-cards";
+import { PaymentsTable } from "./payments-table";
+import { PaymentDetailsDialog } from "./payment-details-dialog";
+import { RecordPaymentDialog } from "./record-payment-dialog";
 import { Button } from "@/components/ui/button";
 import { Eye, Receipt } from "lucide-react";
 

@@ -27,12 +27,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+interface RecordPaymentDialogSelectProps {
 
-export function RecordPaymentDialog() {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+export function RecordPaymentDialogSelect({ open, onOpenChange }: RecordPaymentDialogSelectProps) {
   const [date, setDate] = useState<Date>();
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button className="button-1">
           <Receipt className="mr-2 h-4 w-4" />
@@ -117,7 +121,7 @@ export function RecordPaymentDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" className="button-1">Record Payment</Button>
+          <Button type="submit" className="button-1" onClick={() => onOpenChange(false)}>Record Payment</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

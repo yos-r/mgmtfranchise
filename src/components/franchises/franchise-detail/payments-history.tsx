@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PaymentsTable } from "../royalties/payments-table";
-import { PaymentDetailsDialog } from "../royalties/payment-details-dialog";
-import { RecordPaymentDialog } from "../royalties/record-payment-dialog";
+import { PaymentsTable } from "../../royalties/payments-table";
+import { PaymentDetailsDialog } from "../../royalties/payment-details-dialog";
+import { RecordPaymentDialog } from "../../royalties/record-payment-dialog";
 import { useState } from "react";
 import { Eye, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";

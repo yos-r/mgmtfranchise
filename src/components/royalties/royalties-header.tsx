@@ -8,14 +8,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RecordPaymentDialogSelect } from "./record-payment-dialog-select";
+import { useState } from "react";
 
-interface RoyaltiesHeaderProps {
-  onFilterChange: (value: string) => void;
-  onSearchChange: (value: string) => void;
-}
+// interface RoyaltiesHeaderProps {
+//   onFilterChange: (value: string) => void;
+//   onSearchChange: (value: string) => void;
+// }
 
-export function RoyaltiesHeader({ onFilterChange, onSearchChange }: RoyaltiesHeaderProps) {
+export function RoyaltiesHeader() {
+    const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  
   return (
+    
     <div className="flex items-center justify-between">
       <div>
         <h2 className="tagline-1">Royalty Payments</h2>
@@ -24,7 +29,7 @@ export function RoyaltiesHeader({ onFilterChange, onSearchChange }: RoyaltiesHea
         </p>
       </div>
       <div className="flex items-center space-x-2">
-        <Select onValueChange={onFilterChange}>
+        <Select >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
@@ -38,12 +43,17 @@ export function RoyaltiesHeader({ onFilterChange, onSearchChange }: RoyaltiesHea
         <Input
           placeholder="Search franchises..."
           className="w-[200px]"
-          onChange={(e) => onSearchChange(e.target.value)}
+          
         />
-        <Button className="button-1">
+        {/* <Button className="button-1" onClick={(e) => {
+          e.stopPropagation();
+          setPaymentDialogOpen(true);
+        }}>
           <Receipt className="mr-2 h-4 w-4" />
           Record Payment
-        </Button>
+        </Button> */}
+
+        <RecordPaymentDialogSelect open={paymentDialogOpen}  onOpenChange={setPaymentDialogOpen}></RecordPaymentDialogSelect>
       </div>
     </div>
   );
