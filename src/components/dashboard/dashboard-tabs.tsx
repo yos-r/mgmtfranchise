@@ -6,6 +6,7 @@ import { SupportTab } from "../support/support-tab";
 import { t } from "@/lib/i18n";
 import { OverviewTab } from "../overview/overview-tab";
 import { FranchisesTab } from "../franchises/franchises-tab";
+import { HelpDeskTab } from "../help-desk/help-desk-tab";
 interface DashboardTabsProps {
     franchises: any[];
     viewMode: string;
@@ -45,6 +46,9 @@ export function DashboardTabs({ franchises, viewMode, setViewMode, setIsAddingFr
             </TabsContent>
             <TabsContent value="support">
                 <SupportTab />
+            </TabsContent>
+            <TabsContent value="helpdesk">
+                <HelpDeskTab />
             </TabsContent>
         </Tabs>
     )

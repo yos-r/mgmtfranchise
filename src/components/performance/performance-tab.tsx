@@ -1,16 +1,4 @@
 import { useState } from "react";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,16 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+
 import { TrendingUp, TrendingDown, Percent, Building2, ListFilter } from "lucide-react";
+import { RevenueTrendChart } from "./revenue-trend-chart";
+import { MarketShareDistribution } from "./market-share-distribution";
+import { PerformanceMetrics } from "./performance-metrics";
 
 const monthlyData = [
   {
@@ -145,7 +128,6 @@ export function PerformanceTab() {
   const totalListings = performanceMetrics.reduce((acc, curr) => acc + curr.listings, 0);
   const totalTransactions = performanceMetrics.reduce((acc, curr) => acc + curr.transactions, 0);
   const avgConversionRate = performanceMetrics.reduce((acc, curr) => acc + curr.conversionRate, 0) / performanceMetrics.length;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -173,7 +155,6 @@ export function PerformanceTab() {
           </Button>
         </div>
       </div>
-
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Listings"
@@ -204,118 +185,11 @@ export function PerformanceTab() {
           trend="up"
         />
       </div>
-
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="tagline-2">Revenue Trends</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="CENTURY 21 Saint-Germain"
-                    stroke="#2563eb"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="CENTURY 21 Confluence"
-                    stroke="#16a34a"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="CENTURY 21 Vieux Port"
-                    stroke="#9333ea"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="CENTURY 21 Bordeaux Centre"
-                    stroke="#ea580c"
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="tagline-2">Market Share Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={marketShareData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#2563eb" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <RevenueTrendChart monthlyData={monthlyData} />
+        <MarketShareDistribution marketShareData={marketShareData} />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="tagline-2">Detailed Performance Metrics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="label-1">Franchise</TableHead>
-                <TableHead className="label-1 text-right">Listings</TableHead>
-                <TableHead className="label-1 text-right">Transactions</TableHead>
-                <TableHead className="label-1 text-right">Market Share</TableHead>
-                <TableHead className="label-1 text-right">Avg. Days on Market</TableHead>
-                <TableHead className="label-1 text-right">Conversion Rate</TableHead>
-                <TableHead className="label-1 text-right">Revenue</TableHead>
-                <TableHead className="label-1 text-right">YoY Growth</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {performanceMetrics.map((metric) => (
-                <TableRow key={metric.id}>
-                  <TableCell className="body-1 font-medium">
-                    {metric.franchise}
-                  </TableCell>
-                  <TableCell className="numbers text-right">{metric.listings}</TableCell>
-                  <TableCell className="numbers text-right">{metric.transactions}</TableCell>
-                  <TableCell className="numbers text-right">{metric.marketShare}%</TableCell>
-                  <TableCell className="numbers text-right">{metric.avgDaysOnMarket}</TableCell>
-                  <TableCell className="numbers text-right">{metric.conversionRate}%</TableCell>
-                  <TableCell className="numbers text-right">{metric.revenue}</TableCell>
-                  <TableCell className="text-right">
-                    <Badge
-                      className={`${
-                        metric.yoyGrowth >= 0
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      } label-2`}
-                    >
-                      {metric.yoyGrowth}%
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <PerformanceMetrics performanceMetrics={performanceMetrics} />
     </div>
   );
 }

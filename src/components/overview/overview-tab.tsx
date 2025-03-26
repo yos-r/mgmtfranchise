@@ -1,4 +1,4 @@
-import { Award, BarChart2, TicketCheck, Wallet } from "lucide-react";
+import { Award, BarChart2, TicketCheck, Users, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { t } from "@/lib/i18n";
 import { RevenueOverviewChart } from "./revenue-overview-chart";
@@ -12,7 +12,7 @@ export function OverviewTab() {
                         <CardTitle className="tagline-3">
                             Total Franchises
                         </CardTitle>
-                        {/* <Users className="h-4 w-4 text-muted-foreground" /> */}
+                        <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="numbers text-2xl font-bold">245</div>
