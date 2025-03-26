@@ -29,21 +29,45 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
 
         if (!error && data) {
             setFranchises(data);
+            // setFranchises(data.map(f => ({ ...f }))); 
+
         }
 
     };
 
     useEffect(() => {
         loadFranchises();
+        const channel = supabase
+        .channel('franchise_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'franchises' }, () => {
+            console.log("Franchises  updated, reloading...");
+            loadFranchises();
+        })
+        .subscribe();
+        const channel2 = supabase
+        .channel('franchise_contracts_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'franchise_contracts' }, () => {
+            console.log("Franchises contracts  updated, reloading...");
+            loadFranchises();
+        })
+        .subscribe();
+
+
+    return () => {
+        supabase.removeChannel(channel);
+        supabase.removeChannel(channel2);
+    };
+    
+
     }, []);
     if (isAddingFranchise) {
         return (
-            <AddFranchise onCancel={() => setIsAddingFranchise(false)} />
+            <AddFranchise  onCancel={() => setIsAddingFranchise(false)} />
         )
     }
     if (selectedFranchise) {
         return (
-            <FranchiseDetail franchise={selectedFranchise} />
+            <FranchiseDetail loadFranchises={loadFranchises} franchise={selectedFranchise} />
         );
     }
     return (
