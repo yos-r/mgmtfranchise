@@ -21,7 +21,7 @@ import { getStatusColor, getPerformanceBadge } from "./franchise-card";
 
 interface FranchiseTableProps {
   franchises: any[];
-  onFranchiseSelect: (id: number) => void;
+  onFranchiseSelect: (franchise: any) => void;
 }
 
 export function FranchiseTable({ franchises, onFranchiseSelect }: FranchiseTableProps) {
@@ -43,7 +43,7 @@ export function FranchiseTable({ franchises, onFranchiseSelect }: FranchiseTable
           <TableRow
             key={franchise.id}
             className="cursor-pointer"
-            onClick={() => onFranchiseSelect(franchise.id)}
+            onClick={() => onFranchiseSelect(franchise)}
           >
             <TableCell>
               <div>

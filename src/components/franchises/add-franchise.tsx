@@ -15,6 +15,7 @@ import {
   Calendar,
   Upload,
   ArrowLeft,
+  Hourglass,
 } from "lucide-react";
 import {
   Form,
@@ -33,28 +34,23 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/lib/auth';
 
 const formSchema = z.object({
-  // Owner Information
   ownerName: z.string().min(2, "Name must be at least 2 characters"),
   ownerEmail: z.string().email("Invalid email address"),
-  ownerPhone: z.string().min(10, "Phone number must be at least 10 characters"),
-
-  // Company Information
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
   companyTaxId: z.string().min(5, "Tax ID must be at least 5 characters"),
   address: z.string().min(10, "Address must be at least 10 characters"),
-
-  // Financial Information
-  royaltyAmount: z.number().min(0, "Royalty amount must be positive"),
-  marketingAmount: z.number().min(0, "Marketing amount must be positive"),
-  annualIncrease: z.number().min(0, "Annual increase must be positive").max(100, "Annual increase cannot exceed 100%"),
-
-  // Contract Information
-  startDate: z.string(),
+  // contract information
+  royaltyAmount: z.number().min(0, "Royalty amount must be at least 0"),
+  marketingAmount: z.number().min(0, "Marketing amount must be at least 0"),
+  annualIncrease: z.number().min(0, "Annual increase must be at least 0"),
+  startDate: z.string().transform((val) => format(new Date(val), 'yyyy-MM-dd')),
   contractDuration: z.number().min(1, "Contract duration must be at least 1 year"),
+  initialFee: z.number().min(0, 'Initial fee must be at least 0 '),
+  gracePeriodMonths: z.number().min(0, 'Grace period must be at least 0 '),
 });
 
 interface AddFranchiseProps {
@@ -69,11 +65,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      royaltyAmount: 0,
-      marketingAmount: 0,
-      annualIncrease: 3,
-      contractDuration: 5,
-      startDate: format(new Date(), 'yyyy-MM-dd'),
+
     },
   });
 
@@ -92,14 +84,95 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
       setOwnerImage(acceptedFiles[0]);
     },
   });
+  async function generateMonthlyPayments(franchiseId: number, startDate: Date, durationYears: number, royaltyAmount: number, marketingAmount: number, annualIncrease: number) {
+    const payments = [];
+    let currentDate = new Date(startDate);
+    const endDate = new Date(startDate);
+    endDate.setFullYear(endDate.getFullYear() + durationYears);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+    let monthlyRoyalty = royaltyAmount;
+    let monthlyMarketing = marketingAmount;
+
+    while (currentDate < endDate) {
+      const payment = {
+        franchise_id: franchiseId,
+        due_date: currentDate.toISOString(),
+        amount: monthlyRoyalty,
+        royalty_amount: monthlyRoyalty,
+        marketing_amount: monthlyMarketing,
+        status: 'upcoming'
+      };
+
+      payments.push(payment);
+
+      currentDate.setMonth(currentDate.getMonth() + 1);
+
+      if (currentDate.getMonth() === startDate.getMonth()) {
+        monthlyRoyalty *= (1 + annualIncrease / 100);
+        monthlyMarketing *= (1 + annualIncrease / 100);
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('royalty_payments')
+      .insert(payments);
+
+    if (error) {
+      console.error('Error inserting payments:', error);
+      throw error;
+    }
+
+    return payments;
+  }
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const validatedData = formSchema.parse(values)
+    const { data, error } = await supabase
+      .from('franchises')
+      .insert({
+        owner_name: validatedData.ownerName,
+        owner_email: validatedData.ownerEmail,
+        company_name: validatedData.companyName,
+        name: validatedData.companyName,
+        tax_id: validatedData.companyTaxId,
+        address: validatedData.address,
+        // created_at: new Date().toISOString(),
+        status: 'active'
+      })
+      .select().single(); // Use .select() to return the inserted row
+
+    // console.log('franchise cerated with id',data.id)
+    const { data2, error2 } = await supabase.from('franchise_contracts')
+      .insert({
+        franchise_id: data.id,
+        start_date: validatedData.startDate,
+        duration_years: validatedData.contractDuration,
+        initial_fee: validatedData.initialFee,
+        royalty_amount: validatedData.royaltyAmount,
+        marketing_amount: validatedData.marketingAmount,
+        annual_increase: validatedData.annualIncrease,
+        grace_period_months: validatedData.gracePeriodMonths
+      }).select().single();
+    try {
+      await generateMonthlyPayments(
+        data.id,
+        new Date(validatedData.startDate),
+        validatedData.contractDuration,
+        validatedData.marketingAmount,
+        validatedData.royaltyAmount,
+        validatedData.annualIncrease
+      );
+    } catch (paymentError) {
+      console.error('Error generating payments:', paymentError);
+      // Optionally handle payment generation failure
+    }
     toast({
-      title: "Franchise created",
-      description: "The franchise has been successfully created",
+      title: "Franchise Contract created",
+      description: "The franchise contract has been successfully created",
     });
     onCancel();
   }
+  
 
   const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
     <span className="flex items-center gap-1">
@@ -135,13 +208,13 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div {...getOwnerRootProps()} className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors">
+                {/* <div {...getOwnerRootProps()} className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors">
                   <input {...getOwnerInputProps()} />
                   <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
                   <p className="body-1 mt-2">
                     {ownerImage ? ownerImage.name : "Drop owner's photo here or click to upload"}
                   </p>
-                </div>
+                </div> */}
 
                 <FormField
                   control={form.control}
@@ -181,24 +254,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="ownerPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="label-1">
-                        <RequiredLabel>Phone</RequiredLabel>
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input className="pl-9" placeholder="+1 234 567 890" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
               </CardContent>
             </Card>
 
@@ -211,13 +267,13 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div {...getAgencyRootProps()} className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors">
+                {/* <div {...getAgencyRootProps()} className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors">
                   <input {...getAgencyInputProps()} />
                   <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
                   <p className="body-1 mt-2">
                     {agencyImage ? agencyImage.name : "Drop agency photo here or click to upload"}
                   </p>
-                </div>
+                </div> */}
 
                 <FormField
                   control={form.control}
@@ -288,7 +344,33 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-5 gap-4">
+                <FormField
+                  control={form.control}
+                  name="initialFee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="label-1">
+                        <RequiredLabel>Initial Fee (€)</RequiredLabel>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Euro className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            className="pl-9"
+                            placeholder="25000"
+                            {...field}
+                            onChange={e => field.onChange(parseFloat(e.target.value))}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+
                 <FormField
                   control={form.control}
                   name="royaltyAmount"
@@ -348,12 +430,38 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                         <RequiredLabel>Annual Increase (%)</RequiredLabel>
                       </FormLabel>
                       <FormControl>
+
                         <Input
                           type="number"
                           placeholder="3"
                           {...field}
                           onChange={e => field.onChange(parseFloat(e.target.value))}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="gracePeriodMonths"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="label-1">
+                        <RequiredLabel>Grace Period</RequiredLabel>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Hourglass className='absolute left-3 top-3 h-4 w-4 text-muted-foreground'></Hourglass>
+                          <Input
+                            type="number"
+                            className="pl-9"
+                            placeholder="2"
+                            {...field}
+                            onChange={e => field.onChange(parseFloat(e.target.value))}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

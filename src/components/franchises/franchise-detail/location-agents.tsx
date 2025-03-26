@@ -12,15 +12,20 @@ const agents = [
   { name: "Sophie Martin", sales: 24, rentals: 18, revenue: "€450,000", performance: 95 },
   { name: "Jean Dupont", sales: 20, rentals: 15, revenue: "€380,000", performance: 88 },
   { name: "Marie Lambert", sales: 18, rentals: 22, revenue: "€360,000", performance: 85 },
-  { name: "Lucas Bernard", sales: 15, rentals: 20, revenue: "€320,000", performance: 82 },
-  { name: "Emma Petit", sales: 12, rentals: 16, revenue: "€280,000", performance: 78 },
+  // { name: "Lucas Bernard", sales: 15, rentals: 20, revenue: "€320,000", performance: 82 },
+  // { name: "Emma Petit", sales: 12, rentals: 16, revenue: "€280,000", performance: 78 },
 ];
 
-export function LocationAndAgents() {
-  const [viewState, setViewState] = useState({
-    longitude: 2.3522,
-    latitude: 48.8566,
-    zoom: 14
+export function LocationAndAgents({franchise}: any) {
+  const [viewState, setViewState] = useState(() => {
+    if (franchise.coordinates) {
+      return {
+        longitude: franchise.coordinates.lng,
+        latitude: franchise.coordinates.lat,
+        zoom: 14
+      };
+    }
+    return { longitude: 0, latitude: 0, zoom: 1 }; // Default values
   });
 
   return (
@@ -31,16 +36,18 @@ export function LocationAndAgents() {
         </CardHeader>
         <CardContent>
           <div className="h-[400px] rounded-lg overflow-hidden">
-            <Map
+            {franchise.coordinates && (
+              <Map
               {...viewState}
               onMove={evt => setViewState(evt.viewState)}
               mapStyle="mapbox://styles/mapbox/light-v11"
               mapboxAccessToken={MAPBOX_TOKEN}
-            >
-              <Marker longitude={2.3522} latitude={48.8566}>
+              >
+              <Marker longitude={franchise.coordinates.lng} latitude={franchise.coordinates.lat}>
                 <MapPin className="h-6 w-6 text-primary" />
               </Marker>
-            </Map>
+              </Map>
+            )}
           </div>
         </CardContent>
       </Card>

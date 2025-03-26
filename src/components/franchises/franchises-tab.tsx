@@ -17,12 +17,13 @@ interface FranchisesTabsProps {
 export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
     const [franchises, setFranchises] = useState<any[]>([]);
     const [isAddingFranchise, setIsAddingFranchise] = useState(false);
-    const [selectedFranchise, setSelectedFranchise] = useState<number | null>(null);
+    const [selectedFranchise, setSelectedFranchise] = useState<any | null>(null);
 
     const loadFranchises = async () => {
         const { data, error } = await supabase
             .from('franchises')
-            .select('*')
+            .select('*,franchise_contracts(*)')
+
             .order('name', { ascending: true })
             ;
 
@@ -41,10 +42,10 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
         )
     }
     if (selectedFranchise) {
-            return (
-                    <FranchiseDetail />
-            );
-        }
+        return (
+            <FranchiseDetail franchise={selectedFranchise} />
+        );
+    }
     return (
         <div>
 
