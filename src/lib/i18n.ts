@@ -19,6 +19,7 @@ export const translations = {
     newFranchise: "New Franchise",
     viewDetails: "View Details",
     topAgents: "Top Agents",
+    addFranchise: "Add Franchise",
   },
   fr: {
     overview: "Vue d'ensemble",
@@ -40,6 +41,7 @@ export const translations = {
     newFranchise: "Nouvelle Franchise",
     viewDetails: "Voir les Détails",
     topAgents: "Meilleurs Agents",
+    addFranchise: "Ajouter Une Franchise",
   },
 };
 

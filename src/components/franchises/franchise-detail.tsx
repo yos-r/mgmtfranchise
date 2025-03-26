@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { Building2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import { FranchiseHeader } from "./franchise-detail/franchise-header";
 import { FranchiseInfo } from "./franchise-detail/franchise-info";
 import { PaymentsHistory } from "./franchise-detail/payments-history";

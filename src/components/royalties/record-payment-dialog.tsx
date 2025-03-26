@@ -65,7 +65,6 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
       return;
     }
 
-    // try {
       const { data: insertedData, error } = await supabase
         .from('royalty_payments')
         .insert({
@@ -90,14 +89,7 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
       });
       
       onOpenChange(false);
-    // } catch (error) {
-    //   console.error('Error recording payment:', error);
-    //   toast({
-    //     title: "Error",
-    //     description: "Failed to record payment. Please try again.",
-    //     variant: "destructive"
-    //   });
-    // }
+    
   };
 
   return (

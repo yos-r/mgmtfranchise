@@ -8,14 +8,11 @@ import { OverviewTab } from "../overview/overview-tab";
 import { FranchisesTab } from "../franchises/franchises-tab";
 import { HelpDeskTab } from "../help-desk/help-desk-tab";
 interface DashboardTabsProps {
-    franchises: any[];
     viewMode: string;
     setViewMode: React.Dispatch<React.SetStateAction<"list" | "grid" | "map">>;
-    setSelectedFranchise: (id: number) => void;
-    setIsAddingFranchise: (isAdding: boolean) => void;
 
 }
-export function DashboardTabs({ franchises, viewMode, setViewMode, setIsAddingFranchise, setSelectedFranchise }: DashboardTabsProps) {
+export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: DashboardTabsProps) {
     return (
         <Tabs defaultValue="overview" className="space-y-4">
             <TabsList>
@@ -26,6 +23,8 @@ export function DashboardTabs({ franchises, viewMode, setViewMode, setIsAddingFr
                 <TabsTrigger value="training" className="button-2">{t('training')}</TabsTrigger>
                 <TabsTrigger value="support" className="button-2">{t('support')}</TabsTrigger>
                 <TabsTrigger value="helpdesk" className="button-2">Helpdesk</TabsTrigger>
+                <TabsTrigger value="dev" className="button-2">Dev</TabsTrigger>
+
 
             </TabsList>
 
@@ -33,7 +32,7 @@ export function DashboardTabs({ franchises, viewMode, setViewMode, setIsAddingFr
                 <OverviewTab></OverviewTab>
             </TabsContent>
             <TabsContent value="franchises" className="space-y-4">
-                <FranchisesTab franchises={franchises} viewMode={viewMode} setViewMode={setViewMode} setIsAddingFranchise={setIsAddingFranchise} setSelectedFranchise={setSelectedFranchise}></FranchisesTab>
+                <FranchisesTab  viewMode={viewMode} setViewMode={setViewMode} ></FranchisesTab>
             </TabsContent>
             <TabsContent value="royalties">
                 <RoyaltiesTab />
@@ -49,6 +48,9 @@ export function DashboardTabs({ franchises, viewMode, setViewMode, setIsAddingFr
             </TabsContent>
             <TabsContent value="helpdesk">
                 <HelpDeskTab />
+            </TabsContent>
+            <TabsContent value="dev">
+                Dev section here
             </TabsContent>
         </Tabs>
     )

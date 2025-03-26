@@ -32,8 +32,8 @@ export function FranchiseTable({ franchises, onFranchiseSelect }: FranchiseTable
           <TableHead className="label-1">Franchise</TableHead>
           <TableHead className="label-1">Location</TableHead>
           <TableHead className="label-1">Status</TableHead>
-          <TableHead className="label-1">Performance</TableHead>
-          <TableHead className="label-1">Revenue</TableHead>
+          {/* <TableHead className="label-1">Performance</TableHead> */}
+          {/* <TableHead className="label-1">Revenue</TableHead> */}
           <TableHead className="label-1">Agents</TableHead>
           <TableHead></TableHead>
         </TableRow>
@@ -49,25 +49,25 @@ export function FranchiseTable({ franchises, onFranchiseSelect }: FranchiseTable
               <div>
                 <div className="body-1 font-medium">{franchise.name}</div>
                 <div className="legal text-muted-foreground">
-                  {franchise.owner}
+                  {franchise.owner_name}
                 </div>
               </div>
             </TableCell>
             <TableCell>
               <div className="flex items-center">
                 <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                <span className="body-1">{franchise.location}</span>
+                <span className="body-1">{franchise.address}</span>
               </div>
             </TableCell>
             <TableCell>
-              <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(franchise.status)} label-2`}>
+              <span className={`capitalize rounded-sm px-2 py-1 text-xs font-medium ${getStatusColor(franchise.status)} label-2`}>
                 {franchise.status}
               </span>
             </TableCell>
-            <TableCell>
+            {/* <TableCell>
               {getPerformanceBadge(franchise.performance)}
-            </TableCell>
-            <TableCell className="numbers">{franchise.revenue}</TableCell>
+            </TableCell> */}
+            {/* <TableCell className="numbers">{franchise.revenue}</TableCell> */}
             <TableCell className="numbers">{franchise.agents}</TableCell>
             <TableCell>
               <DropdownMenu>
