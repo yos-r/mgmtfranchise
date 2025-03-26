@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { RoyaltiesHeader } from "./royalties-header";
 import { StatsCards } from "./stats-cards";
@@ -7,6 +7,7 @@ import { PaymentDetailsDialog } from "./payment-details-dialog";
 import { RecordPaymentDialog } from "./record-payment-dialog";
 import { Button } from "@/components/ui/button";
 import { Eye, Receipt } from "lucide-react";
+import { supabase } from "@/lib/auth";
 
 const mockPayments = [
   {
@@ -46,9 +47,27 @@ export function RoyaltiesTab() {
   const filteredPayments = mockPayments.filter((payment) => {
     const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
     const matchesSearch = payment.franchiseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         payment.companyName.toLowerCase().includes(searchQuery.toLowerCase());
+      payment.companyName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
+  const [payments, setPayments] = useState<any[]>([]);
+  const loadPayments = async () => {
+    const { data, error } = await supabase
+      .from('royalty_payments')
+      .select('*,franchises(*)')
+      .order('due_date', { ascending: true });
+    
+    if (!error && data) {
+      setPayments(data);
+      console.log('payments are', data);
+    }
+
+  };
+
+  useEffect(() => {
+    loadPayments();
+  }, []);
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -64,7 +83,7 @@ export function RoyaltiesTab() {
   };
 
   const renderActionButton = (payment: any) => {
-    if (payment.status === "pending") {
+    if (payment.status === "upcoming") {
       return (
         <Button
           variant="ghost"
@@ -109,7 +128,7 @@ export function RoyaltiesTab() {
       <Card>
         <CardContent className="pt-6">
           <PaymentsTable
-            payments={filteredPayments}
+            payments={payments}
             onPaymentSelect={(payment) => {
               setSelectedPayment(payment);
               setDetailsDialogOpen(true);

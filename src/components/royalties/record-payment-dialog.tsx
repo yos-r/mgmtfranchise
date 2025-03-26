@@ -32,7 +32,7 @@ interface RecordPaymentDialogProps {
   payment: {
     id: string;
     franchiseName: string;
-    totalAmount: number;
+    amount: number;
     franchiseId: string;
   };
   open: boolean;
@@ -69,7 +69,7 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
         .from('royalty_payments')
         .insert({
           franchise_id: payment.franchiseId,
-          amount: payment.totalAmount,
+          amount: payment.amount,
           status: 'paid',
           due_date: format(date, 'yyyy-MM-dd'),
           payment_method: paymentMethod,
@@ -85,7 +85,7 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
 
       toast({
         title: "Payment Recorded",
-        description: `Payment of €${payment.totalAmount.toLocaleString()} recorded successfully`,
+        description: `Payment of €${payment.amount.toLocaleString()} recorded successfully`,
       });
       
       onOpenChange(false);
@@ -98,7 +98,7 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
         <DialogHeader>
           <DialogTitle className="tagline-2">Record Payment</DialogTitle>
           <DialogDescription className="body-lead">
-            Record payment details for {payment.franchiseName}
+            Record payment details for
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -106,7 +106,7 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
             <Label htmlFor="amount" className="label-1">Amount</Label>
             <Input
               id="amount"
-              value={`€${payment.totalAmount.toLocaleString()}`}
+              value={`€${payment.amount.toLocaleString()}`}
               readOnly
               className="body-1"
             />

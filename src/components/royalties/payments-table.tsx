@@ -34,12 +34,12 @@ export function PaymentsTable({
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
           </TableHead>
-          <TableHead className="label-1">Company</TableHead>
+          {/* <TableHead className="label-1">Company</TableHead> */}
           <TableHead className="label-1">Amount</TableHead>
           <TableHead className="label-1">Due Date</TableHead>
           <TableHead className="label-1">Status</TableHead>
-          <TableHead className="label-1">Reference</TableHead>
-          <TableHead className="label-1 text-right">Actions</TableHead>
+          {/* <TableHead className="label-1">Reference</TableHead> */}
+          <TableHead className="label-1 text-right pr-8">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -50,25 +50,25 @@ export function PaymentsTable({
             onClick={() => onPaymentSelect(payment)}
           >
             <TableCell className="body-1 font-medium">
-              {payment.franchiseName}
+              {payment.franchises.name} <br />
+              <span className="text-muted-foreground"> {payment.franchises.address}</span>
             </TableCell>
-            <TableCell className="body-1">
-              {payment.companyName}
-            </TableCell>
+            {/* <TableCell className="body-1"> */}
+              {/* {payment.companyName} */}
+            {/* </TableCell> */}
             <TableCell className="numbers">
-              €{payment.totalAmount.toLocaleString()}
+              €{payment.amount.toLocaleString()}
             </TableCell>
             <TableCell className="body-1">
-              {format(payment.dueDate, 'MMM d, yyyy')}
+              {format(payment.due_date, 'MMM d, yyyy')}
             </TableCell>
             <TableCell>
               <Badge className={`${getStatusColor(payment.status)} label-2`}>
                 {payment.status}
               </Badge>
             </TableCell>
-            <TableCell className="legal">
-              {payment.reference}
-            </TableCell>
+            {/* <TableCell className="legal">
+            </TableCell> */}
             <TableCell className="text-right">
               {renderActionButton(payment)}
             </TableCell>

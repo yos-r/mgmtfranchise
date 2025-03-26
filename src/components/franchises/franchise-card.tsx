@@ -1,13 +1,14 @@
 import { MapPin, Phone, Mail } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { randomInt } from "crypto";
 
 interface FranchiseCardProps {
   franchise: {
     id: number;
     name: string;
     owner: string;
-    location: string;
+    address: string;
     revenue: string;
     status: string;
     performance: string;
@@ -58,21 +59,21 @@ export function FranchiseCard({ franchise, onSelect }: FranchiseCardProps) {
           </div>
           <div className="flex items-center text-sm">
             <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span className="body-1">{franchise.location}</span>
+            <span className="body-1">{franchise.address}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="legal text-muted-foreground">Revenue</p>
-              <p className="numbers font-medium">{franchise.revenue}</p>
+              <p className="numbers font-medium">€ 115,113</p>
             </div>
             <div className="space-y-1 text-right">
               <p className="legal text-muted-foreground">Agents</p>
               <p className="numbers font-medium">{franchise.agents}</p>
             </div>
           </div>
-          <div className="pt-2">
+          {/* <div className="pt-2">
             {getPerformanceBadge(franchise.performance)}
-          </div>
+          </div> */}
         </div>
       </CardContent>
     </Card>

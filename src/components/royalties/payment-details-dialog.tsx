@@ -26,22 +26,22 @@ export function PaymentDetailsDialog({ payment, open, onOpenChange }: PaymentDet
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="label-1">Franchise</p>
-              <p className="body-1">{payment.franchiseName}</p>
+              <p className="body-1">{payment.franchises.name}</p>
             </div>
             <div>
               <p className="label-1">Company</p>
-              <p className="body-1">{payment.companyName}</p>
+              {/* <p className="body-1">{payment.companyName}</p> */}
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
               <p className="label-1">Amount</p>
-              <p className="numbers text-xl">€{payment.totalAmount.toLocaleString()}</p>
+              <p className="numbers text-xl">€{payment.amount.toLocaleString()}</p>
             </div>
             <div>
               <p className="label-1">Due Date</p>
-              <p className="body-1">{format(payment.dueDate, 'MMMM d, yyyy')}</p>
+              <p className="body-1">{format(payment.due_date, 'MMMM d, yyyy')}</p>
             </div>
             <div>
               <p className="label-1">Status</p>
@@ -54,7 +54,7 @@ export function PaymentDetailsDialog({ payment, open, onOpenChange }: PaymentDet
               <div className="space-y-4">
                 <div>
                   <p className="label-1">Reference Number</p>
-                  <p className="body-1">{payment.reference}</p>
+                  {/* <p className="body-1">{payment.reference}</p> */}
                 </div>
                 <div className="flex items-center">
                   <Mail className="h-4 w-4 mr-2" />

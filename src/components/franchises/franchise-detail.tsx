@@ -16,10 +16,10 @@ export function FranchiseDetail({ franchise }: any) {
      
      <FranchiseHeader franchise={franchise} />
      <FranchiseInfo franchise={franchise} />
-      <PaymentsHistory franchise={franchise} />
+      <PaymentsHistory franchise={franchise}/>
       <LocationAndAgents franchise={franchise} />
-      <TrainingHistory franchise={franchise} />
-      <AssistanceHistory franchise={franchise}/>
+      <TrainingHistory />
+      <AssistanceHistory />
     </div>
   );
 }

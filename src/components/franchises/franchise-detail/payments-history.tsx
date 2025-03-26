@@ -2,11 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PaymentsTable } from "../../royalties/payments-table";
 import { PaymentDetailsDialog } from "../../royalties/payment-details-dialog";
 import { RecordPaymentDialog } from "../../royalties/record-payment-dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/auth";
 
-export function PaymentsHistory() {
+export function PaymentsHistory({franchise}: any) {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -79,6 +80,25 @@ export function PaymentsHistory() {
     );
   };
 
+  const [payments, setPayments] = useState<any[]>([]);
+    const loadPayments = async () => {
+      const { data, error } = await supabase
+        .from('royalty_payments')
+        .select('*,franchises(*)')
+        .eq('franchise_id', franchise.id)
+        .order('due_date', { ascending: true });
+      
+      if (!error && data) {
+        setPayments(data);
+        console.log('payments are', data);
+      }
+  
+    };
+  
+    useEffect(() => {
+      loadPayments();
+    }, []);
+
   return (
     <Card>
       <CardHeader>
@@ -86,7 +106,7 @@ export function PaymentsHistory() {
       </CardHeader>
       <CardContent>
         <PaymentsTable
-          payments={mockPayments}
+          payments={payments}
           onPaymentSelect={(payment) => {
             setSelectedPayment(payment);
             setDetailsDialogOpen(true);

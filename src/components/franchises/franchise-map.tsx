@@ -18,8 +18,8 @@ interface FranchiseMapProps {
 
 export function FranchiseMap({ franchises, onSelect }: FranchiseMapProps) {
   const [viewState, setViewState] = useState({
-    longitude: 2.3522,
-    latitude: 46.2276,
+    longitude: 4.298558312213245,
+    latitude: 50.83003140632331, 
     zoom: 5
   });
 
@@ -31,18 +31,20 @@ export function FranchiseMap({ franchises, onSelect }: FranchiseMapProps) {
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
       >
-        {franchises.map((franchise) => (
-          <Marker
-            key={franchise.id}
-            longitude={franchise.coordinates.lng}
-            latitude={franchise.coordinates.lat}
-            onClick={() => onSelect(franchise.id)}
-          >
-            <div className="cursor-pointer">
-              <MapPin className="h-6 w-6 text-primary" />
-            </div>
-          </Marker>
-        ))}
+        {franchises
+          .filter(franchise => franchise.coordinates !== null)
+          .map((franchise) => (
+            <Marker
+              key={franchise.id}
+              longitude={franchise.coordinates.lng}
+              latitude={franchise.coordinates.lat}
+              onClick={() => onSelect(franchise.id)}
+            >
+              <div className="cursor-pointer">
+          <MapPin className="h-6 w-6 text-primary" />
+              </div>
+            </Marker>
+          ))}
       </Map>
     </div>
   );
