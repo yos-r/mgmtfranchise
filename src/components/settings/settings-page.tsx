@@ -11,9 +11,7 @@ import { TeamForm } from "./team-form";
 import { useState } from "react";
 
 interface SettingsPageProps {
-    // setCurrentSection: (section: string) => void;
     setCurrentSection: React.Dispatch<React.SetStateAction<"main" | "settings">>;
-
   }
 export const SettingsPage: React.FC<SettingsPageProps> = ({ setCurrentSection }) => {
     const [settingsSection, setSettingsSection] = useState<string>('profile');
