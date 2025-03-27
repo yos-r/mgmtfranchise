@@ -43,6 +43,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { EditEventDialog } from "./edit-event-dialog";
+import { NotesCard } from "./notes-card"; // Import the new NotesCard component
 
 interface EventDetailProps {
   event: any;
@@ -52,7 +53,6 @@ interface EventDetailProps {
 export function EventDetail({ event, onBack }: EventDetailProps) {
   const { toast } = useToast();
   const [rating, setRating] = useState(event.trainer_rating || 0);
-  const [notes, setNotes] = useState("");
   const [selectedAttendees, setSelectedAttendees] = useState<number[]>([]);
   const [attendanceUpdated, setAttendanceUpdated] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -60,7 +60,6 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
 
   const handleRatingChange = async (newRating: number) => {
     setRating(newRating);
-    console.log("Rating updated:", newRating);
     
     try {
       const { error } = await supabase
@@ -84,13 +83,6 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
         variant: "destructive"
       });
     }
-  };
-
-  const handleSaveNotes = () => {
-    toast({
-      title: "Notes saved",
-      description: "Internal notes have been saved successfully",
-    });
   };
 
   const handleAttendanceChange = (attendeeId: number) => {
@@ -333,23 +325,8 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="tagline-2">Internal Notes</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                placeholder="Add internal notes about the training session..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[150px]"
-              />
-              <Button onClick={handleSaveNotes} className="w-full">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Save Notes
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Replace the old notes section with the new NotesCard component */}
+          <NotesCard eventId={event.id} initialNotes={event.notes} />
 
           <Card>
             <CardHeader>
