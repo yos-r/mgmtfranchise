@@ -24,8 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Map, { Marker } from 'react-map-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+// import Map, { Marker } from 'react-map-gl';
+// import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface AreaDetailProps {
   area: {

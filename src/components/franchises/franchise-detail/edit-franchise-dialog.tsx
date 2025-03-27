@@ -18,10 +18,22 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/auth";
+
+// Create a RequiredLabel component
+const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
+  <span>{children} <span className="text-destructive">*</span></span>
+);
 
 const franchiseFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -33,6 +45,7 @@ const franchiseFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(8, "Phone number must be at least 8 characters"),
   address: z.string().min(10, "Address must be at least 10 characters"),
+  commune: z.string().min(1, "Please select a commune"),
 });
 
 interface EditFranchiseDialogProps {
@@ -64,6 +77,7 @@ export function EditFranchiseDialog({
       email: franchise.email,
       phone: franchise.phone,
       address: franchise.address,
+      commune: franchise.commune || "",
     },
   });
 
@@ -80,6 +94,7 @@ export function EditFranchiseDialog({
         email: franchise.email,
         phone: franchise.phone,
         address: franchise.address,
+        commune: franchise.commune || "",
       });
     }
   }, [franchise, open, form]);
@@ -99,6 +114,7 @@ export function EditFranchiseDialog({
           email: values.email,
           phone: values.phone,
           address: values.address,
+          commune: values.commune,
         })
         .eq('id', franchise.id)
         .select();
@@ -260,19 +276,64 @@ export function EditFranchiseDialog({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="commune"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="label-1">
+                      <RequiredLabel>Commune</RequiredLabel>
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a commune" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="1000">1000 - Brussels City</SelectItem>
+                        <SelectItem value="1020">1020 - Laeken</SelectItem>
+                        <SelectItem value="1030">1030 - Schaerbeek</SelectItem>
+                        <SelectItem value="1040">1040 - Etterbeek</SelectItem>
+                        <SelectItem value="1050">1050 - Ixelles</SelectItem>
+                        <SelectItem value="1060">1060 - Saint-Gilles</SelectItem>
+                        <SelectItem value="1070">1070 - Anderlecht</SelectItem>
+                        <SelectItem value="1080">1080 - Molenbeek-Saint-Jean</SelectItem>
+                        <SelectItem value="1081">1081 - Koekelberg</SelectItem>
+                        <SelectItem value="1082">1082 - Berchem-Sainte-Agathe</SelectItem>
+                        <SelectItem value="1083">1083 - Ganshoren</SelectItem>
+                        <SelectItem value="1090">1090 - Jette</SelectItem>
+                        <SelectItem value="1120">1120 - Neder-Over-Heembeek</SelectItem>
+                        <SelectItem value="1130">1130 - Haren</SelectItem>
+                        <SelectItem value="1140">1140 - Evere</SelectItem>
+                        <SelectItem value="1150">1150 - Woluwe-Saint-Pierre</SelectItem>
+                        <SelectItem value="1160">1160 - Auderghem</SelectItem>
+                        <SelectItem value="1170">1170 - Watermael-Boitsfort</SelectItem>
+                        <SelectItem value="1180">1180 - Uccle</SelectItem>
+                        <SelectItem value="1190">1190 - Forest</SelectItem>
+                        <SelectItem value="1200">1200 - Woluwe-Saint-Lambert</SelectItem>
+                        <SelectItem value="1210">1210 - Saint-Josse-ten-Noode</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <DialogFooter>
               <Button

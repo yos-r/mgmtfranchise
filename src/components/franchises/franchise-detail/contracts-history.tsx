@@ -56,7 +56,7 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
     // Determine contract status
     let status: 'active' | 'expired' | 'terminated';
     
-    if (contract.terminated=='yes') {
+    if (contract.terminated=='yes' || contract.terminated=='true') {
       status = 'terminated';
     } else {
       const startDate = new Date(contract.start_date);

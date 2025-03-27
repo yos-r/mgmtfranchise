@@ -3,7 +3,7 @@ import { AuthProvider } from '@/components/AuthProvider';
 import { LoginPage } from '@/pages/Login';
 import { Toaster } from '@/components/ui/toaster';
 
-import 'mapbox-gl/dist/mapbox-gl.css';
+// import 'mapbox-gl/dist/mapbox-gl.css';
 
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Dashboard } from './pages/Dashboard';

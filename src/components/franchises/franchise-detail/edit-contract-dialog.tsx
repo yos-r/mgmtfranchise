@@ -78,7 +78,7 @@ export function EditContractDialog({
       setMarketingAmount(contract.marketing_amount || 0);
       setGracePeriodMonths(contract.grace_period_months || 0);
       setAnnualIncrease(contract.annual_increase || 0);
-      setIsTerminated(contract.terminated=='yes' || false);
+      setIsTerminated(['yes','true'].includes(contract.terminated) || false);
       setTerminationDate(contract.termination_date ? new Date(contract.termination_date) : undefined);
       setDocumentUrl(contract.document_url || "");
     }
@@ -210,7 +210,7 @@ export function EditContractDialog({
             />
           </div>}
           
-          {contract?.renewal_fee && <div className="grid gap-2">
+          {contract?.renewal_fee>0 && <div className="grid gap-2">
             <Label htmlFor="renewal-fee">Renewal Fee (€)</Label>
             <Input
               id="renewal-fee"
