@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Euro, Eye, FileText } from "lucide-react";
+import { Euro, Eye, FileText, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { EditContractDialog } from "./edit-contract-dialog";
 
 interface Contract {
   id: string;
@@ -33,6 +34,7 @@ interface Contract {
   terminated?: boolean;
   termination_date?: string;
   document_url?: string;
+  renewal_fee?: number;
 }
 
 interface ContractsHistoryProps {
@@ -43,6 +45,8 @@ interface ContractsHistoryProps {
 export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryProps) {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [isViewingDetails, setIsViewingDetails] = useState(false);
+  const [isEditingContract, setIsEditingContract] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Determine contract type and status
   const processedContracts = contracts.map((contract, index) => {
@@ -52,7 +56,7 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
     // Determine contract status
     let status: 'active' | 'expired' | 'terminated';
     
-    if (contract.terminated) {
+    if (contract.terminated=='yes') {
       status = 'terminated';
     } else {
       const startDate = new Date(contract.start_date);
@@ -90,6 +94,16 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
   const handleViewDetails = (contract: any) => {
     setSelectedContract(contract);
     setIsViewingDetails(true);
+  };
+
+  const handleEditContract = (contract: any) => {
+    setSelectedContract(contract);
+    setIsEditingContract(true);
+  };
+
+  const handleContractUpdated = () => {
+    // Refresh the contracts list
+    setRefreshKey(prev => prev + 1);
   };
 
   const getEndDate = (contract: Contract) => {
@@ -172,6 +186,14 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
                         <Eye className="mr-2 h-4 w-4" />
                         View
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditContract(contract)}
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -228,10 +250,14 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Financial Terms</Label>
                 <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div>
+                  {selectedContract?.initial_fee > 0 && <div>
                     <span className="text-sm text-muted-foreground">Initial Fee</span>
                     <p className="text-lg font-medium">€{selectedContract?.initial_fee.toLocaleString()}</p>
-                  </div>
+                  </div>}
+                  {selectedContract?.renewal_fee > 0 && <div>
+                    <span className="text-sm text-muted-foreground">Renewal Fee</span>
+                    <p className="text-lg font-medium">€{selectedContract?.renewal_fee.toLocaleString()}</p>
+                  </div>}
                   <div>
                     <span className="text-sm text-muted-foreground">Annual Increase</span>
                     <p className="text-lg font-medium">{selectedContract?.annual_increase}%</p>
@@ -247,8 +273,8 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
                 </div>
               </div>
 
-              {selectedContract?.document_url && (
-                <div className="pt-4">
+              <div className="flex justify-between pt-4">
+                {selectedContract?.document_url && (
                   <Button
                     variant="outline"
                     onClick={() => window.open(selectedContract.document_url, '_blank')}
@@ -256,11 +282,29 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
                     <FileText className="mr-2 h-4 w-4" />
                     View Contract Document
                   </Button>
-                </div>
-              )}
+                )}
+                <Button 
+                  onClick={() => {
+                    setIsViewingDetails(false);
+                    setIsEditingContract(true);
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Contract
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Contract Dialog */}
+        <EditContractDialog
+          contract={selectedContract}
+          open={isEditingContract}
+          onOpenChange={setIsEditingContract}
+          onContractUpdated={handleContractUpdated}
+          franchiseId={franchise_id}
+        />
       </CardContent>
     </Card>
   );

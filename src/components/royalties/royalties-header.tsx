@@ -11,16 +11,22 @@ import {
 import { RecordPaymentDialogSelect } from "./record-payment-dialog-select";
 import { useState } from "react";
 
-// interface RoyaltiesHeaderProps {
-//   onFilterChange: (value: string) => void;
-//   onSearchChange: (value: string) => void;
-// }
+interface RoyaltiesHeaderProps {
+  onFilterChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
+  currentFilter?: string;
+  currentSearch?: string;
+}
 
-export function RoyaltiesHeader() {
-    const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  
+export function RoyaltiesHeader({
+  onFilterChange,
+  onSearchChange,
+  currentFilter = "all",
+  currentSearch = "",
+}: RoyaltiesHeaderProps) {
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+
   return (
-    
     <div className="flex items-center justify-between">
       <div>
         <h2 className="tagline-1">Royalty Payments</h2>
@@ -29,13 +35,16 @@ export function RoyaltiesHeader() {
         </p>
       </div>
       <div className="flex items-center space-x-2">
-        <Select >
+        <Select 
+          defaultValue={currentFilter} 
+          onValueChange={(value) => onFilterChange(value)}
+        >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Payments</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="upcoming">Upcoming</SelectItem>
             <SelectItem value="paid">Paid</SelectItem>
             <SelectItem value="late">Late</SelectItem>
           </SelectContent>
@@ -43,17 +52,13 @@ export function RoyaltiesHeader() {
         <Input
           placeholder="Search franchises..."
           className="w-[200px]"
-          
+          value={currentSearch}
+          onChange={(e) => onSearchChange(e.target.value)}
         />
-        {/* <Button className="button-1" onClick={(e) => {
-          e.stopPropagation();
-          setPaymentDialogOpen(true);
-        }}>
-          <Receipt className="mr-2 h-4 w-4" />
-          Record Payment
-        </Button> */}
-
-        <RecordPaymentDialogSelect open={paymentDialogOpen}  onOpenChange={setPaymentDialogOpen}></RecordPaymentDialogSelect>
+        {/* <RecordPaymentDialogSelect 
+          open={paymentDialogOpen} 
+          onOpenChange={setPaymentDialogOpen} 
+        /> */}
       </div>
     </div>
   );

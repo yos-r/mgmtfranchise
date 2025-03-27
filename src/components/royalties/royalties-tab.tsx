@@ -9,67 +9,71 @@ import { Button } from "@/components/ui/button";
 import { Eye, Receipt } from "lucide-react";
 import { supabase } from "@/lib/auth";
 
-const mockPayments = [
-  {
-    id: 1,
-    franchiseName: "CENTURY 21 Saint-Germain",
-    companyName: "Saint-Germain Real Estate SARL",
-    totalAmount: 4000,
-    dueDate: new Date("2024-04-15"),
-    status: "pending",
-    reference: "PAY-2024-001",
-  },
-  {
-    id: 2,
-    franchiseName: "CENTURY 21 Confluence",
-    companyName: "Confluence Immobilier SAS",
-    totalAmount: 3500,
-    dueDate: new Date("2024-04-10"),
-    status: "paid",
-    reference: "PAY-2024-002",
-  },
-];
-
 export function RoyaltiesTab() {
-  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [selectedPayment, setSelectedPayment] = useState(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-
-  const stats = {
-    totalDue: 45000,
-    pendingPayments: 12,
-    latePayments: 3,
-    collectionRate: 92,
-  };
-
-  const filteredPayments = mockPayments.filter((payment) => {
-    const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
-    const matchesSearch = payment.franchiseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.companyName.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
+  const [payments, setPayments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalDue: 0,
+    pendingPayments: 0,
+    latePayments: 0,
+    collectionRate: 0,
   });
-  const [payments, setPayments] = useState<any[]>([]);
-  const loadPayments = async () => {
-    const { data, error } = await supabase
-      .from('royalty_payments')
-      .select('*,franchises(*)')
-      .order('due_date', { ascending: true });
-    
-    if (!error && data) {
-      setPayments(data);
-      console.log('payments are', data);
-    }
 
+  const loadPayments = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('royalty_payments')
+        .select('*, franchises(*)')
+        .order('due_date', { ascending: true });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setPayments(data);
+        
+        // Calculate stats from actual data
+        const totalDue = data.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+        const pendingCount = data.filter(p => p.status === 'pending').length;
+        const lateCount = data.filter(p => p.status === 'late').length;
+        const paidCount = data.filter(p => p.status === 'paid').length;
+        const collectionRate = data.length > 0 
+          ? Math.round((paidCount / data.length) * 100) 
+          : 0;
+        
+        setStats({
+          totalDue,
+          pendingPayments: pendingCount,
+          latePayments: lateCount,
+          collectionRate,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading payments:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     loadPayments();
   }, []);
 
+  const filteredPayments = payments.filter((payment) => {
+    const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
+    const matchesSearch = payment.franchises && (
+      payment.franchises.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      payment.franchises.address?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    return matchesStatus && (searchQuery === "" || matchesSearch);
+  });
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case "paid":
         return "bg-green-100 text-green-800";
@@ -82,8 +86,8 @@ export function RoyaltiesTab() {
     }
   };
 
-  const renderActionButton = (payment: any) => {
-    if (payment.status === "upcoming") {
+  const renderActionButton = (payment) => {
+    if (payment.status === "upcoming" || payment.status === "pending") {
       return (
         <Button
           variant="ghost"
@@ -121,21 +125,29 @@ export function RoyaltiesTab() {
       <RoyaltiesHeader
         onFilterChange={setStatusFilter}
         onSearchChange={setSearchQuery}
+        currentFilter={statusFilter}
+        currentSearch={searchQuery}
       />
 
-      <StatsCards stats={stats} />
+      <StatsCards stats={stats} isLoading={isLoading} />
 
       <Card>
         <CardContent className="pt-6">
-          <PaymentsTable
-            payments={payments}
-            onPaymentSelect={(payment) => {
-              setSelectedPayment(payment);
-              setDetailsDialogOpen(true);
-            }}
-            renderActionButton={renderActionButton}
-            getStatusColor={getStatusColor}
-          />
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <p className="text-muted-foreground">Loading payments...</p>
+            </div>
+          ) : (
+            <PaymentsTable
+              payments={filteredPayments}
+              onPaymentSelect={(payment) => {
+                setSelectedPayment(payment);
+                setDetailsDialogOpen(true);
+              }}
+              renderActionButton={renderActionButton}
+              getStatusColor={getStatusColor}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -145,11 +157,13 @@ export function RoyaltiesTab() {
             payment={selectedPayment}
             open={detailsDialogOpen}
             onOpenChange={setDetailsDialogOpen}
+            onPaymentRecorded={loadPayments}
           />
           <RecordPaymentDialog
             payment={selectedPayment}
             open={paymentDialogOpen}
             onOpenChange={setPaymentDialogOpen}
+            onPaymentRecorded={loadPayments}
           />
         </>
       )}

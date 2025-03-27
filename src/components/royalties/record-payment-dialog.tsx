@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { CalendarIcon, Receipt } from "lucide-react";
 import {
@@ -31,19 +31,36 @@ import { supabase } from "@/lib/supabase";
 interface RecordPaymentDialogProps {
   payment: {
     id: string;
-    franchiseName: string;
     amount: number;
-    franchiseId: string;
+    franchises?: {
+      name: string;
+    };
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onPaymentRecorded?: () => void;
 }
 
-export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPaymentDialogProps) {
+export function RecordPaymentDialog({ 
+  payment, 
+  open, 
+  onOpenChange, 
+  onPaymentRecorded 
+}: RecordPaymentDialogProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [referenceNumber, setReferenceNumber] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      setDate(new Date());
+      setPaymentMethod('');
+      setReferenceNumber('');
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
     // Validate inputs
@@ -65,18 +82,20 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
       return;
     }
 
-      const { data: insertedData, error } = await supabase
+    setIsSubmitting(true);
+
+    try {
+      // Update the existing payment record instead of creating a new one
+      const { data, error } = await supabase
         .from('royalty_payments')
-        .insert({
-          franchise_id: payment.franchiseId,
-          amount: payment.amount,
+        .update({
           status: 'paid',
-          due_date: format(date, 'yyyy-MM-dd'),
           payment_method: paymentMethod,
           payment_reference: referenceNumber || null,
           payment_date: format(date, 'yyyy-MM-dd'),
-          notes: `Payment for ${payment.franchiseName}`
+          notes: `Payment received via ${paymentMethod}${referenceNumber ? ` (Ref: ${referenceNumber})` : ''}`
         })
+        .eq('id', payment.id)
         .select();
 
       if (error) {
@@ -85,12 +104,27 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
 
       toast({
         title: "Payment Recorded",
-        description: `Payment of €${payment.amount.toLocaleString()} recorded successfully`,
+        description: `Payment of €${payment.amount.toLocaleString()} marked as paid`,
       });
       
+      // Close dialog and refresh data
       onOpenChange(false);
-    
+      if (onPaymentRecorded) {
+        onPaymentRecorded();
+      }
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to record payment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const franchiseName = payment.franchises?.name || "this franchise";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,11 +132,11 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
         <DialogHeader>
           <DialogTitle className="tagline-2">Record Payment</DialogTitle>
           <DialogDescription className="body-lead">
-            Record payment details for
+            Record payment details for {franchiseName}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
+          {/* <div className="grid gap-2">
             <Label htmlFor="amount" className="label-1">Amount</Label>
             <Input
               id="amount"
@@ -110,7 +144,7 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
               readOnly
               className="body-1"
             />
-          </div>
+          </div> */}
           <div className="grid gap-2">
             <Label className="label-1">Payment Date</Label>
             <Popover>
@@ -162,9 +196,13 @@ export function RecordPaymentDialog({ payment, open, onOpenChange }: RecordPayme
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSubmit} className="button-1">
+          <Button 
+            onClick={handleSubmit} 
+            className="button-1"
+            disabled={isSubmitting}
+          >
             <Receipt className="mr-2 h-4 w-4" />
-            Record Payment
+            {isSubmitting ? "Recording..." : "Record Payment"}
           </Button>
         </DialogFooter>
       </DialogContent>
