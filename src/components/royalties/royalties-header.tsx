@@ -71,7 +71,7 @@ export function RoyaltiesHeader({
       </div>
       <div className="flex items-center space-x-2">
         {/* Franchise Selection Dropdown with Search */}
-        <Popover open={open} onOpenChange={setOpen}>
+        {/* <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -129,10 +129,10 @@ export function RoyaltiesHeader({
               </CommandList>
             </Command>
           </PopoverContent>
-        </Popover>
+        </Popover> */}
 
         {/* Status Filter */}
-        <Select 
+        {/* <Select 
           defaultValue={currentFilter} 
           onValueChange={(value) => onFilterChange(value)}
         >
@@ -146,10 +146,10 @@ export function RoyaltiesHeader({
             <SelectItem value="paid">Paid</SelectItem>
             <SelectItem value="late">Late</SelectItem>
           </SelectContent>
-        </Select>
+        </Select> */}
 
         {/* Search Input */}
-        <div className="relative w-[200px]">
+        {/* <div className="relative w-[200px]">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search payments..."
@@ -166,7 +166,7 @@ export function RoyaltiesHeader({
               <X className="h-4 w-4 text-muted-foreground" />
             </Button>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );

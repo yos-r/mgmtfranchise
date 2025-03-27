@@ -184,14 +184,21 @@ export function RoyaltiesTab() {
             </div>
           ) : (
             <PaymentsTable
-              payments={filteredPayments}
-              onPaymentSelect={(payment) => {
-                setSelectedPayment(payment);
-                setDetailsDialogOpen(true);
-              }}
-              renderActionButton={renderActionButton}
-              getStatusColor={getStatusColor}
-            />
+  payments={filteredPayments}
+  onPaymentSelect={(payment) => {
+    setSelectedPayment(payment);
+    setDetailsDialogOpen(true);
+  }}
+  renderActionButton={renderActionButton}
+  getStatusColor={getStatusColor}
+  franchises={franchises}
+  onFilterChange={setStatusFilter}
+  onSearchChange={setSearchQuery}
+  onFranchiseSelect={setSelectedFranchiseId}
+  currentFilter={statusFilter}
+  currentSearch={searchQuery}
+  selectedFranchise={selectedFranchiseId}
+/>
           )}
         </CardContent>
       </Card>
