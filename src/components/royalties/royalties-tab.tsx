@@ -15,8 +15,11 @@ export function RoyaltiesTab() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFranchiseId, setSelectedFranchiseId] = useState(null);
   const [payments, setPayments] = useState([]);
+  const [franchises, setFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingFranchises, setIsLoadingFranchises] = useState(true);
   const [stats, setStats] = useState({
     totalDue: 0,
     pendingPayments: 0,
@@ -24,21 +27,49 @@ export function RoyaltiesTab() {
     collectionRate: 0,
   });
 
+  const loadFranchises = async () => {
+    setIsLoadingFranchises(true);
+    try {
+      const { data, error } = await supabase
+        .from('franchises')
+        .select('id, name, address')
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setFranchises(data);
+      }
+    } catch (error) {
+      console.error('Error loading franchises:', error);
+    } finally {
+      setIsLoadingFranchises(false);
+    }
+  };
+
   const loadPayments = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('royalty_payments')
         .select('*, franchises(*)')
         .order('due_date', { ascending: true });
+      
+      // Apply franchise filter if selected
+      if (selectedFranchiseId) {
+        query = query.eq('franchise_id', selectedFranchiseId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       
       if (data) {
         setPayments(data);
         
-        // Calculate stats from actual data
-        const totalDue = data.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+        // Calculate stats from filtered data
+        const totalDue = data.reduce((sum, payment) => 
+          sum + (payment.status !== 'paid' ? (payment.amount || 0) : 0), 0);
         const pendingCount = data.filter(p => p.status === 'pending').length;
         const lateCount = data.filter(p => p.status === 'late').length;
         const paidCount = data.filter(p => p.status === 'paid').length;
@@ -60,17 +91,26 @@ export function RoyaltiesTab() {
     }
   };
 
+  // Load franchises on initial render
+  useEffect(() => {
+    loadFranchises();
+  }, []);
+
+  // Load payments when filters change
   useEffect(() => {
     loadPayments();
-  }, []);
+  }, [selectedFranchiseId]);
 
   const filteredPayments = payments.filter((payment) => {
     const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
-    const matchesSearch = payment.franchises && (
-      payment.franchises.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.franchises.address?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = searchQuery === "" || (
+      payment.franchises && (
+        payment.franchises.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        payment.franchises.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        payment.payment_reference?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     );
-    return matchesStatus && (searchQuery === "" || matchesSearch);
+    return matchesStatus && matchesSearch;
   });
 
   const getStatusColor = (status) => {
@@ -81,13 +121,15 @@ export function RoyaltiesTab() {
         return "bg-yellow-100 text-yellow-800";
       case "late":
         return "bg-red-100 text-red-800";
+      case "upcoming":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
   const renderActionButton = (payment) => {
-    if (payment.status === "upcoming" || payment.status === "pending") {
+    if (payment.status === "upcoming" || payment.status === "pending" || payment.status === "late") {
       return (
         <Button
           variant="ghost"
@@ -125,8 +167,11 @@ export function RoyaltiesTab() {
       <RoyaltiesHeader
         onFilterChange={setStatusFilter}
         onSearchChange={setSearchQuery}
+        onFranchiseSelect={setSelectedFranchiseId}
         currentFilter={statusFilter}
         currentSearch={searchQuery}
+        franchises={franchises}
+        selectedFranchise={selectedFranchiseId}
       />
 
       <StatsCards stats={stats} isLoading={isLoading} />
