@@ -8,9 +8,16 @@ import { supabase } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { ContractsHistory } from "./franchise-detail/contracts-history";
 
-export function FranchiseDetail({ franchise, loadFranchises }: any) {
+export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, onDelete, onUpdate }: any) {
+  // Keep local state of franchise data to allow immediate updates
+  const [franchise, setFranchise] = useState(initialFranchise);
   const [contracts, setContracts] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  
+  // Update local franchise state when prop changes
+  useEffect(() => {
+    setFranchise(initialFranchise);
+  }, [initialFranchise]);
   
   const loadContracts = async () => {
     setLoading(true);
@@ -19,7 +26,7 @@ export function FranchiseDetail({ franchise, loadFranchises }: any) {
       .select('*')
       .eq('franchise_id', franchise.id)
       .order('start_date', { ascending: true });
-
+    
     if (!error && data) {
       setContracts(data);
     } else if (error) {
@@ -28,7 +35,7 @@ export function FranchiseDetail({ franchise, loadFranchises }: any) {
     
     setLoading(false);
   };
-
+  
   useEffect(() => {
     loadContracts();
     
@@ -38,26 +45,45 @@ export function FranchiseDetail({ franchise, loadFranchises }: any) {
         console.log("Franchise contracts updated, reloading...");
         loadContracts();
       }).subscribe();
-      
+    
     return () => {
       supabase.removeChannel(channel);
     }
   }, [franchise.id]);
-
+  
   const activeContract = contracts.length > 0 ? contracts[contracts.length - 1] : undefined;
-
+  
+  // Handler for franchise updates - update local state immediately
+  const handleFranchiseUpdate = (updatedFranchise) => {
+    // Update the local franchise state
+    setFranchise(prev => ({
+      ...prev,
+      ...updatedFranchise
+    }));
+    
+    // Also call the parent's onUpdate if available
+    if (onUpdate) {
+      onUpdate();
+    }
+  };
+  
   return (
     <div className="container mx-auto space-y-6">
       {loading ? (
         <div className="p-6 text-center">Loading contract details...</div>
       ) : (
         <>
-          <FranchiseHeader franchise={franchise} contract={activeContract} />
+          <FranchiseHeader 
+            franchise={franchise} 
+            contract={activeContract} 
+            onDelete={onDelete} 
+            onUpdate={handleFranchiseUpdate}
+          />
           {/* <FranchiseInfo franchise={franchise} contracts={contracts} /> */}
           <PaymentsHistory franchise={franchise} />
           <ContractsHistory contracts={contracts} franchise_id={franchise.id} />
           <LocationAndAgents franchise={franchise} />
-
+          
           <TrainingHistory />
           <AssistanceHistory />
         </>

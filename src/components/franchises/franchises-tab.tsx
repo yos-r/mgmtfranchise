@@ -18,7 +18,11 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
     const [franchises, setFranchises] = useState<any[]>([]);
     const [isAddingFranchise, setIsAddingFranchise] = useState(false);
     const [selectedFranchise, setSelectedFranchise] = useState<any | null>(null);
-
+    const [refreshKey, setRefreshKey] = useState(0);
+    const handleFranchiseUpdated = () => {
+        // Refresh the contracts list
+        setRefreshKey(prev => prev + 1);
+      };
     const loadFranchises = async () => {
         const { data, error } = await supabase
             .from('franchises')
@@ -67,7 +71,7 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
     }
     if (selectedFranchise) {
         return (
-            <FranchiseDetail loadFranchises={loadFranchises} franchise={selectedFranchise} />
+        <FranchiseDetail loadFranchises={loadFranchises} franchise={selectedFranchise} onDelete={() => setIsAddingFranchise(false)} onUpdate={handleFranchiseUpdated}/>
         );
     }
     return (
