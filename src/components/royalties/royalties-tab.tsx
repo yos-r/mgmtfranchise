@@ -8,6 +8,7 @@ import { RecordPaymentDialog } from "./record-payment-dialog";
 import { Button } from "@/components/ui/button";
 import { Eye, Receipt } from "lucide-react";
 import { supabase } from "@/lib/auth";
+import { toast } from "@/hooks/use-toast";
 
 export function RoyaltiesTab() {
   const [selectedPayment, setSelectedPayment] = useState(null);
@@ -47,42 +48,27 @@ export function RoyaltiesTab() {
     }
   };
 
-  const loadPayments = async () => {
+  // Load ALL payments for stats and filtering
+  const loadAllPayments = async () => {
     setIsLoading(true);
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('royalty_payments')
         .select('*, franchises(*)')
         .order('due_date', { ascending: true });
-      
-      // Apply franchise filter if selected
-      if (selectedFranchiseId) {
-        query = query.eq('franchise_id', selectedFranchiseId);
-      }
-      
-      const { data, error } = await query;
       
       if (error) throw error;
       
       if (data) {
         setPayments(data);
         
-        // Calculate stats from filtered data
-        const totalDue = data.reduce((sum, payment) => 
-          sum + (payment.status !== 'paid' ? (payment.amount || 0) : 0), 0);
-        const pendingCount = data.filter(p => p.status === 'pending').length;
-        const lateCount = data.filter(p => p.status === 'late').length;
-        const paidCount = data.filter(p => p.status === 'paid').length;
-        const collectionRate = data.length > 0 
-          ? Math.round((paidCount / data.length) * 100) 
-          : 0;
+        // Apply franchise filter for stats calculation
+        let statsData = data;
+        if (selectedFranchiseId) {
+          statsData = data.filter(payment => payment.franchise_id === selectedFranchiseId);
+        }
         
-        setStats({
-          totalDue,
-          pendingPayments: pendingCount,
-          latePayments: lateCount,
-          collectionRate,
-        });
+        calculateStats(statsData);
       }
     } catch (error) {
       console.error('Error loading payments:', error);
@@ -91,18 +77,104 @@ export function RoyaltiesTab() {
     }
   };
 
+  // Calculate stats based on the provided data
+  const calculateStats = (data) => {
+    // Get current date and next month's date for calculations
+    const today = new Date();
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    
+    // Get current month and year for collection rate calculation
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // Total due: sum amounts of unpaid payments that are due before next month
+    const totalDue = data.reduce((sum, payment) => {
+      const dueDate = new Date(payment.due_date);
+      // Include if payment is not paid and due before next month
+      if (payment.status !== 'paid' && payment.status !== 'grace' && dueDate < nextMonth) {
+        return sum + (payment.amount || 0);
+      }
+      return sum;
+    }, 0);
+    
+    // Pending payments: count unpaid payments that are due before next month
+    const pendingCount = data.filter(payment => {
+      const dueDate = new Date(payment.due_date);
+      return payment.status === 'upcoming' && dueDate < nextMonth;
+    }).length;
+    
+    // Late payments: count payments with 'late' status
+    const lateCount = data.filter(p => p.status === 'late').length;
+    
+    // Collection rate: paid royalties divided by due royalties for the current month
+    // Filter payments for current month
+    const currentMonthPayments = data.filter(payment => {
+      const dueDate = new Date(payment.due_date);
+      return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
+    });
+    
+    // Count paid and total due payments for current month
+    const paidCurrentMonth = currentMonthPayments.filter(p => p.status === 'paid').length;
+    const totalCurrentMonth = currentMonthPayments.length;
+    
+    const collectionRate = totalCurrentMonth > 0 
+      ? Math.round((paidCurrentMonth / totalCurrentMonth) * 100) 
+      : 0;
+    
+    setStats({
+      totalDue,
+      pendingPayments: pendingCount,
+      latePayments: lateCount,
+      collectionRate,
+    });
+  };
+
+  // Handle batch updates
+  const handleBatchUpdate = async (paymentIds, updateData) => {
+    try {
+      const { data, error } = await supabase
+        .from('royalty_payments')
+        .update(updateData)
+        .in('id', paymentIds);
+      
+      if (error) throw error;
+      
+      // Reload data after update
+      loadAllPayments();
+      
+      // Show success message
+      toast({
+        title: "Success",
+        description: `${paymentIds.length} payments marked as paid`,
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error updating payments:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update payments",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Load franchises on initial render
   useEffect(() => {
     loadFranchises();
   }, []);
 
-  // Load payments when filters change
+  // Load payments when franchise selection changes
   useEffect(() => {
-    loadPayments();
+    loadAllPayments();
   }, [selectedFranchiseId]);
 
+  // Apply filters to the payments data
   const filteredPayments = payments.filter((payment) => {
+    // Apply status filter
     const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
+    
+    // Apply search query filter
     const matchesSearch = searchQuery === "" || (
       payment.franchises && (
         payment.franchises.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -110,7 +182,11 @@ export function RoyaltiesTab() {
         payment.payment_reference?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
-    return matchesStatus && matchesSearch;
+    
+    // Apply franchise filter
+    const matchesFranchise = !selectedFranchiseId || payment.franchise_id === selectedFranchiseId;
+    
+    return matchesStatus && matchesSearch && matchesFranchise;
   });
 
   const getStatusColor = (status) => {
@@ -184,21 +260,22 @@ export function RoyaltiesTab() {
             </div>
           ) : (
             <PaymentsTable
-  payments={filteredPayments}
-  onPaymentSelect={(payment) => {
-    setSelectedPayment(payment);
-    setDetailsDialogOpen(true);
-  }}
-  renderActionButton={renderActionButton}
-  getStatusColor={getStatusColor}
-  franchises={franchises}
-  onFilterChange={setStatusFilter}
-  onSearchChange={setSearchQuery}
-  onFranchiseSelect={setSelectedFranchiseId}
-  currentFilter={statusFilter}
-  currentSearch={searchQuery}
-  selectedFranchise={selectedFranchiseId}
-/>
+              payments={filteredPayments}
+              onPaymentSelect={(payment) => {
+                setSelectedPayment(payment);
+                setDetailsDialogOpen(true);
+              }}
+              renderActionButton={renderActionButton}
+              getStatusColor={getStatusColor}
+              franchises={franchises}
+              onFilterChange={setStatusFilter}
+              onSearchChange={setSearchQuery}
+              onFranchiseSelect={setSelectedFranchiseId}
+              currentFilter={statusFilter}
+              currentSearch={searchQuery}
+              selectedFranchise={selectedFranchiseId}
+              onBatchUpdate={handleBatchUpdate}
+            />
           )}
         </CardContent>
       </Card>
@@ -209,13 +286,13 @@ export function RoyaltiesTab() {
             payment={selectedPayment}
             open={detailsDialogOpen}
             onOpenChange={setDetailsDialogOpen}
-            onPaymentRecorded={loadPayments}
+            onPaymentRecorded={loadAllPayments}
           />
           <RecordPaymentDialog
             payment={selectedPayment}
             open={paymentDialogOpen}
             onOpenChange={setPaymentDialogOpen}
-            onPaymentRecorded={loadPayments}
+            onPaymentRecorded={loadAllPayments}
           />
         </>
       )}
