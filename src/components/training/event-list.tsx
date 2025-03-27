@@ -5,15 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface EventListProps {
-  meetings: any[];
+  events: any[];
   onEventSelect: (event: any) => void;
+  emptyMessage: string;
 }
 
-export function EventList({ meetings, onEventSelect }: EventListProps) {
+export function EventList({ events, onEventSelect, emptyMessage }: EventListProps) {
+  if (events.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center h-32">
+          <p className="text-muted-foreground">{emptyMessage}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="tagline-2">Upcoming Events</CardTitle>
+        <CardTitle className="tagline-2">Events</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
@@ -29,36 +40,36 @@ export function EventList({ meetings, onEventSelect }: EventListProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {meetings.map((meeting) => (
+            {events.map((event) => (
               <TableRow
-                key={meeting.id}
+                key={event.id}
                 className="cursor-pointer hover:bg-muted/50"
-                onClick={() => onEventSelect(meeting)}
+                onClick={() => onEventSelect(event)}
               >
                 <TableCell className="body-1 font-medium">
-                  {meeting.title}
+                  {event.title}
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" className="label-2">
-                    {meeting.type}
+                    {event.type}
                   </Badge>
                 </TableCell>
                 <TableCell className="body-1">
-                  {format(new Date(meeting.date), "MMM d, yyyy")} at {meeting.time}
+                  {format(new Date(event.date), "MMM d, yyyy")} at {event.time}
                 </TableCell>
-                <TableCell className="body-1">{meeting.duration}</TableCell>
+                <TableCell className="body-1">{event.duration}</TableCell>
                 <TableCell className="body-1">
-                  {meeting.attendees.length} invited
+                  {event.attendees?.length || 0} invited
                 </TableCell>
                 <TableCell>
                   <Badge
                     className={
-                      new Date(meeting.date) > new Date()
+                      new Date(event.date) > new Date()
                         ? "bg-yellow-100 text-yellow-800"
                         : "bg-green-100 text-green-800"
                     }
                   >
-                    {new Date(meeting.date) > new Date() ? "Upcoming" : "Completed"}
+                    {new Date(event.date) > new Date() ? "Upcoming" : "Completed"}
                   </Badge>
                 </TableCell>
                 <TableCell>

@@ -2,68 +2,50 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import {
   Calendar,
-  Clock,
   Users,
-  Mail
+  Mail,
+  Plus,
+  Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-import { supabase } from "@/lib/supabase";
-import { EventDetail } from "./event-detail";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CreateEventDialog } from "./create-event-dialog";
+import { EventList } from "./event-list";
+import { EventDetail } from "./event-detail";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
-const meetings = [
-  {
-    id: 1,
-    title: "Q2 Strategy Meeting",
-    type: "meeting",
-    date: "2024-04-15",
-    time: "10:00",
-    duration: "2h",
-    attendees: [
-      { id: 1, name: "Marie Laurent", franchise: "Saint-Germain", attended: true },
-      { id: 2, name: "Thomas Bernard", franchise: "Confluence", attended: false },
-      { id: 3, name: "Sophie Martin", franchise: "Vieux Port", attended: true },
-    ],
-  },
-  {
-    id: 2,
-    title: "Digital Marketing Training",
-    type: "training",
-    date: "2024-04-20",
-    time: "14:00",
-    duration: "3h",
-    attendees: [
-      { id: 1, name: "Marie Laurent", franchise: "Saint-Germain", attended: null },
-      { id: 2, name: "Thomas Bernard", franchise: "Confluence", attended: null },
-      { id: 3, name: "Sophie Martin", franchise: "Vieux Port", attended: null },
-    ],
-  },
-];
 export function TrainingTab() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("upcoming");
+  const { toast } = useToast();
 
   const loadEvents = async () => {
-    const { data, error } = await supabase
-      .from('training_events')
-      .select('*')
-      .order('date', { ascending: true });
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('training_events')
+        .select('*')
+        .order('date', { ascending: true });
 
-    console.log('The data is ', data)
-    if (!error && data) {
-      setEvents(data);
+      if (error) throw error;
+
+      if (data) {
+        setEvents(data);
+      }
+    } catch (error) {
+      toast({
+        title: "Error loading events",
+        description: "Failed to load training events",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -71,8 +53,56 @@ export function TrainingTab() {
     loadEvents();
   }, []);
 
+  const today = new Date();
+  const upcomingEvents = events.filter(event => new Date(event.date) >= today);
+  const pastEvents = events.filter(event => new Date(event.date) < today);
+
   if (selectedEvent) {
     return <EventDetail event={selectedEvent} onBack={() => setSelectedEvent(null)} />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-48 mt-2" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-24 mb-2" />
+                <Skeleton className="h-4 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -94,7 +124,7 @@ export function TrainingTab() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">8</div>
+            <div className="numbers text-2xl font-bold">{upcomingEvents.length}</div>
             <p className="legal text-muted-foreground">
               Next 30 days
             </p>
@@ -138,102 +168,30 @@ export function TrainingTab() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="tagline-2">Upcoming Events</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="label-1">Event</TableHead>
-                <TableHead className="label-1">Type</TableHead>
-                <TableHead className="label-1">Date & Time</TableHead>
-                <TableHead className="label-1">Duration</TableHead>
-                <TableHead className="label-1">Attendees</TableHead>
-                <TableHead className="label-1">Status</TableHead>
-                <TableHead className="w-[100px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {meetings.map((meeting) => (
-                <TableRow
-                  key={meeting.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setSelectedEvent(meeting)}
-                >
-                  <TableCell className="body-1 font-medium">
-                    {meeting.title}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="label-2">
-                      {meeting.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="body-1">
-                    {format(new Date(meeting.date), "MMM d, yyyy")} at {meeting.time}
-                  </TableCell>
-                  <TableCell className="body-1">{meeting.duration}</TableCell>
-                  <TableCell className="body-1">
-                    {meeting.attendees.length} invited
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        new Date(meeting.date) > new Date()
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
-                      }
-                    >
-                      {new Date(meeting.date) > new Date() ? "Upcoming" : "Completed"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" className="button-2">
-                      View Details
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-
-            </TableBody>
-
-          </Table>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {events.map((event) => (
-                <TableRow key={event.id}>
-                  <TableCell>{event.title}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {event.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {event.date}
-                  </TableCell>
-                  <TableCell>{event.time}</TableCell>
-                  <TableCell>{event.duration}</TableCell>
-                  <TableCell>
-
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="upcoming" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="upcoming" className="button-2">
+            Upcoming Events
+          </TabsTrigger>
+          <TabsTrigger value="past" className="button-2">
+            Past Events
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="upcoming">
+          <EventList
+            events={upcomingEvents}
+            onEventSelect={setSelectedEvent}
+            emptyMessage="No upcoming events scheduled"
+          />
+        </TabsContent>
+        <TabsContent value="past">
+          <EventList
+            events={pastEvents}
+            onEventSelect={setSelectedEvent}
+            emptyMessage="No past events found"
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

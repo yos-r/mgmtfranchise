@@ -1,21 +1,10 @@
-import { MapPin, Phone, Mail } from "lucide-react";
+import { MapPin, Phone, Mail, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { randomInt } from "crypto";
+import { format } from 'date-fns';
 
 interface FranchiseCardProps {
-  franchise: {
-    id: number;
-    name: string;
-    owner: string;
-    address: string;
-    revenue: string;
-    status: string;
-    performance: string;
-    agents: number;
-    email: string;
-    phone: string;
-  };
+  franchise: any;
   onSelect: (id: number) => void;
 }
 
@@ -25,6 +14,8 @@ export function getStatusColor(status: string) {
       return "bg-green-100 text-green-800";
     case "pending":
       return "bg-yellow-100 text-yellow-800";
+    case "terminated":
+      return "bg-red-100 text-red-800";
     default:
       return "bg-gray-100 text-gray-800";
   }
@@ -44,36 +35,118 @@ export function getPerformanceBadge(performance: string) {
 }
 
 export function FranchiseCard({ franchise, onSelect }: FranchiseCardProps) {
+  // Function to format dates
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    return format(new Date(dateString), 'MMM d, yyyy');
+  };
+
+  // Function to calculate contract start date (first contract)
+  const getStartDate = () => {
+    if (!franchise.franchise_contracts || franchise.franchise_contracts.length === 0) {
+      return "No contract";
+    }
+    
+    // Sort contracts by start_date to get the first one
+    const sortedContracts = [...franchise.franchise_contracts].sort(
+      (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+    );
+    
+    return formatDate(sortedContracts[0].start_date);
+  };
+
+  // Function to calculate expiration date (start_date + duration of the last contract)
+  const getExpirationDate = () => {
+    if (!franchise.franchise_contracts || franchise.franchise_contracts.length === 0) {
+      return "No contract";
+    }
+    
+    // Sort contracts by start_date to get the last one
+    const sortedContracts = [...franchise.franchise_contracts].sort(
+      (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+    );
+    
+    const lastContract = sortedContracts[sortedContracts.length - 1];
+    const startDate = new Date(lastContract.start_date);
+    startDate.setFullYear(startDate.getFullYear() + lastContract.duration_years);
+    
+    return formatDate(startDate.toISOString());
+  };
+
+  // Function to get termination date if contract is terminated
+  const getTerminationDate = () => {
+    if (!franchise.franchise_contracts || franchise.franchise_contracts.length === 0) {
+      return null;
+    }
+    
+    // Find terminated contract
+    const terminatedContract = franchise.franchise_contracts.find(
+      (contract: any) => contract.terminated === "yes" || contract.terminated === true
+    );
+    
+    return terminatedContract ? formatDate(terminatedContract.termination_date) : null;
+  };
+
+  const isTerminated = franchise.status === "terminated";
+  const terminationDate = getTerminationDate();
+  const startDate = getStartDate();
+  const expirationDate = getExpirationDate();
+
   return (
     <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onSelect(franchise.id)}>
       <CardContent className="p-6">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="body-1 font-medium">{franchise.name}</h3>
-              <p className="legal text-muted-foreground">{franchise.owner}</p>
+              <h3 className="font-medium">{franchise.name}</h3>
+              <p className="text-sm text-muted-foreground">{franchise.owner_name}</p>
             </div>
-            <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(franchise.status)} label-2`}>
+            <Badge className={getStatusColor(franchise.status)}>
               {franchise.status}
-            </span>
+            </Badge>
           </div>
           <div className="flex items-center text-sm">
             <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span className="body-1">{franchise.address}</span>
+            <span>{franchise.address}</span>
           </div>
-          <div className="flex items-center justify-between">
+          
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <p className="legal text-muted-foreground">Revenue</p>
-              <p className="numbers font-medium">€ 115,113</p>
+              <p className="text-xs text-muted-foreground">Start Date</p>
+              <div className="flex items-center text-sm">
+                <Calendar className="mr-2 h-3 w-3 text-muted-foreground" />
+                {startDate}
+              </div>
             </div>
-            <div className="space-y-1 text-right">
-              <p className="legal text-muted-foreground">Agents</p>
-              <p className="numbers font-medium">{franchise.agents}</p>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Expiration Date</p>
+              <div className="flex items-center text-sm">
+                <Calendar className="mr-2 h-3 w-3 text-muted-foreground" />
+                {expirationDate}
+              </div>
             </div>
           </div>
-          {/* <div className="pt-2">
-            {getPerformanceBadge(franchise.performance)}
-          </div> */}
+          
+          {isTerminated && terminationDate && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Termination Date</p>
+              <div className="flex items-center text-sm text-red-600">
+                <Calendar className="mr-2 h-3 w-3" />
+                {terminationDate}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-2">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Agents</p>
+              <p className="font-medium">{franchise.agents}</p>
+            </div>
+            <div className="space-y-1 flex items-center">
+              <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
+              <Phone className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

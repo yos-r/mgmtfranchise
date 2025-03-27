@@ -7,6 +7,9 @@ import { t } from "@/lib/i18n";
 import { OverviewTab } from "../overview/overview-tab";
 import { FranchisesTab } from "../franchises/franchises-tab";
 import { HelpDeskTab } from "../help-desk/help-desk-tab";
+import { MarketAnalysisData } from "../business-development/market-analysis-data";
+import { MarketAnalysis } from "../business-development/market-analysis";
+
 interface DashboardTabsProps {
     viewMode: string;
     setViewMode: React.Dispatch<React.SetStateAction<"list" | "grid" | "map">>;
@@ -19,11 +22,12 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
                 <TabsTrigger value="overview" className="button-2">{t('overview')}</TabsTrigger>
                 <TabsTrigger value="franchises" className="button-2">{t('franchises')}</TabsTrigger>
                 <TabsTrigger value="royalties" className="button-2">{t('royalties')}</TabsTrigger>
+                <TabsTrigger value="dev" className="button-2">Business Development</TabsTrigger>
+
                 <TabsTrigger value="performance" className="button-2">{t('performance')}</TabsTrigger>
                 <TabsTrigger value="training" className="button-2">{t('training')}</TabsTrigger>
                 <TabsTrigger value="support" className="button-2">{t('support')}</TabsTrigger>
                 <TabsTrigger value="helpdesk" className="button-2">Helpdesk</TabsTrigger>
-                <TabsTrigger value="dev" className="button-2">Dev</TabsTrigger>
 
 
             </TabsList>
@@ -50,7 +54,8 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
                 <HelpDeskTab />
             </TabsContent>
             <TabsContent value="dev">
-                Dev section here
+                <MarketAnalysisData />
+                {/* <MarketAnalysis /> */}
             </TabsContent>
         </Tabs>
     )

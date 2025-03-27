@@ -33,6 +33,12 @@ const contractFormSchema = z.object({
     annualIncrease: z.coerce.number().min(0, "Annual increase cannot be negative"),
     gracePeriodMonths: z.coerce.number().min(0, "Grace period cannot be negative")
 });
+const getFirstDayOfNextMonth = () => {
+    const today = new Date();
+    // Create date for first day of next month
+    const firstDayNextMonth = new Date(today.getFullYear(), today.getMonth()+1, 1);
+    return firstDayNextMonth.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+  };
 
 export function AddFranchiseContract({ franchise,loadFranchises }: any) {
     const [contractDetailsVisible, setContractDetailsVisible] = useState<{ [key: number]: boolean }>({});
@@ -41,7 +47,7 @@ export function AddFranchiseContract({ franchise,loadFranchises }: any) {
     const contractForm = useForm<z.infer<typeof contractFormSchema>>({
         resolver: zodResolver(contractFormSchema),
         defaultValues: {
-            startDate: new Date().toISOString().split('T')[0],
+            startDate: getFirstDayOfNextMonth(),
             durationYears: 1,
             // initialFee: 0,
             royaltyAmount: 0,

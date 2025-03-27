@@ -95,14 +95,14 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                                 >
                                     <LayoutGrid className="h-4 w-4" />
                                 </Button>
-                                <Button
+                                {/* <Button
                                     variant={viewMode === 'map' ? 'default' : 'ghost'}
                                     size="sm"
                                     className="button-2"
                                     onClick={() => setViewMode('map')}
                                 >
                                     <MapIcon className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                             </div>
                             <Button className="button-1" onClick={() => setIsAddingFranchise(true)}>
                                 <Plus className="mr-2 h-4 w-4" />

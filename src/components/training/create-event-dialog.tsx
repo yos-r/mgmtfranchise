@@ -3,7 +3,8 @@ import { format } from "date-fns";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
-import { Plus, Eye, Send, Save } from "lucide-react";
+import { Plus, Eye, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,23 +23,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
 interface CreateEventDialogProps {
-  onEventCreated?: () => void;
+  onEventCreated: () => void;
 }
 
 export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     title: "",
     type: "",
-    date: format(new Date(), 'yyyy-MM-dd'),
+    date: format(new Date(), "yyyy-MM-dd"),
     time: "10:00",
-    duration: "2h",
+    duration: "",
+    description: "",
   });
   
   const editor = useEditor({
@@ -50,95 +51,65 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
       }),
     ],
     content: `
-Dear Franchisees,
+# Training Agenda
 
-You are invited to attend our upcoming event. Please find the details below:
+## Objectives
+- 
+- 
+-
 
-Date: ${format(new Date(formData.date), 'MMMM d, yyyy')}
-Time: ${formData.time}
-Duration: ${formData.duration}
+## Materials Required
+- 
+- 
+-
 
-Please confirm your attendance.
-
-Best regards,
-CENTURY 21 Management
+## Schedule
+1. Introduction (XX minutes)
+2. Main Topics (XX minutes)
+3. Practical Exercise (XX minutes)
+4. Q&A Session (XX minutes)
+5. Wrap-up (XX minutes)
     `,
   });
 
-  const { toast } = useToast();
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-
-    // Update email content when date/time changes
-    if (field === 'date' || field === 'time' || field === 'duration') {
-      editor?.commands.setContent(`
-Dear Franchisees,
-
-You are invited to attend our upcoming event. Please find the details below:
-
-Date: ${format(new Date(field === 'date' ? value : formData.date), 'MMMM d, yyyy')}
-Time: ${field === 'time' ? value : formData.time}
-Duration: ${field === 'duration' ? value : formData.duration}
-
-Please confirm your attendance.
-
-Best regards,
-CENTURY 21 Management
-      `);
-    }
-  };
-
-  const handleSave = async (sendEmail: boolean = false) => {
+  const handleSubmit = async () => {
     try {
-      // Save event to database
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('training_events')
-        .insert({
-          title: formData.title,
-          type: formData.type,
-          date: formData.date,
-          time: formData.time,
-          duration: formData.duration,
-          description: editor?.getHTML() || '',
-        })
-        .select()
-        .single();
+        .insert([
+          {
+            title: formData.title,
+            type: formData.type,
+            date: formData.date,
+            time: formData.time,
+            duration: formData.duration,
+            description: editor?.getHTML() || "",
+            status: "scheduled",
+          }
+        ]);
 
       if (error) throw error;
 
-      if (sendEmail) {
-        // Here you would implement email sending logic
-        toast({
-          title: "Event created and invitations sent",
-          description: "The event has been saved and email invitations have been sent to all franchisees",
-        });
-      } else {
-        toast({
-          title: "Event saved",
-          description: "The event has been saved successfully",
-        });
-      }
-
-      // Reset form and close dialog
+      toast({
+        title: "Event created",
+        description: "The training event has been created successfully",
+      });
+      
+      setIsOpen(false);
+      onEventCreated();
       setFormData({
         title: "",
         type: "",
-        date: format(new Date(), 'yyyy-MM-dd'),
+        date: format(new Date(), "yyyy-MM-dd"),
         time: "10:00",
-        duration: "2h",
+        duration: "",
+        description: "",
       });
       editor?.commands.setContent("");
-      setIsOpen(false);
-      onEventCreated?.();
-
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create event. Please try again.",
+        description: "Failed to create training event",
         variant: "destructive",
       });
     }
@@ -156,7 +127,7 @@ CENTURY 21 Management
         <DialogHeader>
           <DialogTitle className="tagline-2">Create New Event</DialogTitle>
           <DialogDescription className="body-lead">
-            Schedule a new meeting or training session
+            Schedule a new training session or meeting
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -165,24 +136,24 @@ CENTURY 21 Management
               <Label htmlFor="title" className="label-1">Event Title</Label>
               <Input
                 id="title"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
                 placeholder="Enter event title"
                 className="body-1"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="type" className="label-1">Event Type</Label>
               <Select
                 value={formData.type}
-                onValueChange={(value) => handleInputChange('type', value)}
+                onValueChange={(value) => setFormData({ ...formData, type: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="meeting">Meeting</SelectItem>
                   <SelectItem value="training">Training</SelectItem>
+                  <SelectItem value="meeting">Meeting</SelectItem>
                   <SelectItem value="workshop">Workshop</SelectItem>
                 </SelectContent>
               </Select>
@@ -195,9 +166,9 @@ CENTURY 21 Management
               <Input
                 id="date"
                 type="date"
-                value={formData.date}
-                onChange={(e) => handleInputChange('date', e.target.value)}
                 className="body-1"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               />
             </div>
             <div className="grid gap-2">
@@ -205,26 +176,26 @@ CENTURY 21 Management
               <Input
                 id="time"
                 type="time"
-                value={formData.time}
-                onChange={(e) => handleInputChange('time', e.target.value)}
                 className="body-1"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="duration" className="label-1">Duration</Label>
               <Input
                 id="duration"
-                value={formData.duration}
-                onChange={(e) => handleInputChange('duration', e.target.value)}
                 placeholder="e.g., 2h"
                 className="body-1"
+                value={formData.duration}
+                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
               />
             </div>
           </div>
 
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
-              <Label className="label-1">Email Invitation</Label>
+              <Label className="label-1">Event Details</Label>
               <Button
                 variant="outline"
                 size="sm"
@@ -232,7 +203,7 @@ CENTURY 21 Management
                 className="button-2"
               >
                 <Eye className="mr-2 h-4 w-4" />
-                {showPreview ? "Hide Preview" : "Preview Email"}
+                {showPreview ? "Edit" : "Preview"}
               </Button>
             </div>
             {!showPreview ? (
@@ -240,43 +211,27 @@ CENTURY 21 Management
                 <EditorContent editor={editor} />
               </div>
             ) : (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="label-1">To:</p>
-                        <p className="body-1 text-muted-foreground">all-franchisees@century21.fr</p>
-                      </div>
-                      <div>
-                        <p className="label-1">Subject:</p>
-                        <p className="body-1 text-muted-foreground">Invitation: {formData.title}</p>
-                      </div>
-                    </div>
-                    <div className="prose prose-sm max-w-none">
-                      <EditorContent editor={editor} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="min-h-[300px] border rounded-md p-4 prose prose-sm max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: editor?.getHTML() || "" }} />
+              </div>
             )}
           </div>
         </div>
-        <DialogFooter className="flex justify-between">
+        <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => handleSave(false)}
+            onClick={() => setIsOpen(false)}
             className="button-2"
           >
-            <Save className="mr-2 h-4 w-4" />
-            Save Draft
+            Cancel
           </Button>
           <Button
-            onClick={() => handleSave(true)}
+            onClick={handleSubmit}
+            disabled={!formData.title || !formData.type || !formData.date || !formData.time}
             className="button-1"
           >
             <Send className="mr-2 h-4 w-4" />
-            Save & Send Invitations
+            Create Event
           </Button>
         </DialogFooter>
       </DialogContent>
