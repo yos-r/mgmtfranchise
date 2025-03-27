@@ -28,6 +28,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/auth";
 import { AddFranchiseContract } from './add-franchise-contract';
+import { RenewFranchiseContract } from './renew-franchise-contracts';
 
 interface FranchiseHeaderProps {
   franchise: {
@@ -317,37 +318,12 @@ export function FranchiseHeader({ franchise, contract, loadFranchises }: Franchi
             <>
               {/* Renew Contract button - only show for active contracts */}
               {hasContract && !isContractTerminated && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      disabled={isRenewing}
-                    >
-                      {isRenewing ?
-                        <span>Processing...</span> :
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Renew Contract
-                        </>
-                      }
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Renew Franchise Contract</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to renew this franchise contract? This will extend the contract for another term under the same conditions.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleRenewContract}>
-                        Renew Contract
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+        <RenewFranchiseContract 
+          franchise={franchise} 
+          contract={contract}
+          loadFranchises={loadFranchises} 
+        />
+      )}
 
               {/* Terminate Contract button - only show for active contracts */}
               {hasContract && !isContractTerminated && (

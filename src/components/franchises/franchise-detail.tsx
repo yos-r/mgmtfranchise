@@ -56,7 +56,7 @@ export function FranchiseDetail({ franchise, loadFranchises }: any) {
           {/* <FranchiseInfo franchise={franchise} contracts={contracts} /> */}
           <PaymentsHistory franchise={franchise} />
           <LocationAndAgents franchise={franchise} />
-          <ContractsHistory  />
+          <ContractsHistory contracts={contracts} franchise_id={franchise.id} />
           <TrainingHistory />
           <AssistanceHistory />
         </>

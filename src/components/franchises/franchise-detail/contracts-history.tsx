@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Euro, Eye } from "lucide-react";
+import { Euro, Eye, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,6 @@ import { useState } from "react";
 
 interface Contract {
   id: string;
-  type: 'initial' | 'renewal';
   start_date: string;
   duration_years: number;
   initial_fee: number;
@@ -31,39 +30,38 @@ interface Contract {
   marketing_amount: number;
   grace_period_months: number;
   annual_increase: number;
-  status: 'active' | 'expired' | 'terminated';
+  terminated?: boolean;
+  termination_date?: string;
+  document_url?: string;
 }
 
-const mockContracts: Contract[] = [
-  {
-    id: "1",
-    type: "initial",
-    start_date: "2020-01-15",
-    duration_years: 5,
-    initial_fee: 50000,
-    royalty_amount: 2500,
-    marketing_amount: 1500,
-    grace_period_months: 3,
-    annual_increase: 3,
-    status: "expired"
-  },
-  {
-    id: "2",
-    type: "renewal",
-    start_date: "2025-01-15",
-    duration_years: 5,
-    initial_fee: 25000,
-    royalty_amount: 2750,
-    marketing_amount: 1650,
-    grace_period_months: 1,
-    annual_increase: 3,
-    status: "active"
-  }
-];
+interface ContractsHistoryProps {
+  contracts: Contract[];
+  franchise_id: string;
+}
 
-export function ContractsHistory() {
+export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryProps) {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [isViewingDetails, setIsViewingDetails] = useState(false);
+
+  // Determine contract type and status
+  const processedContracts = contracts.map((contract, index) => {
+    // Determine contract type (first one is initial, rest are renewals)
+    const type = index === 0 ? 'initial' : 'renewal';
+    
+    // Determine contract status
+    let status: 'active' | 'expired' | 'terminated';
+    
+    if (contract.terminated) {
+      status = 'terminated';
+    } else {
+      const startDate = new Date(contract.start_date);
+      const endDate = addYears(startDate, contract.duration_years);
+      status = new Date() > endDate ? 'expired' : 'active';
+    }
+    
+    return { ...contract, type, status };
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -89,9 +87,17 @@ export function ContractsHistory() {
     }
   };
 
-  const handleViewDetails = (contract: Contract) => {
+  const handleViewDetails = (contract: any) => {
     setSelectedContract(contract);
     setIsViewingDetails(true);
+  };
+
+  const getEndDate = (contract: Contract) => {
+    if (contract.terminated && contract.termination_date) {
+      return format(new Date(contract.termination_date), 'MMM d, yyyy');
+    } else {
+      return format(addYears(new Date(contract.start_date), contract.duration_years), 'MMM d, yyyy');
+    }
   };
 
   return (
@@ -100,63 +106,79 @@ export function ContractsHistory() {
         <CardTitle>Contracts History</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Type</TableHead>
-              <TableHead>Start Date</TableHead>
-              <TableHead>End Date</TableHead>
-              <TableHead>Initial Fee</TableHead>
-              <TableHead>Monthly Fees</TableHead>
-              <TableHead>Grace Period</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockContracts.map((contract) => (
-              <TableRow key={contract.id}>
-                <TableCell>{getTypeBadge(contract.type)}</TableCell>
-                <TableCell>{format(new Date(contract.start_date), 'MMM d, yyyy')}</TableCell>
-                <TableCell>
-                  {format(addYears(new Date(contract.start_date), contract.duration_years), 'MMM d, yyyy')}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-1">
-                    <Euro className="h-3 w-3 text-muted-foreground" />
-                    <span>{contract.initial_fee.toLocaleString()}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-sm text-muted-foreground">Royalty:</span>
-                      <Euro className="h-3 w-3 text-muted-foreground" />
-                      <span>{contract.royalty_amount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-sm text-muted-foreground">Marketing:</span>
-                      <Euro className="h-3 w-3 text-muted-foreground" />
-                      <span>{contract.marketing_amount.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>{contract.grace_period_months} months</TableCell>
-                <TableCell>{getStatusBadge(contract.status)}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleViewDetails(contract)}
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    View Details
-                  </Button>
-                </TableCell>
+        {processedContracts.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            No contracts found for this franchise
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead>Initial Fee</TableHead>
+                <TableHead>Monthly Fees</TableHead>
+                <TableHead>Grace Period</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {processedContracts.map((contract) => (
+                <TableRow key={contract.id}>
+                  <TableCell>{getTypeBadge(contract.type)}</TableCell>
+                  <TableCell>{format(new Date(contract.start_date), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>{getEndDate(contract)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-1">
+                      <Euro className="h-3 w-3 text-muted-foreground" />
+                      <span>{contract.initial_fee.toLocaleString()}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-1">
+                        <span className="text-sm text-muted-foreground">Royalty:</span>
+                        <Euro className="h-3 w-3 text-muted-foreground" />
+                        <span>{contract.royalty_amount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <span className="text-sm text-muted-foreground">Marketing:</span>
+                        <Euro className="h-3 w-3 text-muted-foreground" />
+                        <span>{contract.marketing_amount.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{contract.grace_period_months} months</TableCell>
+                  <TableCell>{getStatusBadge(contract.status)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end items-center space-x-2">
+                      {contract.document_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(contract.document_url, '_blank')}
+                        >
+                          <FileText className="mr-2 h-4 w-4" />
+                          Document
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewDetails(contract)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
 
         {/* Contract Details Dialog */}
         <Dialog open={isViewingDetails} onOpenChange={setIsViewingDetails}>
@@ -171,11 +193,11 @@ export function ContractsHistory() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground">Contract Type</Label>
-                  <p>{getTypeBadge(selectedContract?.type || '')}</p>
+                  <p>{selectedContract?.type && getTypeBadge(selectedContract.type)}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Status</Label>
-                  <p>{getStatusBadge(selectedContract?.status || '')}</p>
+                  <p>{selectedContract?.status && getStatusBadge(selectedContract.status)}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Start Date</Label>
@@ -184,8 +206,7 @@ export function ContractsHistory() {
                 <div>
                   <Label className="text-muted-foreground">End Date</Label>
                   <p>
-                    {selectedContract?.start_date && 
-                     format(addYears(new Date(selectedContract.start_date), selectedContract.duration_years), 'MMM d, yyyy')}
+                    {selectedContract && getEndDate(selectedContract)}
                   </p>
                 </div>
                 <div>
@@ -196,6 +217,12 @@ export function ContractsHistory() {
                   <Label className="text-muted-foreground">Grace Period</Label>
                   <p>{selectedContract?.grace_period_months} months</p>
                 </div>
+                {selectedContract?.terminated && selectedContract?.termination_date && (
+                  <div>
+                    <Label className="text-muted-foreground">Termination Date</Label>
+                    <p>{format(new Date(selectedContract.termination_date), 'MMM d, yyyy')}</p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -219,6 +246,18 @@ export function ContractsHistory() {
                   </div>
                 </div>
               </div>
+
+              {selectedContract?.document_url && (
+                <div className="pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(selectedContract.document_url, '_blank')}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Contract Document
+                  </Button>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
