@@ -18,7 +18,12 @@ export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, o
   useEffect(() => {
     setFranchise(initialFranchise);
   }, [initialFranchise]);
-  
+  const handleDelete = () => {
+    // Call the onDelete function passed from the parent to navigate back
+    if (onDelete) {
+      onDelete();
+    }
+  };
   const loadContracts = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -76,7 +81,7 @@ export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, o
           <FranchiseHeader 
             franchise={franchise} 
             contract={activeContract} 
-            onDelete={onDelete} 
+            onDelete={handleDelete} // Pass our local handler
             onUpdate={handleFranchiseUpdate}
           />
           {/* <FranchiseInfo franchise={franchise} contracts={contracts} /> */}
