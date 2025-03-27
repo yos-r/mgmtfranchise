@@ -4,16 +4,14 @@ import {
   Calendar,
   Users,
   Mail,
-  Plus,
   Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateEventDialog } from "./create-event-dialog";
-import { EventList } from "./event-list";
 import { EventDetail } from "./event-detail";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -22,7 +20,6 @@ export function TrainingTab() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("upcoming");
   const { toast } = useToast();
 
   const loadEvents = async () => {
@@ -51,14 +48,32 @@ export function TrainingTab() {
 
   useEffect(() => {
     loadEvents();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('training_events_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'training_events' 
+        }, 
+        () => {
+          loadEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const today = new Date();
-  const upcomingEvents = events.filter(event => new Date(event.date) >= today);
-  const pastEvents = events.filter(event => new Date(event.date) < today);
-
   if (selectedEvent) {
-    return <EventDetail event={selectedEvent} onBack={() => setSelectedEvent(null)} />;
+    return <EventDetail event={selectedEvent} onBack={() => {
+      setSelectedEvent(null);
+      loadEvents(); // Reload events when returning to list
+    }} />;
   }
 
   if (isLoading) {
@@ -105,6 +120,13 @@ export function TrainingTab() {
     );
   }
 
+  const upcomingEvents = events.filter(event => new Date(event.date) >= new Date()).length;
+  const completedEvents = events.filter(event => new Date(event.date) < new Date()).length;
+  const totalHours = events.reduce((acc, event) => {
+    const duration = parseInt(event.duration);
+    return isNaN(duration) ? acc : acc + duration;
+  }, 0);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -124,21 +146,21 @@ export function TrainingTab() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">{upcomingEvents.length}</div>
+            <div className="numbers text-2xl font-bold">{upcomingEvents}</div>
             <p className="legal text-muted-foreground">
-              Next 30 days
+              Scheduled events
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Average Attendance</CardTitle>
+            <CardTitle className="tagline-3">Completed Events</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">85%</div>
+            <div className="numbers text-2xl font-bold">{completedEvents}</div>
             <p className="legal text-muted-foreground">
-              Last 3 months
+              Past events
             </p>
           </CardContent>
         </Card>
@@ -148,9 +170,9 @@ export function TrainingTab() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">24h</div>
+            <div className="numbers text-2xl font-bold">{totalHours}h</div>
             <p className="legal text-muted-foreground">
-              This month
+              Total duration
             </p>
           </CardContent>
         </Card>
@@ -168,30 +190,74 @@ export function TrainingTab() {
         </Card>
       </div>
 
-      <Tabs defaultValue="upcoming" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="upcoming" className="button-2">
-            Upcoming Events
-          </TabsTrigger>
-          <TabsTrigger value="past" className="button-2">
-            Past Events
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="upcoming">
-          <EventList
-            events={upcomingEvents}
-            onEventSelect={setSelectedEvent}
-            emptyMessage="No upcoming events scheduled"
-          />
-        </TabsContent>
-        <TabsContent value="past">
-          <EventList
-            events={pastEvents}
-            onEventSelect={setSelectedEvent}
-            emptyMessage="No past events found"
-          />
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader>
+          <CardTitle>Training Events</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="label-1">Event</TableHead>
+                <TableHead className="label-1">Type</TableHead>
+                <TableHead className="label-1">Trainer</TableHead>
+                <TableHead className="label-1">Date & Time</TableHead>
+                <TableHead className="label-1">Duration</TableHead>
+                <TableHead className="label-1">Status</TableHead>
+                <TableHead className="w-[100px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {events.map((event) => (
+                <TableRow
+                  key={event.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  <TableCell className="body-1 font-medium">
+                    {event.title}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="label-2">
+                      {event.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="body-1">
+                    {event.trainer || '-'}
+                  </TableCell>
+                  <TableCell className="body-1">
+                    {format(new Date(event.date), "MMM d, yyyy")} at {event.time}
+                  </TableCell>
+                  <TableCell className="body-1">{event.duration}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={
+                        new Date(event.date) > new Date()
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-green-100 text-green-800"
+                      }
+                    >
+                      {new Date(event.date) > new Date() ? "Upcoming" : "Completed"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" className="button-2">
+                      View Details
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {events.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                    No training events found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

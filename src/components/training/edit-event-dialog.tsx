@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,7 +9,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase"; // Use the correct Supabase client
 
 const eventSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
@@ -42,27 +40,41 @@ const eventSchema = z.object({
   description: z.string().optional(),
 });
 
-interface CreateEventDialogProps {
-  onEventCreated: () => void;
+interface EditEventDialogProps {
+  event: any;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
-export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function EditEventDialog({
+  event,
+  open,
+  onOpenChange,
+  onSuccess,
+}: EditEventDialogProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof eventSchema>>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
-      type: "training",
-      time: "10:00",
+      title: event.title,
+      type: event.type,
+      trainer: event.trainer || "",
+      date: event.date,
+      time: event.time,
+      duration: event.duration,
+      description: event.description || "",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof eventSchema>) => {
+    setIsSubmitting(true);
     try {
       const { error } = await supabase
         .from('training_events')
-        .insert({
+        .update({
           title: values.title,
           type: values.type,
           trainer: values.trainer,
@@ -70,41 +82,37 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
           time: values.time,
           duration: values.duration,
           description: values.description,
-          status: "scheduled",
-        });
+        })
+        .eq('id', event.id);
 
       if (error) throw error;
 
       toast({
-        title: "Event created",
-        description: "The training event has been created successfully",
+        title: "Event updated",
+        description: "The training event has been updated successfully",
       });
-      
-      setIsOpen(false);
-      onEventCreated();
-      form.reset();
+
+      onSuccess();
+      onOpenChange(false);
     } catch (error: any) {
+      console.error("Error updating event:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to update the event. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="button-1">
-          <Plus className="mr-2 h-4 w-4" />
-          Create Event
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Event</DialogTitle>
+          <DialogTitle>Edit Event</DialogTitle>
           <DialogDescription>
-            Schedule a new training session or meeting
+            Update the training event details
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -116,7 +124,7 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
                 <FormItem>
                   <FormLabel>Event Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter event title" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -133,7 +141,7 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -154,7 +162,7 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
                   <FormItem>
                     <FormLabel>Trainer</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter trainer name" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -198,7 +206,7 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
                   <FormItem>
                     <FormLabel>Duration</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 2h" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -213,7 +221,7 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input placeholder="Event description" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -221,7 +229,16 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
             />
 
             <DialogFooter>
-              <Button type="submit">Create Event</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
