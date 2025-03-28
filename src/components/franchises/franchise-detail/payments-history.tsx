@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Euro, Plus, Receipt, Eye, Edit, MoreHorizontal, History } from "lucide-react";
+import { Euro, Plus, Receipt, Eye, Edit, MoreHorizontal, History, Calendar, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/auth";
 import { RecordPaymentDialog } from './record-payment-dialog';
@@ -34,6 +34,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function PaymentsHistory({ franchise }: any) {
   const [payments, setPayments] = useState<any[]>([]);
@@ -51,6 +58,28 @@ export function PaymentsHistory({ franchise }: any) {
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [paginatedPayments, setPaginatedPayments] = useState<any[]>([]);
+  
+  // Filtering state
+  const [selectedYear, setSelectedYear] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [filteredPayments, setFilteredPayments] = useState<any[]>([]);
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
+
+  const months = [
+    { value: "01", label: "January" },
+    { value: "02", label: "February" },
+    { value: "03", label: "March" },
+    { value: "04", label: "April" },
+    { value: "05", label: "May" },
+    { value: "06", label: "June" },
+    { value: "07", label: "July" },
+    { value: "08", label: "August" },
+    { value: "09", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" }
+  ];
 
   const loadPayments = async () => {
     setLoading(true);
@@ -66,8 +95,23 @@ export function PaymentsHistory({ franchise }: any) {
       
       if (data) {
         setPayments(data);
-        setTotalPages(Math.ceil(data.length / itemsPerPage));
-        console.log('payments are', data);
+        
+        // Extract available years for filtering
+        const years = new Set<string>();
+        data.forEach(payment => {
+          if (payment.due_date) {
+            try {
+              const date = new Date(payment.due_date);
+              if (!isNaN(date.getTime())) {
+                const year = date.getFullYear().toString();
+                years.add(year);
+              }
+            } catch (e) {
+              console.error("Error parsing date:", payment.due_date, e);
+            }
+          }
+        });
+        setAvailableYears(Array.from(years).sort((a, b) => b.localeCompare(a))); // Sort descending
         
         // Get payment IDs for log count query
         const paymentIds = data.map(payment => payment.id);
@@ -144,13 +188,56 @@ export function PaymentsHistory({ franchise }: any) {
       supabase.removeChannel(logsChannel);
     }
   }, [franchise.id]);
+  
+  // Apply filters when they change
+  useEffect(() => {
+    // Apply year, month, and status filters
+    const filtered = payments.filter(payment => {
+      // Apply status filter
+      if (selectedStatus !== "all" && payment.status !== selectedStatus) {
+        return false;
+      }
+      
+      if (!payment.due_date) return true;
+      
+      try {
+        const dueDate = new Date(payment.due_date);
+        
+        // Skip invalid dates
+        if (isNaN(dueDate.getTime())) return true;
+        
+        // Apply year filter
+        if (selectedYear) {
+          const paymentYear = dueDate.getFullYear().toString();
+          if (paymentYear !== selectedYear) return false;
+        }
+        
+        // Apply month filter (only if year matches)
+        if (selectedMonth) {
+          const paymentMonth = (dueDate.getMonth() + 1).toString().padStart(2, '0');
+          if (paymentMonth !== selectedMonth) return false;
+        }
+        
+        return true;
+      } catch (e) {
+        console.error("Error filtering by date:", e);
+        return true;
+      }
+    });
+    
+    setFilteredPayments(filtered);
+    setTotalPages(Math.ceil(filtered.length / itemsPerPage) || 1);
+    
+    // Reset to first page when filters change
+    setCurrentPage(1);
+  }, [payments, selectedYear, selectedMonth, selectedStatus, itemsPerPage]);
 
-  // Update paginated data when payments or pagination changes
+  // Update paginated data when filtered payments or pagination changes
   useEffect(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    setPaginatedPayments(payments.slice(startIndex, endIndex));
-  }, [payments, currentPage, itemsPerPage]);
+    setPaginatedPayments(filteredPayments.slice(startIndex, endIndex));
+  }, [filteredPayments, currentPage, itemsPerPage]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -193,11 +280,26 @@ export function PaymentsHistory({ franchise }: any) {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newItemsPerPage = parseInt(e.target.value, 10);
-    setItemsPerPage(newItemsPerPage);
-    setTotalPages(Math.ceil(payments.length / newItemsPerPage));
-    setCurrentPage(1); // Reset to first page when changing items per page
+  const handleYearChange = (year: string | null) => {
+    setSelectedYear(year);
+    // Reset month when year changes
+    if (year !== selectedYear) {
+      setSelectedMonth(null);
+    }
+  };
+
+  const handleMonthChange = (month: string | null) => {
+    setSelectedMonth(month);
+  };
+
+  const handleStatusChange = (status: string) => {
+    setSelectedStatus(status);
+  };
+
+  const clearFilters = () => {
+    setSelectedYear(null);
+    setSelectedMonth(null);
+    setSelectedStatus("all");
   };
 
   const hasLogs = (paymentId: string) => {
@@ -208,21 +310,112 @@ export function PaymentsHistory({ franchise }: any) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Royalty Payments History</CardTitle>
-        {/* Commented out as in original code
-        <Button onClick={() => {
-          setSelectedPayment(null);
-          setIsRecordingPayment(true);
-        }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Record Payment
-        </Button> */}
+        
+        {/* Filters */}
+        <div className="flex items-center gap-2">
+          {/* Status Filter */}
+          <Select 
+            value={selectedStatus}
+            onValueChange={handleStatusChange}
+          >
+            <SelectTrigger className="w-[120px]">
+              <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="upcoming">Upcoming</SelectItem>
+              <SelectItem value="late">Late</SelectItem>
+              <SelectItem value="grace">Grace Period</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          {/* Year Filter */}
+          <Select 
+            value={selectedYear || "all_years"}
+            onValueChange={(value) => handleYearChange(value === "all_years" ? null : value)}
+          >
+            <SelectTrigger className="w-[100px]">
+              <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_years">All Years</SelectItem>
+              {availableYears.map(year => (
+                <SelectItem key={year} value={year}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Month Filter - Only enable if year is selected */}
+          <Select 
+            value={selectedMonth || "all_months"}
+            onValueChange={(value) => handleMonthChange(value === "all_months" ? null : value)}
+            disabled={!selectedYear}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Month" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_months">All Months</SelectItem>
+              {months.map(month => (
+                <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {/* Clear Filters Button - Show only when filters are active */}
+          {(selectedYear || selectedMonth || selectedStatus !== "all") && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={clearFilters}
+              className="h-9 px-2"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
+        {/* Filter Indicators */}
+        {(selectedYear || selectedMonth || selectedStatus !== "all") && (
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
+            <span>Filtered by:</span>
+            {selectedStatus !== "all" && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                Status: {selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
+              </Badge>
+            )}
+            {selectedYear && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                Year: {selectedYear}
+              </Badge>
+            )}
+            {selectedMonth && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                Month: {months.find(m => m.value === selectedMonth)?.label}
+              </Badge>
+            )}
+          </div>
+        )}
+        
         {loading ? (
           <div className="text-center py-4">Loading payment history...</div>
-        ) : payments.length === 0 ? (
+        ) : filteredPayments.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">No payment records found for this franchise</p>
+            <p className="text-muted-foreground mb-4">
+              {payments.length === 0 
+                ? "No payment records found for this franchise" 
+                : "No payments match the selected filters"}
+            </p>
+            {payments.length > 0 && (selectedYear || selectedMonth || selectedStatus !== "all") && (
+              <Button variant="outline" onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            )}
           </div>
         ) : (
           <>
