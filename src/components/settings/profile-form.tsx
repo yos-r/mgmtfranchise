@@ -19,37 +19,46 @@ import { supabase } from "@/lib/supabase";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
 const profileFormSchema = z.object({
-  username: z
+  firstName: z
     .string()
     .min(2, {
-      message: "Username must be at least 2 characters.",
+      message: "First name must be at least 2 characters.",
     })
     .max(30, {
-      message: "Username must not be longer than 30 characters.",
+      message: "First name must not be longer than 30 characters.",
+    }),
+  lastName: z
+    .string()
+    .min(2, {
+      message: "Last name must be at least 2 characters.",
+    })
+    .max(30, {
+      message: "Last name must not be longer than 30 characters.",
     }),
   email: z
     .string({
       required_error: "Please select an email to display.",
     })
     .email(),
-  bio: z.string().max(160).min(4),
-  urls: z
-    .array(
-      z.object({
-        value: z.string().url({ message: "Please enter a valid URL." }),
-      })
-    )
-    .optional(),
+  // bio: z.string().max(160).optional(), // Made bio optional since it's commented out in the form
+  // urls: z
+  //   .array(
+  //     z.object({
+  //       value: z.string().url({ message: "Please enter a valid URL." }),
+  //     })
+  //   )
+  //   .optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 // Empty default values as a fallback
 const emptyDefaultValues: ProfileFormValues = {
-  username: "",
+  firstName: "",
+  lastName: "",
   email: "",
-  bio: "",
-  urls: [{ value: "" }],
+  // bio: "",
+  // urls: [{ value: "" }],
 };
 
 export function ProfileForm() {
@@ -61,7 +70,7 @@ export function ProfileForm() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: emptyDefaultValues,
-    mode: "onChange",
+    mode: "onSubmit", // Changed from onChange to make submission easier
   });
 
   // Fetch the current user's profile data when component mounts
@@ -102,18 +111,30 @@ export function ProfileForm() {
         // If profile exists, populate the form
         if (profile) {
           form.reset({
-            username:  profile?.first_name +' ' +profile?.last_name || "",
+            firstName: profile.first_name || "",
+            lastName: profile.last_name || "",
             email: profile.email || user.email || "",
-            bio: profile.bio || "",
-            urls: profile.urls || [{ value: "" }],
+            // bio: profile.bio || "",
+            // urls: profile.urls || [{ value: "" }],
           });
         } else {
           // If no profile exists yet, populate with user auth data
+          // Split full name into first and last if available
+          let firstName = "";
+          let lastName = "";
+          
+          if (user.user_metadata?.full_name) {
+            const nameParts = user.user_metadata.full_name.split(" ");
+            firstName = nameParts[0] || "";
+            lastName = nameParts.slice(1).join(" ") || "";
+          }
+          
           form.reset({
-            username: user.user_metadata?.full_name || "",
+            firstName,
+            lastName,
             email: user.email || "",
-            bio: "",
-            urls: [{ value: "" }],
+            // bio: "",
+            // urls: [{ value: "" }],
           });
         }
       } catch (error: any) {
@@ -150,6 +171,8 @@ export function ProfileForm() {
 
   // Handle form submission
   async function onSubmit(data: ProfileFormValues) {
+    console.log('Submitting form with data:', data);
+    
     if (!userId) {
       toast({
         title: "Authentication error",
@@ -163,44 +186,46 @@ export function ProfileForm() {
     
     try {
       // Check if profile exists
-      const { data: existingProfile, error: checkError } = await supabase
-        .from("team_members")
-        .select("id")
-        .eq("user_id", userId)
-        .maybeSingle();
+      // const { data: existingProfile, error: checkError } = await supabase
+      //   .from("team_members")
+      //   .select("id")
+      //   .eq("user_id", userId)
+      //   .maybeSingle();
       
-      if (checkError) {
-        throw checkError;
-      }
+      // if (checkError) {
+      //   throw checkError;
+      // }
       
       let result;
+      console.log('updating ', data.email)
       
-      if (existingProfile) {
+      // if (existingProfile) {
         // Update existing profile
+        // eslint-disable-next-line prefer-const
         result = await supabase
           .from("team_members")
           .update({
-            username: data.username,
+            first_name: data.firstName,
+            last_name: data.lastName,
             email: data.email,
-            bio: data.bio,
-            urls: data.urls,
+            
             updated_at: new Date().toISOString(),
           })
           .eq("user_id", userId);
-      } else {
-        // Create new profile
-        result = await supabase
-          .from("team_members")
-          .insert({
-            user_id: userId,
-            username: data.username,
-            email: data.email,
-            bio: data.bio,
-            urls: data.urls,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-      }
+      // } else {
+      //   // Create new profile
+      //   result = await supabase
+      //     .from("team_members")
+      //     .insert({
+      //       user_id: userId,
+      //       first_name: data.firstName,
+      //       last_name: data.lastName,
+      //       email: data.email,
+            
+      //       created_at: new Date().toISOString(),
+      //       updated_at: new Date().toISOString(),
+      //     });
+      // }
       
       if (result.error) {
         throw result.error;
@@ -233,23 +258,57 @@ export function ProfileForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="label-1">Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Your name" className="body-1" {...field} />
-              </FormControl>
-              <FormDescription className="legal text-muted-foreground">
-                This is your public display name.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form 
+        onSubmit={form.handleSubmit(
+          (data) => { 
+            console.log("Validation Passed", data); 
+            onSubmit(data);
+          },
+          (errors) => {
+            console.error("Validation Failed", errors);
+            toast({
+              title: "Form validation failed",
+              description: "Please check the form for errors.",
+              variant: "destructive",
+            });
+          }
+        )} 
+        className="space-y-8"
+      >
+        <div>
+          <FormLabel className="label-1 block mb-2">Name</FormLabel>
+          <FormDescription className="legal text-muted-foreground mb-2">
+            This is your public display name.
+          </FormDescription>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="First name" className="body-1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="Last name" className="body-1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+        
         <FormField
           control={form.control}
           name="email"
@@ -266,74 +325,7 @@ export function ProfileForm() {
             </FormItem>
           )}
         />
-        {/* <FormField
-          control={form.control}
-          name="bio"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="label-1">Bio</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Tell us a little bit about yourself"
-                  className="body-1 resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription className="legal text-muted-foreground">
-                You can <span>@mention</span> other users and organizations.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> */}
         
-        {/* <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <FormLabel className="label-1">Links</FormLabel>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addUrl}
-              className="h-8 px-2"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add URL
-            </Button>
-          </div>
-          
-          {form.watch("urls")?.map((_, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <FormField
-                control={form.control}
-                name={`urls.${index}.value`}
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormControl>
-                      <Input placeholder="https://example.com" className="body-1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {(form.watch("urls")?.length || 0) > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeUrl(index)}
-                  className="h-10 w-10"
-                >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </Button>
-              )}
-            </div>
-          ))}
-          <FormDescription className="legal text-muted-foreground">
-            Add links to your website, social media profiles, or other resources.
-          </FormDescription>
-        </div>
-         */}
         <Button 
           type="submit" 
           className="button-1"
