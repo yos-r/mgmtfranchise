@@ -133,6 +133,24 @@ export function TrainingTab() {
     const duration = parseInt(event.duration);
     return isNaN(duration) ? acc : acc + duration;
   }, 0);
+  const totalAttendanceRate = events
+  .filter(event => new Date(event.date) < new Date()) // Only consider completed events
+  .reduce((stats, event) => {
+    // Get attendance for this event
+    const totalAttendees = event.training_attendance?.length || 0;
+    const presentAttendees = event.training_attendance?.filter(a => a.attended)?.length || 0;
+    
+    // Add to running totals
+    return {
+      total: stats.total + totalAttendees,
+      present: stats.present + presentAttendees
+    };
+  }, { total: 0, present: 0 });
+
+// Calculate the final percentage - avoid division by zero
+const overallAttendanceRate = totalAttendanceRate.total > 0
+  ? Math.round((totalAttendanceRate.present / totalAttendanceRate.total) * 100)
+  : 0;
 
   return (
     <div className="space-y-6">
@@ -189,7 +207,7 @@ export function TrainingTab() {
             <Mail className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">92%</div>
+            <div className="numbers text-2xl font-bold">{overallAttendanceRate}%</div>
             <p className="legal text-muted-foreground">
               Response rate
             </p>
