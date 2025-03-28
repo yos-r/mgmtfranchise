@@ -1,4 +1,4 @@
-import { FileText, LayoutGrid, MapIcon, Plus, Building2, AlertCircle, Map } from "lucide-react";
+import { FileText, LayoutGrid, MapIcon, Plus, Building2, AlertCircle, Map, Filter } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { FranchiseCard } from "./franchise-card";
@@ -9,22 +9,71 @@ import { supabase } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { AddFranchise } from "./add-franchise";
 import { FranchiseDetail } from "./franchise-detail";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Badge } from "../ui/badge";
 
 interface FranchisesTabsProps {
     viewMode: string;
     setViewMode: React.Dispatch<React.SetStateAction<"list" | "grid" | "map">>;
 }
 
+// Define filter types
+type FilterOption = "expiringFranchises" | "newFranchises" | "terminatedFranchises";
+
 export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
     const [franchises, setFranchises] = useState<any[]>([]);
+    const [filteredFranchises, setFilteredFranchises] = useState<any[]>([]);
     const [isAddingFranchise, setIsAddingFranchise] = useState(false);
     const [selectedFranchise, setSelectedFranchise] = useState<any | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [activeFilters, setActiveFilters] = useState<FilterOption[]>([]);
     
     const handleFranchiseUpdated = () => {
         // Refresh the contracts list
         setRefreshKey(prev => prev + 1);
+    };
+
+    // Apply filters to the franchises
+    const applyFilters = (franchisesData: any[]) => {
+        if (activeFilters.length === 0) {
+            return franchisesData;
+        }
+
+        return franchisesData.filter(franchise => {
+            const currentDate = new Date();
+            const thirtyDaysFromNow = new Date();
+            thirtyDaysFromNow.setDate(currentDate.getDate() + 180);
+            
+            const activeContracts = franchise.franchise_contracts?.filter(
+                (contract: any) => contract.status !== 'terminated'
+            ) || [];
+            
+            const latestContract = activeContracts.length > 0 
+                ? activeContracts.sort((a: any, b: any) => 
+                    new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+                )[0] 
+                : null;
+                
+            const isExpiring = latestContract && 
+                latestContract.expiration_date && 
+                new Date(latestContract.expiration_date) <= thirtyDaysFromNow &&
+                new Date(latestContract.expiration_date) >= currentDate;
+                
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(currentDate.getDate() - 180);
+            const isNew = new Date(latestContract?.start_date) >= thirtyDaysAgo; //creation date
+            
+            const isTerminated = franchise.franchise_contracts?.every(
+                (contract: any) => contract.status === 'terminated'
+            ) || franchise.status=='terminated' || false;
+            
+            return (
+                (activeFilters.includes("expiringFranchises") && isExpiring) ||
+                (activeFilters.includes("newFranchises") && isNew) ||
+                (activeFilters.includes("terminatedFranchises") && isTerminated)
+            );
+        });
     };
     
     const loadFranchises = async () => {
@@ -37,6 +86,7 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
 
             if (!error && data) {
                 setFranchises(data);
+                setFilteredFranchises(applyFilters(data));
             } else if (error) {
                 console.error("Error loading franchises:", error);
             }
@@ -72,6 +122,20 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
         };
     }, [refreshKey]);
     
+    // Apply filters when they change
+    useEffect(() => {
+        setFilteredFranchises(applyFilters(franchises));
+    }, [activeFilters, franchises]);
+    
+    // Toggle filter
+    const toggleFilter = (filter: FilterOption) => {
+        setActiveFilters(prev => 
+            prev.includes(filter) 
+                ? prev.filter(f => f !== filter) 
+                : [...prev, filter]
+        );
+    };
+    
     if (isAddingFranchise) {
         return (
             <AddFranchise onCancel={() => setIsAddingFranchise(false)} />
@@ -97,12 +161,21 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
             </div>
             <h3 className="text-xl font-semibold mb-2">No Franchises Found</h3>
             <p className="text-muted-foreground max-w-md mb-6">
-                There are no franchises in your network yet. Add your first franchise to get started.
+                {activeFilters.length > 0 
+                    ? "No franchises match the selected filters. Try changing your filters or add a new franchise."
+                    : "There are no franchises in your network yet. Add your first franchise to get started."}
             </p>
-            <Button onClick={() => setIsAddingFranchise(true)} className="button-1">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Franchise
-            </Button>
+            <div className="flex gap-3">
+                {activeFilters.length > 0 && (
+                    <Button variant="outline" onClick={() => setActiveFilters([])}>
+                        Clear Filters
+                    </Button>
+                )}
+                <Button onClick={() => setIsAddingFranchise(true)} className="button-1">
+                    <Plus className="mr-2 h-4 w-4" />
+                    {activeFilters.length > 0 ? "Add New Franchise" : "Add Your First Franchise"}
+                </Button>
+            </div>
         </div>
     );
     
@@ -126,6 +199,37 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                     <div className="flex items-center justify-between">
                         <CardTitle className="tagline-2">Franchise Network</CardTitle>
                         <div className="flex items-center gap-4">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="flex items-center gap-2">
+                                        <Filter className="h-4 w-4" />
+                                        Filter
+                                        {activeFilters.length > 0 && (
+                                            <Badge className="ml-1 h-5 px-1.5 bg-primary">{activeFilters.length}</Badge>
+                                        )}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuCheckboxItem
+                                        checked={activeFilters.includes("expiringFranchises")}
+                                        onCheckedChange={() => toggleFilter("expiringFranchises")}
+                                    >
+                                        Expiring Soon (30 Days)
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={activeFilters.includes("newFranchises")}
+                                        onCheckedChange={() => toggleFilter("newFranchises")}
+                                    >
+                                        New Franchises (30 Days)
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={activeFilters.includes("terminatedFranchises")}
+                                        onCheckedChange={() => toggleFilter("terminatedFranchises")}
+                                    >
+                                        Terminated Franchises
+                                    </DropdownMenuCheckboxItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             <div className="flex items-center rounded-lg border p-1">
                                 <Button
                                     variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -158,17 +262,42 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                             </Button>
                         </div>
                     </div>
+                    {activeFilters.length > 0 && (
+                        <div className="flex items-center gap-2 mt-4">
+                            <span className="text-sm text-muted-foreground">Active filters:</span>
+                            {activeFilters.map(filter => (
+                                <Badge 
+                                    key={filter} 
+                                    variant="secondary"
+                                    className="flex items-center gap-1 cursor-pointer"
+                                    onClick={() => toggleFilter(filter)}
+                                >
+                                    {filter === "expiringFranchises" && "Expiring Soon"}
+                                    {filter === "newFranchises" && "New Franchises"}
+                                    {filter === "terminatedFranchises" && "Terminated"}
+                                    <span className="text-xs ml-1">×</span>
+                                </Badge>
+                            ))}
+                            <Button 
+                                variant="ghost" 
+                                className="h-6 px-2 text-xs" 
+                                onClick={() => setActiveFilters([])}
+                            >
+                                Clear all
+                            </Button>
+                        </div>
+                    )}
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
                         <LoadingState />
-                    ) : franchises.length === 0 ? (
+                    ) : filteredFranchises.length === 0 ? (
                         <EmptyState />
                     ) : viewMode === 'map' ? (
-                        <FranchiseMap franchises={franchises} onSelect={setSelectedFranchise} />
+                        <FranchiseMap franchises={filteredFranchises} onSelect={setSelectedFranchise} />
                     ) : viewMode === 'grid' ? (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {franchises.map((franchise) => (
+                            {filteredFranchises.map((franchise) => (
                                 <FranchiseCard
                                     key={franchise.id}
                                     franchise={franchise}
@@ -177,7 +306,7 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                             ))}
                         </div>
                     ) : (
-                        <FranchiseTable franchises={franchises} onFranchiseSelect={setSelectedFranchise} />
+                        <FranchiseTable franchises={filteredFranchises} onFranchiseSelect={setSelectedFranchise} />
                     )}
                 </CardContent>
             </Card>
