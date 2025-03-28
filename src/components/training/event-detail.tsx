@@ -291,7 +291,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="tagline-2">Trainer Rating</CardTitle>
+              <CardTitle className="tagline-2">Trainer Rating – {event.trainer} </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-2">
