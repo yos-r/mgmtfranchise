@@ -107,10 +107,6 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
     setIsLoading(true);
     
     try {
-      // Start a Supabase transaction
-      // Since Supabase doesn't support true transactions in the client library,
-      // we'll just run operations sequentially
-      
       // 1. First, create a log of the current payment state before updating
       const { error: logError } = await supabase
         .from('payment_logs')
@@ -118,8 +114,6 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
           payment_id: payment.id,
           status: payment.status,
           amount: payment.amount || payment.total_amount,
-        //   royalty_amount: payment.royalty_amount,
-        //   marketing_amount: payment.marketing_amount,
           payment_method: payment.payment_method,
           payment_reference: payment.payment_reference,
           due_date: payment.due_date,
@@ -131,7 +125,8 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
       if (logError) throw logError;
       
       // 2. Calculate total amount based on royalty and marketing
-      const totalAmount = data.royalty_amount + data.marketing_amount;
+      // Ensure we're working with numbers, not strings
+      const totalAmount = Number(data.royalty_amount) + Number(data.marketing_amount);
       
       // 3. Update payment record
       const { error } = await supabase
@@ -145,7 +140,6 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
           payment_method: data.payment_method === "none" ? null : data.payment_method,
           payment_reference: data.payment_reference || null,
           status: data.status,
-        //   period: data.period,
           notes: data.notes || null,
           updated_at: new Date().toISOString(),
         })
@@ -176,10 +170,14 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
   
   // Update total amount when royalty or marketing amounts change
   useEffect(() => {
-    const royaltyAmount = form.watch('royalty_amount') || 0;
-    const marketingAmount = form.watch('marketing_amount') || 0;
+    // Get values and ensure they're treated as numbers
+    const royaltyAmount = Number(form.watch('royalty_amount') || 0);
+    const marketingAmount = Number(form.watch('marketing_amount') || 0);
+    
+    // Calculate the total as a number
     const total = royaltyAmount + marketingAmount;
     
+    // Update the form value
     form.setValue('amount', total);
   }, [form.watch('royalty_amount'), form.watch('marketing_amount')]);
   
@@ -247,7 +245,10 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
                   <FormItem>
                     <FormLabel>Royalty Amount (€)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" {...field} />
+                      <Input type="number" step="0.01" {...field} onChange={(e) => {
+                        // Explicitly set as number
+                        field.onChange(Number(e.target.value));
+                      }} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -261,7 +262,10 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
                   <FormItem>
                     <FormLabel>Marketing Amount (€)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" {...field} />
+                      <Input type="number" step="0.01" {...field} onChange={(e) => {
+                        // Explicitly set as number
+                        field.onChange(Number(e.target.value));
+                      }} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
