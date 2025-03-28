@@ -79,7 +79,7 @@ export function LocationAndAgents({ franchise }: LocationAndAgentsProps) {
           <CardTitle className="tagline-2">Location</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px] rounded-lg overflow-hidden">
+          <div className="h-[400px] rounded-lg overflow-hidden map-container ">
             <MapContainer 
               center={[mapPosition.lat, mapPosition.lng]} 
               zoom={13} 

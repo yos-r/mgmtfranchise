@@ -107,3 +107,20 @@
 .leaflet-popup-close-button {
   display: none;
 }
+/* In your CSS file */
+.map-container {
+  position: relative;
+  z-index: 0; /* Lower z-index for the map container */
+}
+
+/* Ensure the leaflet container has a lower z-index */
+.leaflet-container {
+  z-index: 0 !important;
+}
+
+/* Ensure modal has higher z-index */
+.modal-container, 
+[role="dialog"],
+[data-radix-popper-content-wrapper] {
+  z-index: 1000 !important; /* Higher value to ensure it's above the map */
+}
