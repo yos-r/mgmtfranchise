@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 
 interface FranchiseCardProps {
   franchise: any;
-  onSelect: (id: number) => void;
+  onSelect: (franchise: any) => void; // Changed to pass the entire franchise object
 }
 
 export function getStatusColor(status: string) {
@@ -93,7 +93,7 @@ export function FranchiseCard({ franchise, onSelect }: FranchiseCardProps) {
   const expirationDate = getExpirationDate();
 
   return (
-    <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onSelect(franchise.id)}>
+    <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onSelect(franchise)}>
       <CardContent className="p-6">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
