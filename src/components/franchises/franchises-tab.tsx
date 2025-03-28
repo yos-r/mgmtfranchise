@@ -1,4 +1,4 @@
-import { FileText, LayoutGrid, MapIcon, Plus, Building2, AlertCircle } from "lucide-react";
+import { FileText, LayoutGrid, MapIcon, Plus, Building2, AlertCircle, Map } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { FranchiseCard } from "./franchise-card";
@@ -142,6 +142,14 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                                     onClick={() => setViewMode('grid')}
                                 >
                                     <LayoutGrid className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant={viewMode === 'map' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    className="button-2"
+                                    onClick={() => setViewMode('map')}
+                                >
+                                    <Map className="h-4 w-4" />
                                 </Button>
                             </div>
                             <Button className="button-1" onClick={() => setIsAddingFranchise(true)}>

@@ -1,13 +1,22 @@
 import { useState } from 'react';
-// import Map, { Marker } from 'react-map-gl';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { MapPin } from "lucide-react";
-// import 'mapbox-gl/dist/mapbox-gl.css';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJja2V4YW1wbGUiLCJhIjoiY2tleGFtcGxlIn0.example';
+// Fix for default marker icon
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface FranchiseMapProps {
   franchises: Array<{
     id: number;
+    name: string;
+    address: string;
     coordinates: {
       lat: number;
       lng: number;
@@ -20,32 +29,39 @@ export function FranchiseMap({ franchises, onSelect }: FranchiseMapProps) {
   const [viewState, setViewState] = useState({
     longitude: 4.298558312213245,
     latitude: 50.83003140632331, 
-    zoom: 5
+    zoom: 14
   });
 
   return (
     <div className="h-[600px] rounded-lg overflow-hidden">
-      <Map
-        {...viewState}
-        onMove={evt => setViewState(evt.viewState)}
-        mapStyle="mapbox://styles/mapbox/light-v11"
-        mapboxAccessToken={MAPBOX_TOKEN}
+      <MapContainer 
+        center={[viewState.latitude, viewState.longitude]} 
+        zoom={viewState.zoom} 
+        style={{ height: '100%', width: '100%' }}
       >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
         {franchises
           .filter(franchise => franchise.coordinates !== null)
           .map((franchise) => (
             <Marker
               key={franchise.id}
-              longitude={franchise.coordinates.lng}
-              latitude={franchise.coordinates.lat}
-              onClick={() => onSelect(franchise.id)}
+              position={[franchise.coordinates.lat, franchise.coordinates.lng]}
+              eventHandlers={{
+                click: () => onSelect(franchise.id),
+              }}
             >
-              <div className="cursor-pointer">
-          <MapPin className="h-6 w-6 text-primary" />
-              </div>
+              <Popup>
+                <div className="p-2">
+                  <h3 className="font-semibold">{franchise.name}</h3>
+                  <p className="text-sm">{franchise.address}</p>
+                </div>
+              </Popup>
             </Marker>
           ))}
-      </Map>
+      </MapContainer>
     </div>
   );
 }
