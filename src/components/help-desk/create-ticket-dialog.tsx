@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,54 +53,83 @@ export function CreateTicketDialog({
   onTicketCreated,
 }: CreateTicketDialogProps) {
   const [franchises, setFranchises] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof ticketSchema>>({
     resolver: zodResolver(ticketSchema),
     defaultValues: {
       priority: "medium",
+      category: "general",
     },
   });
 
+  useEffect(() => {
+    if (open) {
+      loadFranchises();
+    }
+  }, [open]);
+
   const loadFranchises = async () => {
-    const { data } = await supabase
-      .from('franchises')
-      .select('id, name')
-      .order('name');
-    
-    if (data) {
-      setFranchises(data);
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('franchises')
+        .select('id, name')
+        .order('name');
+
+      if (error) {
+        throw error;
+      }
+
+      setFranchises(data || []);
+    } catch (error) {
+      toast({
+        title: "Error loading franchises",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const onSubmit = async (values: z.infer<typeof ticketSchema>) => {
-    const { error } = await supabase
-      .from('help_desk_tickets')
-      .insert({
-        title: values.title,
-        description: values.description,
-        category: values.category,
-        priority: values.priority,
-        franchise_id: values.franchiseId,
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('help_desk_tickets')
+        .insert({
+          title: values.title,
+          description: values.description,
+          category: values.category,
+          priority: values.priority,
+          franchise_id: values.franchiseId,
+          status: "open" // Default status for new tickets
+        })
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Ticket created",
+        description: "The support ticket has been created successfully",
       });
 
-    if (error) {
+      form.reset();
+      onTicketCreated();
+      onOpenChange(false);
+    } catch (error) {
       toast({
         title: "Error creating ticket",
         description: error.message,
         variant: "destructive",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    toast({
-      title: "Ticket created",
-      description: "The support ticket has been created successfully",
-    });
-
-    form.reset();
-    onTicketCreated();
-    onOpenChange(false);
   };
 
   return (
@@ -111,7 +140,7 @@ export function CreateTicketDialog({
           Create Ticket
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="tagline-2">Create Support Ticket</DialogTitle>
           <DialogDescription className="body-lead">
@@ -127,7 +156,7 @@ export function CreateTicketDialog({
                 <FormItem>
                   <FormLabel className="label-1">Title</FormLabel>
                   <FormControl>
-                    <Input className="body-1" {...field} />
+                    <Input className="body-1" placeholder="Brief summary of the issue" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -143,6 +172,7 @@ export function CreateTicketDialog({
                   <FormControl>
                     <Textarea
                       className="body-1 min-h-[100px]"
+                      placeholder="Detailed description of the issue"
                       {...field}
                     />
                   </FormControl>
@@ -224,11 +254,17 @@ export function CreateTicketDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {franchises.map((franchise) => (
-                        <SelectItem key={franchise.id} value={franchise.id}>
-                          {franchise.name}
-                        </SelectItem>
-                      ))}
+                      {isLoading ? (
+                        <div className="px-2 py-1 text-sm text-muted-foreground">Loading franchises...</div>
+                      ) : franchises.length > 0 ? (
+                        franchises.map((franchise) => (
+                          <SelectItem key={franchise.id} value={franchise.id}>
+                            {franchise.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1 text-sm text-muted-foreground">No franchises found</div>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -237,8 +273,11 @@ export function CreateTicketDialog({
             />
 
             <DialogFooter>
-              <Button type="submit" className="button-1">
-                Create Ticket
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="button-1" disabled={isLoading}>
+                {isLoading ? "Creating..." : "Create Ticket"}
               </Button>
             </DialogFooter>
           </form>

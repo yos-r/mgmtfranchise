@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TicketList } from "./ticket-list";
 import { TicketDetail } from "./ticket-detail";
@@ -58,6 +58,10 @@ export function HelpDeskTab() {
     );
   }
 
+  const openPublicPage = () => {
+    window.open('/submit-ticket', '_blank');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -67,14 +71,20 @@ export function HelpDeskTab() {
             Manage support tickets from franchisees
           </p>
         </div>
-        <CreateTicketDialog
-          open={isCreatingTicket}
-          onOpenChange={setIsCreatingTicket}
-          onTicketCreated={() => {
-            loadTickets();
-            setIsCreatingTicket(false);
-          }}
-        />
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={openPublicPage}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Show Public Page
+          </Button>
+          <CreateTicketDialog
+            open={isCreatingTicket}
+            onOpenChange={setIsCreatingTicket}
+            onTicketCreated={() => {
+              loadTickets();
+              setIsCreatingTicket(false);
+            }}
+          />
+        </div>
       </div>
 
       <TicketStats tickets={tickets} />
