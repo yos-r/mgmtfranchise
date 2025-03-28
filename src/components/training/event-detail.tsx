@@ -238,6 +238,29 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
         </div>
 
         <div className="space-y-6">
+        <Card>
+            <CardHeader>
+              <CardTitle className="tagline-2">Session Rating // change func</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Button
+                    key={star}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRatingChange(star)}
+                  >
+                    <Star
+                      className={`h-6 w-6 ${
+                        star <= rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"
+                      }`}
+                    />
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="tagline-2">Trainer Rating</CardTitle>
@@ -261,6 +284,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
               </div>
             </CardContent>
           </Card>
+          
 
           <NotesCard eventId={currentEvent.id} initialNotes={currentEvent.notes} />
 

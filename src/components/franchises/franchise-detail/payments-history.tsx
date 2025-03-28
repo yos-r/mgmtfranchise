@@ -287,8 +287,8 @@ export function PaymentsHistory({ franchise }: any) {
                     </TableCell>
                     <TableCell>{payment.payment_method || '-'}</TableCell>
                     <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
+                    <TableCell className="text-right ">
+                      {payment.status!= 'grace' && <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreHorizontal className="h-4 w-4" />
@@ -319,7 +319,8 @@ export function PaymentsHistory({ franchise }: any) {
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
-                      </DropdownMenu>
+                      </DropdownMenu>}
+                      
                     </TableCell>
                   </TableRow>
                 ))}

@@ -34,7 +34,7 @@ const actionSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
   type: z.enum(["advertising", "digital", "branding", "events"]),
   budget: z.string().transform(Number),
-  spent: z.string().transform(Number),
+  // spent: z.string().transform(Number),
   status: z.enum(["planned", "in_progress", "completed", "cancelled"]),
   start_date: z.string().min(1, "Start date is required"),
   end_date: z.string().min(1, "End date is required"),
@@ -46,7 +46,7 @@ interface MarketingAction {
   title: string;
   type: string;
   budget: number;
-  spent: number;
+  // spent: number;
   status: string;
   start_date: string;
   end_date: string;
@@ -79,7 +79,7 @@ export function EditActionDialog({
       title: action.title,
       type: action.type,
       budget: action.budget.toString(),
-      spent: action.spent.toString(),
+      // spent: action.spent.toString(),
       status: action.status,
       start_date: action.start_date.split('T')[0], // Format date for input[type=date]
       end_date: action.end_date.split('T')[0], // Format date for input[type=date]
@@ -94,7 +94,7 @@ export function EditActionDialog({
         title: action.title,
         type: action.type,
         budget: action.budget.toString(),
-        spent: action.spent.toString(),
+        // spent: action.spent.toString(),
         status: action.status,
         start_date: action.start_date.split('T')[0],
         end_date: action.end_date.split('T')[0],
@@ -113,7 +113,7 @@ export function EditActionDialog({
           title: values.title,
           type: values.type,
           budget: values.budget,
-          spent: values.spent,
+          // spent: values.spent,
           status: values.status,
           start_date: values.start_date,
           end_date: values.end_date,
@@ -131,7 +131,7 @@ export function EditActionDialog({
         title: values.title,
         type: values.type,
         budget: values.budget,
-        spent: values.spent,
+        // spent: values.spent,
         status: values.status,
         start_date: values.start_date,
         end_date: values.end_date,
@@ -245,7 +245,7 @@ export function EditActionDialog({
                 )}
               />
 
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="spent"
                 render={({ field }) => (
@@ -257,7 +257,7 @@ export function EditActionDialog({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

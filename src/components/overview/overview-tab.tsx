@@ -94,7 +94,7 @@ export function OverviewTab() {
         topPerformers: Math.round(totalFranchises * 0.15), // Assuming top 15% are top performers
         activeTickets,
         revenueGrowth,
-        franchiseGrowth: 4, // This would need additional logic to calculate
+        franchiseGrowth: 0, // This would need additional logic to calculate
         ticketResolutionRate,
       });
     } catch (error) {
@@ -193,7 +193,7 @@ export function OverviewTab() {
           <CardContent>
             <div className="numbers text-2xl font-bold">{stats?.totalFranchises}</div>
             <p className="legal text-muted-foreground">
-              {stats?.franchiseGrowth > 0 ? '+' : ''}{stats?.franchiseGrowth} from last month
+              {/* {stats?.franchiseGrowth > 0 ? '+' : ''}{stats?.franchiseGrowth} from last month */}
             </p>
           </CardContent>
         </Card>

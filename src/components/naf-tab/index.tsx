@@ -156,9 +156,9 @@ export function NAFTab() {
   };
 
   // Calculate statistics for the selected year
-  const totalBudget = marketingActions.reduce((sum, action) => sum + action.budget, 0);
+  const totalBudget = marketingActions.reduce((sum, action) => sum + action.budget, 0); // annual expected budget from royalties table
   const totalSpent = marketingActions.reduce((sum, action) => sum + action.spent, 0);
-  const activeActions = marketingActions.filter(action => action.status === 'in_progress').length;
+  const activeActions = marketingActions.filter(action => action).length;
 
   if (selectedAction) {
     return (
@@ -204,7 +204,7 @@ export function NAFTab() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="tagline-3">Annual Budget</CardTitle>
@@ -213,7 +213,19 @@ export function NAFTab() {
           <CardContent>
             <div className="numbers text-2xl font-bold">€{totalBudget.toLocaleString()}</div>
             <p className="legal text-muted-foreground">
-              Budget for {selectedYear}
+              Budget for {selectedYear} // from marketing royalties except grace
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="tagline-3">Collected Budget</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="numbers text-2xl font-bold">€{totalBudget.toLocaleString()}</div>
+            <p className="legal text-muted-foreground">
+              {selectedYear} // paid marketing royalties 
             </p>
           </CardContent>
         </Card>
@@ -223,21 +235,21 @@ export function NAFTab() {
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">€{totalSpent.toLocaleString()}</div>
+            <div className="numbers text-2xl font-bold">€{totalBudget.toLocaleString()}</div>
             <p className="legal text-muted-foreground">
-              {totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0}% of budget
+              {totalBudget > 0 ? Math.round((totalBudget / totalBudget) * 100) : 0}% of budget
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Active Campaigns</CardTitle>
+            <CardTitle className="tagline-3"> Campaigns</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="numbers text-2xl font-bold">{activeActions}</div>
             <p className="legal text-muted-foreground">
-              In progress
+           In  {selectedYear}
             </p>
           </CardContent>
         </Card>
@@ -249,7 +261,7 @@ export function NAFTab() {
           <CardContent>
             <div className="numbers text-2xl font-bold">€{(totalBudget - totalSpent).toLocaleString()}</div>
             <p className="legal text-muted-foreground">
-              Remaining funds
+              Collected - spent
             </p>
           </CardContent>
         </Card>
@@ -269,7 +281,7 @@ export function NAFTab() {
                   <TableHead className="label-1">Action</TableHead>
                   <TableHead className="label-1">Type</TableHead>
                   <TableHead className="label-1">Budget</TableHead>
-                  <TableHead className="label-1">Spent</TableHead>
+                  {/* <TableHead className="label-1">Spent</TableHead> */}
                   <TableHead className="label-1">Start Date</TableHead>
                   <TableHead className="label-1">End Date</TableHead>
                   <TableHead className="label-1">Status</TableHead>
@@ -289,12 +301,12 @@ export function NAFTab() {
                         <span>{action.budget.toLocaleString()}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <div className="flex items-center space-x-1">
                         <Euro className="h-3 w-3 text-muted-foreground" />
                         <span>{action.spent.toLocaleString()}</span>
                       </div>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>{format(new Date(action.start_date), 'MMM d, yyyy')}</TableCell>
                     <TableCell>{format(new Date(action.end_date), 'MMM d, yyyy')}</TableCell>
                     <TableCell>
