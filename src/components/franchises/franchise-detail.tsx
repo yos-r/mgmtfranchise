@@ -7,6 +7,47 @@ import { AssistanceHistory } from "./franchise-detail/assistance-history";
 import { supabase } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { ContractsHistory } from "./franchise-detail/contracts-history";
+import { Skeleton } from "../ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+
+// Skeleton loading components
+const SkeletonHeader = () => (
+  <Card>
+    <CardHeader className="pb-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="flex space-x-2">
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+    </CardHeader>
+    <CardContent>
+      <div className="flex flex-wrap gap-4">
+        <Skeleton className="h-24 w-48" />
+        <Skeleton className="h-24 w-48" />
+        <Skeleton className="h-24 w-48" />
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const SkeletonSection = ({ title }: { title: string }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>{title}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, onDelete, onUpdate }: any) {
   // Keep local state of franchise data to allow immediate updates
@@ -74,27 +115,34 @@ export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, o
     }
   };
   
+  // Skeleton loading state
+  if (loading) {
+    return (
+      <div className="container mx-auto space-y-6 animate-in fade-in-50">
+        <SkeletonHeader />
+        <SkeletonSection title="Payment History" />
+        <SkeletonSection title="Contracts History" />
+        <SkeletonSection title="Location & Agents" />
+        <SkeletonSection title="Training History" />
+        <SkeletonSection title="Assistance History" />
+      </div>
+    );
+  }
+  
   return (
-    <div className="container mx-auto space-y-6">
-      {loading ? (
-        <div className="p-6 text-center">Loading contract details...</div>
-      ) : (
-        <>
-          <FranchiseHeader 
-            franchise={franchise} 
-            contract={activeContract} 
-            onDelete={handleDelete} // Pass our local handler
-            onUpdate={handleFranchiseUpdate}
-          />
-          {/* <FranchiseInfo franchise={franchise} contracts={contracts} /> */}
-          <PaymentsHistory franchise={franchise} />
-          <ContractsHistory contracts={contracts} franchise_id={franchise.id} />
-          <LocationAndAgents franchise={franchise} />
-          
-          <TrainingHistory franchise={franchise} />
-          <AssistanceHistory franchise={franchise} />
-        </>
-      )}
+    <div className="container mx-auto space-y-6 animate-in fade-in-50">
+      <FranchiseHeader 
+        franchise={franchise} 
+        contract={activeContract} 
+        onDelete={handleDelete} // Pass our local handler
+        onUpdate={handleFranchiseUpdate}
+      />
+      {/* <FranchiseInfo franchise={franchise} contracts={contracts} /> */}
+      <PaymentsHistory franchise={franchise} />
+      <ContractsHistory contracts={contracts} franchise_id={franchise.id} />
+      <LocationAndAgents franchise={franchise} />
+      <TrainingHistory franchise={franchise} />
+      <AssistanceHistory franchise={franchise} />
     </div>
   );
 }
