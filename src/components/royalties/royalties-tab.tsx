@@ -17,6 +17,8 @@ export function RoyaltiesTab() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFranchiseId, setSelectedFranchiseId] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(null);
   const [payments, setPayments] = useState([]);
   const [franchises, setFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -169,6 +171,20 @@ export function RoyaltiesTab() {
     loadAllPayments();
   }, [selectedFranchiseId]);
 
+  // Handle year filter change
+  const handleYearChange = (year) => {
+    setSelectedYear(year);
+    // If changing year, reset month selection to avoid invalid combinations
+    if (year !== selectedYear) {
+      setSelectedMonth(null);
+    }
+  };
+
+  // Handle month filter change
+  const handleMonthChange = (month) => {
+    setSelectedMonth(month);
+  };
+
   // Apply filters to the payments data
   const filteredPayments = payments.filter((payment) => {
     // Apply status filter
@@ -186,7 +202,28 @@ export function RoyaltiesTab() {
     // Apply franchise filter
     const matchesFranchise = !selectedFranchiseId || payment.franchise_id === selectedFranchiseId;
     
-    return matchesStatus && matchesSearch && matchesFranchise;
+    // Apply year and month filters
+    let matchesDate = true;
+    if (payment.due_date) {
+      const dueDate = new Date(payment.due_date);
+      
+      // Only apply if valid date
+      if (!isNaN(dueDate.getTime())) {
+        // Check year filter
+        if (selectedYear) {
+          const paymentYear = dueDate.getFullYear().toString();
+          matchesDate = paymentYear === selectedYear;
+        }
+        
+        // Check month filter (only if year matches)
+        if (matchesDate && selectedMonth) {
+          const paymentMonth = (dueDate.getMonth() + 1).toString().padStart(2, '0');
+          matchesDate = paymentMonth === selectedMonth;
+        }
+      }
+    }
+    
+    return matchesStatus && matchesSearch && matchesFranchise && matchesDate;
   });
 
   const getStatusColor = (status) => {
@@ -269,11 +306,13 @@ export function RoyaltiesTab() {
               getStatusColor={getStatusColor}
               franchises={franchises}
               onFilterChange={setStatusFilter}
-              onSearchChange={setSearchQuery}
               onFranchiseSelect={setSelectedFranchiseId}
+              onYearChange={handleYearChange}
+              onMonthChange={handleMonthChange}
               currentFilter={statusFilter}
-              currentSearch={searchQuery}
               selectedFranchise={selectedFranchiseId}
+              selectedYear={selectedYear}
+              selectedMonth={selectedMonth}
               onBatchUpdate={handleBatchUpdate}
             />
           )}
