@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Dashboard } from './pages/Dashboard';
 import { SubmitTicketPage } from './pages/SubmitTicket';
+import { TicketSubmittedPage } from './pages/TicketSubmitted';
 
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/submit-ticket" element={<SubmitTicketPage />} />
+          <Route path="/ticket-submitted" element={<TicketSubmittedPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Dashboard />} />
