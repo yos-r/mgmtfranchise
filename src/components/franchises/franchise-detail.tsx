@@ -1,5 +1,5 @@
 import { FranchiseHeader } from "./franchise-detail/franchise-header";
-import { FranchiseInfo } from "./franchise-detail/franchise-info";
+// import { FranchiseInfo } from "./franchise-detail/franchise-info";
 import { PaymentsHistory } from "./franchise-detail/payments-history";
 import { LocationAndAgents } from "./franchise-detail/location-agents";
 import { TrainingHistory } from "./franchise-detail/training-history";
@@ -18,12 +18,14 @@ export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, o
   useEffect(() => {
     setFranchise(initialFranchise);
   }, [initialFranchise]);
+
   const handleDelete = () => {
     // Call the onDelete function passed from the parent to navigate back
     if (onDelete) {
       onDelete();
     }
   };
+
   const loadContracts = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -89,8 +91,8 @@ export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, o
           <ContractsHistory contracts={contracts} franchise_id={franchise.id} />
           <LocationAndAgents franchise={franchise} />
           
-          <TrainingHistory />
-          <AssistanceHistory />
+          <TrainingHistory franchise={franchise} />
+          <AssistanceHistory franchise={franchise} />
         </>
       )}
     </div>
