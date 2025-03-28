@@ -8,7 +8,18 @@ interface VisitListProps {
   visits: any[];
   onVisitSelect: (visit: any) => void;
 }
-
+const getStatusBadgeClasses = (status) => {
+  switch (status) {
+    case "completed":
+      return "bg-green-100 text-green-800";
+    case "cancelled":
+    case "canceled":
+      return "bg-red-100 text-red-800";
+    case "scheduled":
+    default:
+      return "bg-yellow-100 text-yellow-800";
+  }
+};
 export function VisitList({ visits, onVisitSelect }: VisitListProps) {
   return (
     <Card>
@@ -50,11 +61,7 @@ export function VisitList({ visits, onVisitSelect }: VisitListProps) {
                 <TableCell className="body-1">{visit.duration}</TableCell>
                 <TableCell>
                   <Badge
-                    className={
-                      visit.status === "completed"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }
+                    className={getStatusBadgeClasses(visit.status)}
                   >
                     {visit.status}
                   </Badge>

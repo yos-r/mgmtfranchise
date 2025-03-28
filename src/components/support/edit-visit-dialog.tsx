@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +9,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,67 +32,48 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
 const visitSchema = z.object({
-  franchise_id: z.string().min(1, "Franchise is required"),
-  consultant_id: z.string().min(1, "Consultant is required"),
   type: z.enum(["quarterly_review", "technical_support", "performance_review"]),
   date: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
   duration: z.string().min(1, "Duration is required"),
-  status: z.enum(["scheduled", "completed", "cancelled"]).default("scheduled"),
+  consultant_id: z.string().min(1, "Consultant is required"),
   observations: z.string().optional(),
+  status: z.enum(["scheduled", "completed", "cancelled"]),
 });
 
-interface PlanVisitDialogProps {
-  onSuccess?: () => void;
+interface EditVisitDialogProps {
+  visit: any;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
-export function PlanVisitDialog({ onSuccess }: PlanVisitDialogProps) {
-  const [open, setOpen] = useState(false);
+export function EditVisitDialog({
+  visit,
+  open,
+  onOpenChange,
+  onSuccess,
+}: EditVisitDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [franchises, setFranchises] = useState<any[]>([]);
   const [consultants, setConsultants] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof visitSchema>>({
-    resolver: zodResolver(visitSchema),
-    defaultValues: {
-      franchise_id: "",
-      consultant_id: "",
-      type: "quarterly_review",
-      date: new Date().toISOString().split('T')[0],
-      time: "10:00",
-      duration: "2h",
-      status: "scheduled",
-      observations: "",
-    },
-  });
-
-  // Fetch franchises and consultants
+  // Fetch consultants from team_members table
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchConsultants = async () => {
       setLoading(true);
       try {
-        // Fetch franchises
-        const { data: franchisesData, error: franchisesError } = await supabase
-          .from('franchises')
-          .select('id, name')
-          .order('name');
-
-        if (franchisesError) throw franchisesError;
-        setFranchises(franchisesData || []);
-
-        // Fetch consultants from team_members table
-        const { data: consultantsData, error: consultantsError } = await supabase
+        const { data, error } = await supabase
           .from('team_members')
           .select('id, first_name, last_name, role')
           .eq('role', 'consultant')  // Assuming consultants have this role
           .order('last_name');
 
-        if (consultantsError) throw consultantsError;
-        
-        // Transform consultant data to include full name
-        const formattedConsultants = consultantsData.map(consultant => ({
+        if (error) throw error;
+
+        // Transform data to include full name
+        const formattedConsultants = data.map(consultant => ({
           id: consultant.id,
           name: `${consultant.first_name} ${consultant.last_name}`,
           role: consultant.role
@@ -102,10 +81,10 @@ export function PlanVisitDialog({ onSuccess }: PlanVisitDialogProps) {
 
         setConsultants(formattedConsultants);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching consultants:", error);
         toast({
           title: "Error",
-          description: "Failed to load data for planning visit.",
+          description: "Failed to load consultants. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -114,42 +93,53 @@ export function PlanVisitDialog({ onSuccess }: PlanVisitDialogProps) {
     };
 
     if (open) {
-      fetchData();
+      fetchConsultants();
     }
   }, [open, toast]);
+
+  const form = useForm<z.infer<typeof visitSchema>>({
+    resolver: zodResolver(visitSchema),
+    defaultValues: {
+      type: visit.type || "quarterly_review",
+      date: visit.date || "",
+      time: visit.time || "",
+      duration: visit.duration || "",
+      consultant_id: visit.consultant_id || "",
+      observations: visit.observations || "",
+      status: visit.status || "scheduled",
+    },
+  });
 
   const onSubmit = async (values: z.infer<typeof visitSchema>) => {
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('support_visits')
-        .insert({
-          franchise_id: values.franchise_id,
-          consultant_id: values.consultant_id,
+        .update({
           type: values.type,
           date: values.date,
           time: values.time,
           duration: values.duration,
-          status: values.status,
+          consultant_id: values.consultant_id,
           observations: values.observations,
+          status: values.status,
         })
-        .select();
+        .eq('id', visit.id);
 
       if (error) throw error;
 
       toast({
-        title: "Visit planned",
-        description: "The support visit has been scheduled successfully",
+        title: "Visit updated",
+        description: "The support visit has been updated successfully",
       });
 
-      form.reset();
-      setOpen(false);
-      if (onSuccess) onSuccess();
+      onSuccess();
+      onOpenChange(false);
     } catch (error: any) {
-      console.error("Error planning visit:", error);
+      console.error("Error updating visit:", error);
       toast({
         title: "Error",
-        description: "Failed to schedule the visit. Please try again.",
+        description: "Failed to update the visit. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -158,53 +148,16 @@ export function PlanVisitDialog({ onSuccess }: PlanVisitDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Plan Visit
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Plan Support Visit</DialogTitle>
+          <DialogTitle>Edit Support Visit</DialogTitle>
           <DialogDescription>
-            Schedule a new support visit to a franchise
+            Update the support visit details
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="franchise_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Franchise</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a franchise" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {loading ? (
-                        <div className="p-2 text-sm text-muted-foreground">Loading franchises...</div>
-                      ) : franchises.length > 0 ? (
-                        franchises.map((franchise) => (
-                          <SelectItem key={franchise.id} value={franchise.id}>
-                            {franchise.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="p-2 text-sm text-muted-foreground">No franchises found</div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -231,28 +184,20 @@ export function PlanVisitDialog({ onSuccess }: PlanVisitDialogProps) {
 
               <FormField
                 control={form.control}
-                name="consultant_id"
+                name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Consultant</FormLabel>
+                    <FormLabel>Status</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a consultant" />
+                          <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {loading ? (
-                          <div className="p-2 text-sm text-muted-foreground">Loading consultants...</div>
-                        ) : consultants.length > 0 ? (
-                          consultants.map((consultant) => (
-                            <SelectItem key={consultant.id} value={consultant.id}>
-                              {consultant.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="p-2 text-sm text-muted-foreground">No consultants found</div>
-                        )}
+                        <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -307,20 +252,28 @@ export function PlanVisitDialog({ onSuccess }: PlanVisitDialogProps) {
 
             <FormField
               control={form.control}
-              name="status"
+              name="consultant_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel>Consultant</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select a consultant" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      {loading ? (
+                        <div className="p-2 text-sm text-muted-foreground">Loading consultants...</div>
+                      ) : consultants.length > 0 ? (
+                        consultants.map((consultant) => (
+                          <SelectItem key={consultant.id} value={consultant.id}>
+                            {consultant.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-2 text-sm text-muted-foreground">No consultants found</div>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -336,7 +289,7 @@ export function PlanVisitDialog({ onSuccess }: PlanVisitDialogProps) {
                   <FormLabel>Observations</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter any initial observations or notes..."
+                      placeholder="Enter visit observations..."
                       className="min-h-[100px]"
                       {...field}
                     />
@@ -350,12 +303,12 @@ export function PlanVisitDialog({ onSuccess }: PlanVisitDialogProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => onOpenChange(false)}
               >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Scheduling..." : "Schedule Visit"}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>
