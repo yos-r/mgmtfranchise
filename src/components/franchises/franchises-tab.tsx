@@ -1,4 +1,4 @@
-import { FileText, LayoutGrid, MapIcon, Plus, Building2, AlertCircle, Map, Filter } from "lucide-react";
+import { FileText, LayoutGrid, MapIcon, Plus, Building2, AlertCircle, Map, Filter, Search, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { FranchiseCard } from "./franchise-card";
@@ -11,6 +11,7 @@ import { AddFranchise } from "./add-franchise";
 import { FranchiseDetail } from "./franchise-detail";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Badge } from "../ui/badge";
+import { Input } from "../ui/input";
 
 interface FranchisesTabsProps {
     viewMode: string;
@@ -28,19 +29,34 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
     const [refreshKey, setRefreshKey] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState<FilterOption[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
     
     const handleFranchiseUpdated = () => {
         // Refresh the contracts list
         setRefreshKey(prev => prev + 1);
     };
 
-    // Apply filters to the franchises
-    const applyFilters = (franchisesData: any[]) => {
+    // Apply filters and search to the franchises
+    const applyFiltersAndSearch = (franchisesData: any[]) => {
+        // First apply search
+        let result = franchisesData;
+        
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(franchise => 
+                (franchise.name && franchise.name.toLowerCase().includes(query)) ||
+                (franchise.address && franchise.address.toLowerCase().includes(query)) ||
+                (franchise.city && franchise.city.toLowerCase().includes(query)) ||
+                (franchise.country && franchise.country.toLowerCase().includes(query))
+            );
+        }
+        
+        // Then apply filters if any
         if (activeFilters.length === 0) {
-            return franchisesData;
+            return result;
         }
 
-        return franchisesData.filter(franchise => {
+        return result.filter(franchise => {
             const currentDate = new Date();
             const thirtyDaysFromNow = new Date();
             thirtyDaysFromNow.setDate(currentDate.getDate() + 180);
@@ -86,7 +102,7 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
 
             if (!error && data) {
                 setFranchises(data);
-                setFilteredFranchises(applyFilters(data));
+                setFilteredFranchises(applyFiltersAndSearch(data));
             } else if (error) {
                 console.error("Error loading franchises:", error);
             }
@@ -122,10 +138,10 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
         };
     }, [refreshKey]);
     
-    // Apply filters when they change
+    // Apply filters and search when they change
     useEffect(() => {
-        setFilteredFranchises(applyFilters(franchises));
-    }, [activeFilters, franchises]);
+        setFilteredFranchises(applyFiltersAndSearch(franchises));
+    }, [activeFilters, franchises, searchQuery]);
     
     // Toggle filter
     const toggleFilter = (filter: FilterOption) => {
@@ -134,6 +150,14 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                 ? prev.filter(f => f !== filter) 
                 : [...prev, filter]
         );
+    };
+    
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+    };
+    
+    const clearSearch = () => {
+        setSearchQuery("");
     };
     
     if (isAddingFranchise) {
@@ -161,19 +185,22 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
             </div>
             <h3 className="text-xl font-semibold mb-2">No Franchises Found</h3>
             <p className="text-muted-foreground max-w-md mb-6">
-                {activeFilters.length > 0 
-                    ? "No franchises match the selected filters. Try changing your filters or add a new franchise."
+                {activeFilters.length > 0 || searchQuery
+                    ? "No franchises match the current filters or search terms. Try adjusting your criteria."
                     : "There are no franchises in your network yet. Add your first franchise to get started."}
             </p>
             <div className="flex gap-3">
-                {activeFilters.length > 0 && (
-                    <Button variant="outline" onClick={() => setActiveFilters([])}>
-                        Clear Filters
+                {(activeFilters.length > 0 || searchQuery) && (
+                    <Button variant="outline" onClick={() => {
+                        setActiveFilters([]);
+                        setSearchQuery("");
+                    }}>
+                        Clear All
                     </Button>
                 )}
                 <Button onClick={() => setIsAddingFranchise(true)} className="button-1">
                     <Plus className="mr-2 h-4 w-4" />
-                    {activeFilters.length > 0 ? "Add New Franchise" : "Add Your First Franchise"}
+                    {activeFilters.length > 0 || searchQuery ? "Add New Franchise" : "Add Your First Franchise"}
                 </Button>
             </div>
         </div>
@@ -199,6 +226,28 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                     <div className="flex items-center justify-between">
                         <CardTitle className="tagline-2">Franchise Network</CardTitle>
                         <div className="flex items-center gap-4">
+                            {/* Search Bar */}
+                            <div className="relative w-[250px]">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search franchises..."
+                                    className="pl-8 pr-8"
+                                    value={searchQuery}
+                                    onChange={handleSearchChange}
+                                />
+                                {searchQuery && (
+                                    <button 
+                                        type="button" 
+                                        onClick={clearSearch}
+                                        className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {/* Filter Button */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="flex items-center gap-2">
@@ -230,6 +279,8 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                                     </DropdownMenuCheckboxItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                            
+                            {/* View Mode Toggle */}
                             <div className="flex items-center rounded-lg border p-1">
                                 <Button
                                     variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -256,15 +307,28 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                                     <Map className="h-4 w-4" />
                                 </Button>
                             </div>
+                            
+                            {/* Add Franchise Button */}
                             <Button className="button-1" onClick={() => setIsAddingFranchise(true)}>
                                 <Plus className="mr-2 h-4 w-4" />
                                 {t('addFranchise')}
                             </Button>
                         </div>
                     </div>
-                    {activeFilters.length > 0 && (
+                    {/* Active Filters and Search */}
+                    {(activeFilters.length > 0 || searchQuery) && (
                         <div className="flex items-center gap-2 mt-4">
-                            <span className="text-sm text-muted-foreground">Active filters:</span>
+                            <span className="text-sm text-muted-foreground">Active criteria:</span>
+                            {searchQuery && (
+                                <Badge 
+                                    variant="secondary"
+                                    className="flex items-center gap-1 cursor-pointer"
+                                    onClick={clearSearch}
+                                >
+                                    Search: {searchQuery}
+                                    <span className="text-xs ml-1">×</span>
+                                </Badge>
+                            )}
                             {activeFilters.map(filter => (
                                 <Badge 
                                     key={filter} 
@@ -281,7 +345,10 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                             <Button 
                                 variant="ghost" 
                                 className="h-6 px-2 text-xs" 
-                                onClick={() => setActiveFilters([])}
+                                onClick={() => {
+                                    setActiveFilters([]);
+                                    setSearchQuery("");
+                                }}
                             >
                                 Clear all
                             </Button>
