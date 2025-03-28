@@ -47,10 +47,11 @@ export function AttendanceCard({ event, onAttendanceUpdate }) {
   const [isAddingAttendee, setIsAddingAttendee] = useState(false);
 
   // Initialize selected attendees based on data from the database
-  useEffect(() => {
+  // Initialize selected attendees based on data from the database
+useEffect(() => {
     if (event.training_attendance) {
       const attendedIds = event.training_attendance
-        .filter(attendee => attendee.attended)
+        .filter(attendee => attendee.attended === true)
         .map(attendee => attendee.id);
       
       setSelectedAttendees(attendedIds);
@@ -90,15 +91,17 @@ export function AttendanceCard({ event, onAttendanceUpdate }) {
     }
   };
 
-  const handleAttendanceChange = (attendeeId: number) => {
+  const handleAttendanceChange = (attendeeId: number, isPresent: boolean) => {
     setSelectedAttendees(prev => {
-      const isSelected = prev.includes(attendeeId);
-      if (isSelected) {
-        return prev.filter(id => id !== attendeeId);
+      if (isPresent) {
+        // Add to selected attendees if not already included
+        return prev.includes(attendeeId) ? prev : [...prev, attendeeId];
       } else {
-        return [...prev, attendeeId];
+        // Remove from selected attendees
+        return prev.filter(id => id !== attendeeId);
       }
     });
+    
     setAttendanceUpdated(true);
   };
 
@@ -235,30 +238,76 @@ export function AttendanceCard({ event, onAttendanceUpdate }) {
                 <TableRow key={attendee.id}>
                   <TableCell className="body-1">{attendee.franchises?.name}</TableCell>
                   <TableCell className="text-center">
-                    <Badge
-                      variant="outline"
-                      className={`label-2 ${
-                        selectedAttendees.includes(attendee.id)
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {selectedAttendees.includes(attendee.id) ? "Present" : "Absent"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleAttendanceChange(attendee.id)}
-                    >
-                      {selectedAttendees.includes(attendee.id) ? (
-                        <ChevronLeft className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5 text-red-500" />
-                      )}
-                    </Button>
-                  </TableCell>
+  <Badge
+    variant="outline"
+    className={`label-2 ${
+      attendee.attended === null 
+        ? "bg-yellow-100 text-yellow-800" 
+        : selectedAttendees.includes(attendee.id)
+          ? "bg-green-100 text-green-800"
+          : "bg-red-100 text-red-800"
+    }`}
+  >
+    {attendee.attended === null 
+      ? "Pending" 
+      : selectedAttendees.includes(attendee.id) 
+        ? "Present" 
+        : "Absent"}
+  </Badge>
+</TableCell>
+<TableCell className="text-center">
+  {attendee.attended === null ? (
+    // For pending status, show two separate buttons
+    <div className="flex justify-center space-x-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleAttendanceChange(attendee.id, true);
+        }}
+        className="h-8 w-8 p-0"
+      >
+        <ChevronRight className="h-5 w-5 text-green-500" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleAttendanceChange(attendee.id, false);
+        }}
+        className="h-8 w-8 p-0"
+      >
+        <ChevronLeft className="h-5 w-5 text-red-500" />
+      </Button>
+    </div>
+  ) : selectedAttendees.includes(attendee.id) ? (
+    // For present status - one button to mark absent
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={(e) => {
+        e.stopPropagation();
+        handleAttendanceChange(attendee.id, false);
+      }}
+    >
+      <ChevronLeft className="h-5 w-5 text-green-500" />
+    </Button>
+  ) : (
+    // For absent status - one button to mark present
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={(e) => {
+        e.stopPropagation();
+        handleAttendanceChange(attendee.id, true);
+      }}
+    >
+      <ChevronRight className="h-5 w-5 text-red-500" />
+    </Button>
+  )}
+</TableCell>
                 </TableRow>
               ))}
               {(!event.training_attendance || event.training_attendance.length === 0) && (
