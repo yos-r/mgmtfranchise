@@ -3,6 +3,7 @@ import { Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SettingsDropdown } from './settings-dropdown';
 import { ThemeToggle } from '../theme-toggle';
+import { LanguageToggle } from '../language-toggle';
 interface NavbarLayoutProps {
   children: ReactNode;
   setCurrentSection: React.Dispatch<React.SetStateAction<"main" | "settings">>;
@@ -44,6 +45,7 @@ export const NavbarLayout: React.FC<NavbarLayoutProps> = ({
               setSettingsSection={setSettingsSection}
             />
             <ThemeToggle />
+            <LanguageToggle/>
 
           </div>
         </div>

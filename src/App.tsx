@@ -9,10 +9,13 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Dashboard } from './pages/Dashboard';
 import { SubmitTicketPage } from './pages/SubmitTicket';
 import { TicketSubmittedPage } from './pages/TicketSubmitted';
+import { LanguageWrapper } from './components/language-wrapper';
 
 
 function App() {
   return (
+    <LanguageWrapper>
+
     <Router>
       <AuthProvider>
         <Routes>
@@ -28,6 +31,8 @@ function App() {
         <Toaster />
       </AuthProvider>
     </Router>
+    </LanguageWrapper>
+
   );
 }
 
