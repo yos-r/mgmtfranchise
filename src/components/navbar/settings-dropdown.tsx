@@ -23,10 +23,10 @@ export const SettingsDropdown: React.FC<SettingsDropdownProps> = ({
 }) => {
   const settingsSections = [
     { label: 'Profil', section: 'profile' },
-    { label: 'Entreprise', section: 'company' },
-    { label: 'Équipe', section: 'team' },
-    { label: 'Apparence', section: 'appearance' },
-    { label: 'Notifications', section: 'notifications' },
+    // { label: 'Entreprise', section: 'company' },
+    // { label: 'Équipe', section: 'team' },
+    // { label: 'Apparence', section: 'appearance' },
+    // { label: 'Notifications', section: 'notifications' },
     { label: 'Sécurité', section: 'security' }
   ];
 

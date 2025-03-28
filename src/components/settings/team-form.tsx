@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -62,6 +62,7 @@ type TeamMember = {
 
 export function TeamForm() {
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const { toast } = useToast();
 
@@ -75,72 +76,130 @@ export function TeamForm() {
     },
   });
 
-  async function loadTeamMembers() {
-    const { data, error } = await supabase
-      .from("team_members")
-      .select("*")
-      .order("created_at", { ascending: false });
+  // Load team members on component mount
+  useEffect(() => {
+    loadTeamMembers();
+  }, []);
 
-    if (error) {
+  async function loadTeamMembers() {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setMembers(data || []);
+    } catch (error: any) {
       toast({
         title: "Error loading team members",
         description: error.message,
         variant: "destructive",
       });
-      return;
+      console.error("Error loading team members:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    setMembers(data);
   }
 
-  async function onSubmit(data: z.infer<typeof teamMemberSchema>) {
-    const { error } = await supabase.from("team_members").insert({
-      first_name: data.firstName,
-      last_name: data.lastName,
-      email: data.email,
-      role: data.role,
-    });
+  // Reset form when dialog closes
+  const handleDialogChange = (open: boolean) => {
+    if (!open) {
+      form.reset();
+    }
+    setIsAddingMember(open);
+  };
 
-    if (error) {
+  async function onSubmit(data: z.infer<typeof teamMemberSchema>) {
+    try {
+      // Insert the new team member
+      const { data: newMember, error } = await supabase
+        .from("team_members")
+        .insert({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          role: data.role,
+          status: "active" // Set default status
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the UI immediately
+      setMembers(prevMembers => [newMember, ...prevMembers]);
+      
+      toast({
+        title: "Team member added",
+        description: "The team member has been added successfully",
+      });
+
+      // Close the dialog and reset the form
+      setIsAddingMember(false);
+      form.reset();
+    } catch (error: any) {
       toast({
         title: "Error adding team member",
         description: error.message,
         variant: "destructive",
       });
-      return;
+      console.error("Error adding team member:", error);
     }
-
-    toast({
-      title: "Team member added",
-      description: "The team member has been added successfully",
-    });
-
-    setIsAddingMember(false);
-    form.reset();
-    loadTeamMembers();
   }
 
   async function handleDelete(id: string) {
-    const { error } = await supabase
-      .from("team_members")
-      .update({ status: "inactive" })
-      .eq("id", id);
+    try {
+      // Mark the team member as inactive
+      const { error } = await supabase
+        .from("team_members")
+        .update({ status: "inactive" })
+        .eq("id", id);
 
-    if (error) {
+      if (error) {
+        throw error;
+      }
+
+      // Update the UI immediately
+      setMembers(prevMembers => 
+        prevMembers.map(member => 
+          member.id === id 
+            ? { ...member, status: "inactive" } 
+            : member
+        )
+      );
+
+      toast({
+        title: "Team member removed",
+        description: "The team member has been removed successfully",
+      });
+    } catch (error: any) {
       toast({
         title: "Error removing team member",
         description: error.message,
         variant: "destructive",
       });
-      return;
+      console.error("Error removing team member:", error);
     }
+  }
 
-    toast({
-      title: "Team member removed",
-      description: "The team member has been removed successfully",
-    });
-
-    loadTeamMembers();
+  function getRoleBadge(role: string) {
+    switch (role) {
+      case "admin":
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800">Admin</Badge>;
+      case "manager":
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Manager</Badge>;
+      case "consultant":
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Consultant</Badge>;
+      default:
+        return <Badge variant="outline">{role}</Badge>;
+    }
   }
 
   return (
@@ -152,7 +211,7 @@ export function TeamForm() {
             Manage your team members and their roles
           </p>
         </div>
-        <Dialog open={isAddingMember} onOpenChange={setIsAddingMember}>
+        <Dialog open={isAddingMember} onOpenChange={handleDialogChange}>
           <DialogTrigger asChild>
             <Button className="button-1">
               <Plus className="mr-2 h-4 w-4" />
@@ -242,52 +301,61 @@ export function TeamForm() {
       </div>
 
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="label-1">Name</TableHead>
-              <TableHead className="label-1">Email</TableHead>
-              <TableHead className="label-1">Role</TableHead>
-              <TableHead className="label-1">Status</TableHead>
-              <TableHead className="label-1 text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {members.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell className="body-1 font-medium">
-                  {member.first_name} {member.last_name}
-                </TableCell>
-                <TableCell className="body-1">{member.email}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="label-2">
-                    {member.role}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    className={
-                      member.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }
-                  >
-                    {member.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(member.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </TableCell>
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <p>Loading team members...</p>
+          </div>
+        ) : members.length === 0 ? (
+          <div className="flex justify-center items-center py-8">
+            <p className="text-muted-foreground">No team members found. Add one to get started.</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="label-1">Name</TableHead>
+                <TableHead className="label-1">Email</TableHead>
+                <TableHead className="label-1">Role</TableHead>
+                <TableHead className="label-1">Status</TableHead>
+                <TableHead className="label-1 text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {members.map((member) => (
+                <TableRow key={member.id}>
+                  <TableCell className="body-1 font-medium">
+                    {member.first_name} {member.last_name}
+                  </TableCell>
+                  <TableCell className="body-1">{member.email}</TableCell>
+                  <TableCell>
+                    {getRoleBadge(member.role)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={
+                        member.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }
+                    >
+                      {member.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(member.id)}
+                      disabled={member.status !== "active"}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
     </div>
   );

@@ -14,14 +14,14 @@ const sidebarNavItems = [
     title: "Team",
     href: "/settings/team",
   },
-  {
-    title: "Appearance",
-    href: "/settings/appearance",
-  },
-  {
-    title: "Notifications",
-    href: "/settings/notifications",
-  },
+  // {
+  //   title: "Appearance",
+  //   href: "/settings/appearance",
+  // },
+  // {
+  //   title: "Notifications",
+  //   href: "/settings/notifications",
+  // },
   {
     title: "Security",
     href: "/settings/security",

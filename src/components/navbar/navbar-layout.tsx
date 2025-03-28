@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import { Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SettingsDropdown } from './settings-dropdown';
+import { ThemeToggle } from '../theme-toggle';
 interface NavbarLayoutProps {
   children: ReactNode;
   setCurrentSection: React.Dispatch<React.SetStateAction<"main" | "settings">>;
@@ -42,6 +43,8 @@ export const NavbarLayout: React.FC<NavbarLayoutProps> = ({
               setCurrentSection={setCurrentSection}
               setSettingsSection={setSettingsSection}
             />
+            <ThemeToggle />
+
           </div>
         </div>
       </div>
