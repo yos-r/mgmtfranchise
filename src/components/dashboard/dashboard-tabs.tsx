@@ -8,6 +8,7 @@ import { OverviewTab } from "../overview/overview-tab";
 import { FranchisesTab } from "../franchises/franchises-tab";
 import { HelpDeskTab } from "../help-desk/help-desk-tab";
 import { MarketAnalysis } from "../business-development/market-analysiS";
+import { NAFTab } from "../naf-tab";
 // import { MarketAnalysis } from "../business-development/market-analysis";
 
 interface DashboardTabsProps {
@@ -23,6 +24,7 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
                 <TabsTrigger value="franchises" className="button-2">{t('franchises')}</TabsTrigger>
                 <TabsTrigger value="royalties" className="button-2">{t('royalties')}</TabsTrigger>
                 <TabsTrigger value="dev" className="button-2">Business Development</TabsTrigger>
+                <TabsTrigger value="naf" className="button-2">NAF</TabsTrigger>
 
                 <TabsTrigger value="performance" className="button-2">{t('performance')}</TabsTrigger>
                 <TabsTrigger value="training" className="button-2">{t('training')}</TabsTrigger>
@@ -56,6 +58,9 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
             <TabsContent value="dev">
                 <MarketAnalysis />
                 {/* <MarketAnalysis /> */}
+            </TabsContent>
+            <TabsContent value="naf">
+                <NAFTab />
             </TabsContent>
         </Tabs>
     )
