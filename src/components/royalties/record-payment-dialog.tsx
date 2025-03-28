@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { CalendarIcon, Receipt } from "lucide-react";
+import { useState } from 'react';
+import { format } from 'date-fns';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import {
   Dialog,
   DialogContent,
@@ -9,15 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -25,186 +28,234 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { CalendarIcon, Loader2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { supabase } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 
-interface RecordPaymentDialogProps {
-  payment: {
-    id: string;
-    amount: number;
-    franchises?: {
-      name: string;
-    };
-  };
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onPaymentRecorded?: () => void;
-}
+const formSchema = z.object({
+  payment_date: z.date(),
+  payment_method: z.string(),
+  payment_reference: z.string().optional(),
+  notes: z.string().optional(),
+});
 
-export function RecordPaymentDialog({ 
-  payment, 
-  open, 
-  onOpenChange, 
-  onPaymentRecorded 
-}: RecordPaymentDialogProps) {
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [paymentMethod, setPaymentMethod] = useState<string>('');
-  const [referenceNumber, setReferenceNumber] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export function RecordPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  // Reset form when dialog opens
-  useEffect(() => {
-    if (open) {
-      setDate(new Date());
-      setPaymentMethod('');
-      setReferenceNumber('');
-    }
-  }, [open]);
-
-  const handleSubmit = async () => {
-    // Validate inputs
-    if (!date) {
+  
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      payment_date: new Date(),
+      payment_method: 'transfer',
+      payment_reference: '',
+      notes: '',
+    },
+  });
+  
+  async function onSubmit(data) {
+    if (!payment?.id) {
       toast({
         title: "Error",
-        description: "Please select a payment date",
-        variant: "destructive"
+        description: "No payment selected for recording",
+        variant: "destructive",
       });
       return;
     }
-
-    if (!paymentMethod) {
-      toast({
-        title: "Error",
-        description: "Please select a payment method",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
+    
+    setIsLoading(true);
+    
     try {
-      // Update the existing payment record instead of creating a new one
-      const { data, error } = await supabase
+      // 1. First, create a log of the current payment state before updating
+      const { error: logError } = await supabase
+        .from('payment_logs')
+        .insert({
+          payment_id: payment.id,
+          status: payment.status,
+          amount: payment.amount || payment.total_amount,
+          royalty_amount: payment.royalty_amount,
+          marketing_amount: payment.marketing_amount,
+          payment_method: payment.payment_method,
+          payment_reference: payment.payment_reference,
+          due_date: payment.due_date,
+          payment_date: payment.payment_date,
+          notes: payment.notes,
+          created_at: new Date().toISOString()
+        });
+      
+      if (logError) throw logError;
+      
+      // 2. Update payment record
+      const { error } = await supabase
         .from('royalty_payments')
         .update({
+          payment_date: data.payment_date.toISOString(),
+          payment_method: data.payment_method,
+          payment_reference: data.payment_reference || null,
+          notes: data.notes || null,
           status: 'paid',
-          payment_method: paymentMethod,
-          payment_reference: referenceNumber || null,
-          payment_date: format(date, 'yyyy-MM-dd'),
-          notes: `Payment received via ${paymentMethod}${referenceNumber ? ` (Ref: ${referenceNumber})` : ''}`
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', payment.id)
-        .select();
-
-      if (error) {
-        throw error;
-      }
-
+        .eq('id', payment.id);
+      
+      if (error) throw error;
+      
       toast({
-        title: "Payment Recorded",
-        description: `Payment of €${payment.amount.toLocaleString()} marked as paid`,
+        title: "Success",
+        description: "Payment recorded successfully",
       });
       
       // Close dialog and refresh data
       onOpenChange(false);
-      if (onPaymentRecorded) {
-        onPaymentRecorded();
-      }
+      if (onSuccess) onSuccess();
+      
     } catch (error) {
-      console.error('Error recording payment:', error);
+      console.error("Error recording payment:", error);
       toast({
         title: "Error",
-        description: "Failed to record payment. Please try again.",
-        variant: "destructive"
+        description: error.message || "Failed to record payment",
+        variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
-  };
-
-  const franchiseName = payment.franchises?.name || "this franchise";
-
+  }
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="tagline-2">Record Payment</DialogTitle>
-          <DialogDescription className="body-lead">
-            Record payment details for {franchiseName}
+          <DialogTitle>Record Payment</DialogTitle>
+          <DialogDescription>
+            Record payment details for {payment?.period || (payment?.due_date && format(new Date(payment.due_date), 'MMM yyyy'))}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {/* <div className="grid gap-2">
-            <Label htmlFor="amount" className="label-1">Amount</Label>
-            <Input
-              id="amount"
-              value={`€${payment.amount.toLocaleString()}`}
-              readOnly
-              className="body-1"
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="payment_date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Payment Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className="pl-3 text-left font-normal"
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div> */}
-          <div className="grid gap-2">
-            <Label className="label-1">Payment Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={`body-1 justify-start text-left font-normal ${!date && "text-muted-foreground"}`}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="method" className="label-1">Payment Method</Label>
-            <Select 
-              value={paymentMethod} 
-              onValueChange={setPaymentMethod}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="transfer">Bank Transfer</SelectItem>
-                <SelectItem value="check">Check</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="versement">Versement</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="reference" className="label-1">Reference Number</Label>
-            <Input 
-              id="reference" 
-              placeholder="Enter reference number" 
-              value={referenceNumber}
-              onChange={(e) => setReferenceNumber(e.target.value)}
-              className="body-1" 
+            
+            <FormField
+              control={form.control}
+              name="payment_method"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Method</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select method" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="check">Check</SelectItem>
+                      <SelectItem value="card">Credit Card</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button 
-            onClick={handleSubmit} 
-            className="button-1"
-            disabled={isSubmitting}
-          >
-            <Receipt className="mr-2 h-4 w-4" />
-            {isSubmitting ? "Recording..." : "Record Payment"}
-          </Button>
-        </DialogFooter>
+            
+            <FormField
+              control={form.control}
+              name="payment_reference"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reference Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      rows={3}
+                      placeholder="Add any additional notes here..."
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Recording...
+                  </>
+                ) : (
+                  "Record Payment"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

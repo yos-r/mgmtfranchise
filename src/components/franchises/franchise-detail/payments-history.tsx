@@ -20,16 +20,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Euro, Plus, Receipt, Eye } from "lucide-react";
+import { Euro, Plus, Receipt, Eye, Edit, MoreHorizontal, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/auth";
 import { RecordPaymentDialog } from './record-payment-dialog';
+import { EditPaymentDialog } from './edit-payment-dialog';
+import { PaymentLogsDialog } from './payment-logs-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function PaymentsHistory({ franchise }: any) {
   const [payments, setPayments] = useState<any[]>([]);
+  const [paymentLogs, setPaymentLogs] = useState<Record<string, number>>({});
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
   const [isRecordingPayment, setIsRecordingPayment] = useState(false);
+  const [isEditingPayment, setIsEditingPayment] = useState(false);
   const [isViewingDetails, setIsViewingDetails] = useState(false);
+  const [isViewingLogs, setIsViewingLogs] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -41,26 +54,61 @@ export function PaymentsHistory({ franchise }: any) {
 
   const loadPayments = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('royalty_payments')
-      .select('*,franchises(*)')
-      .eq('franchise_id', franchise.id)
-      .order('due_date', { ascending: true });
-    
-    if (!error && data) {
-      setPayments(data);
-      setTotalPages(Math.ceil(data.length / itemsPerPage));
-      console.log('payments are', data);
-    } else if (error) {
+    try {
+      // Load payments
+      const { data, error } = await supabase
+        .from('royalty_payments')
+        .select('*,franchises(*)')
+        .eq('franchise_id', franchise.id)
+        .order('due_date', { ascending: true });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setPayments(data);
+        setTotalPages(Math.ceil(data.length / itemsPerPage));
+        console.log('payments are', data);
+        
+        // Get payment IDs for log count query
+        const paymentIds = data.map(payment => payment.id);
+        
+        // Get log counts for each payment
+        if (paymentIds.length > 0) {
+          // Get all logs for these payments
+          const { data: logsData, error: logsError } = await supabase
+            .from('payment_logs')
+            .select('payment_id')
+            .in('payment_id', paymentIds);
+          
+          if (logsError) throw logsError;
+          
+          // Count logs for each payment ID
+          const logsMap: Record<string, number> = {};
+          
+          if (logsData && logsData.length > 0) {
+            // Count occurrences of each payment_id
+            logsData.forEach(log => {
+              if (logsMap[log.payment_id]) {
+                logsMap[log.payment_id]++;
+              } else {
+                logsMap[log.payment_id] = 1;
+              }
+            });
+          }
+          
+          setPaymentLogs(logsMap);
+        }
+      }
+    } catch (error) {
       console.error("Error loading payments:", error);
       toast({
         title: "Error",
         description: "Failed to load payment history",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -79,8 +127,21 @@ export function PaymentsHistory({ franchise }: any) {
         loadPayments();
       }).subscribe();
       
+    // Also listen for payment_logs changes
+    const logsChannel = supabase
+      .channel('payment_logs_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'payment_logs'
+      }, () => {
+        console.log("Payment logs updated, reloading...");
+        loadPayments();
+      }).subscribe();
+      
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(logsChannel);
     }
   }, [franchise.id]);
 
@@ -96,6 +157,7 @@ export function PaymentsHistory({ franchise }: any) {
       case 'paid':
         return <Badge className="bg-green-100 text-green-800">Paid</Badge>;
       case 'upcoming':
+        return <Badge variant="outline">Upcoming</Badge>;
       case 'pending':
         return <Badge variant="outline">Pending</Badge>;
       case 'late':
@@ -112,9 +174,19 @@ export function PaymentsHistory({ franchise }: any) {
     setIsViewingDetails(true);
   };
 
+  const handleEditPayment = (payment: any) => {
+    setSelectedPayment(payment);
+    setIsEditingPayment(true);
+  };
+
   const handleRecordPayment = (payment: any) => {
     setSelectedPayment(payment);
     setIsRecordingPayment(true);
+  };
+
+  const handleViewLogs = (payment: any) => {
+    setSelectedPayment(payment);
+    setIsViewingLogs(true);
   };
 
   const handlePageChange = (page: number) => {
@@ -126,6 +198,10 @@ export function PaymentsHistory({ franchise }: any) {
     setItemsPerPage(newItemsPerPage);
     setTotalPages(Math.ceil(payments.length / newItemsPerPage));
     setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const hasLogs = (paymentId: string) => {
+    return paymentLogs[paymentId] && paymentLogs[paymentId] > 0;
   };
 
   return (
@@ -167,7 +243,24 @@ export function PaymentsHistory({ franchise }: any) {
               <TableBody>
                 {paginatedPayments.map((payment) => (
                   <TableRow key={payment.id}>
-                    <TableCell>{payment.period || format(new Date(payment.due_date), 'MMM yyyy')}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        {payment.period || format(new Date(payment.due_date), 'MMM yyyy')}
+                        {hasLogs(payment.id) && (
+                          <Badge 
+                            variant="outline" 
+                            className="ml-2 cursor-pointer" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewLogs(payment);
+                            }}
+                          >
+                            <History className="h-3 w-3 mr-1" />
+                            {paymentLogs[payment.id]}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
                         <Euro className="h-3 w-3 text-muted-foreground" />
@@ -195,27 +288,38 @@ export function PaymentsHistory({ franchise }: any) {
                     <TableCell>{payment.payment_method || '-'}</TableCell>
                     <TableCell>{getStatusBadge(payment.status)}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        {(payment.status === 'pending' || payment.status === 'upcoming' || payment.status === 'late' || payment.status === 'grace') ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRecordPayment(payment)}
-                          >
-                            <Receipt className="mr-2 h-4 w-4" />
-                            Record Payment
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewDetails(payment)}
-                          >
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleViewDetails(payment)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
-                          </Button>
-                        )}
-                      </div>
+                          </DropdownMenuItem>
+                          {hasLogs(payment.id) && (
+                            <DropdownMenuItem onClick={() => handleViewLogs(payment)}>
+                              <History className="mr-2 h-4 w-4" />
+                              View History Logs
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => handleEditPayment(payment)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Payment
+                          </DropdownMenuItem>
+                          {(payment.status === 'pending' || payment.status === 'upcoming' || 
+                            payment.status === 'late' ) && (
+                            <DropdownMenuItem onClick={() => handleRecordPayment(payment)}>
+                              <Receipt className="mr-2 h-4 w-4" />
+                              Record Payment
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -266,6 +370,21 @@ export function PaymentsHistory({ franchise }: any) {
           onSuccess={loadPayments}
         />
 
+        {/* Edit Payment Dialog */}
+        <EditPaymentDialog
+          open={isEditingPayment}
+          onOpenChange={setIsEditingPayment}
+          payment={selectedPayment}
+          onSuccess={loadPayments}
+        />
+
+        {/* Payment Logs Dialog */}
+        <PaymentLogsDialog
+          open={isViewingLogs}
+          onOpenChange={setIsViewingLogs}
+          paymentId={selectedPayment?.id}
+        />
+
         {/* View Payment Details Dialog */}
         <Dialog open={isViewingDetails} onOpenChange={setIsViewingDetails}>
           <DialogContent>
@@ -285,7 +404,19 @@ export function PaymentsHistory({ franchise }: any) {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Status</Label>
-                  <p>{selectedPayment?.status && getStatusBadge(selectedPayment.status)}</p>
+                  <p className="flex items-center">
+                    {selectedPayment?.status && getStatusBadge(selectedPayment.status)}
+                    {hasLogs(selectedPayment?.id) && (
+                      <Badge 
+                        variant="outline" 
+                        className="ml-2 cursor-pointer" 
+                        onClick={() => handleViewLogs(selectedPayment)}
+                      >
+                        <History className="h-3 w-3 mr-1" />
+                        View History
+                      </Badge>
+                    )}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Due Date</Label>
@@ -316,6 +447,16 @@ export function PaymentsHistory({ franchise }: any) {
               </div>
             </div>
             <DialogFooter>
+              {hasLogs(selectedPayment?.id) && (
+                <Button variant="outline" onClick={() => handleViewLogs(selectedPayment)}>
+                  <History className="mr-2 h-4 w-4" />
+                  History
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => handleEditPayment(selectedPayment)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
               <Button onClick={() => setIsViewingDetails(false)}>
                 Close
               </Button>
