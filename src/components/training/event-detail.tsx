@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import {
   ArrowLeft,
@@ -7,28 +7,11 @@ import {
   Users,
   Star,
   FileText,
-  Save,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  ExternalLink,
-  Download,
   Edit,
   Trash2,
-  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,7 +26,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { EditEventDialog } from "./edit-event-dialog";
-import { NotesCard } from "./notes-card"; // Import the new NotesCard component
+import { NotesCard } from "./notes-card";
+import { AttendanceCard } from "./attendance-card"; // Import the new AttendanceCard component
 
 interface EventDetailProps {
   event: any;
@@ -52,9 +36,8 @@ interface EventDetailProps {
 
 export function EventDetail({ event, onBack }: EventDetailProps) {
   const { toast } = useToast();
+  const [currentEvent, setCurrentEvent] = useState(event);
   const [rating, setRating] = useState(event.trainer_rating || 0);
-  const [selectedAttendees, setSelectedAttendees] = useState<number[]>([]);
-  const [attendanceUpdated, setAttendanceUpdated] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -67,7 +50,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
         .update({
           trainer_rating: newRating
         })
-        .eq('id', event.id);
+        .eq('id', currentEvent.id);
         
       if (error) throw error;
       
@@ -85,33 +68,13 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
     }
   };
 
-  const handleAttendanceChange = (attendeeId: number) => {
-    setSelectedAttendees(prev => {
-      const isSelected = prev.includes(attendeeId);
-      if (isSelected) {
-        return prev.filter(id => id !== attendeeId);
-      } else {
-        return [...prev, attendeeId];
-      }
-    });
-    setAttendanceUpdated(true);
-  };
-
-  const handleSaveAttendance = () => {
-    toast({
-      title: "Attendance saved",
-      description: "Attendance records have been updated successfully",
-    });
-    setAttendanceUpdated(false);
-  };
-
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('training_events')
         .delete()
-        .eq('id', event.id);
+        .eq('id', currentEvent.id);
 
       if (error) throw error;
 
@@ -132,6 +95,42 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
     }
   };
 
+  const handleAttendanceUpdate = async () => {
+    // Refresh the event data to get updated attendance list
+    try {
+      const { data, error } = await supabase
+        .from('training_events')
+        .select(`
+          *,
+          training_attendance(
+            *,
+            franchises(*)
+          )
+        `)
+        .eq('id', currentEvent.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setCurrentEvent(data);
+      }
+    } catch (error) {
+      console.error("Error refreshing event data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh event data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Use current event data from state to reflect updates
+  const attendeeCount = currentEvent.training_attendance?.length || 0;
+  const presentCount = currentEvent.training_attendance?.filter(a => a.attended)?.length || 0;
+  const absentCount = attendeeCount - presentCount;
+  const attendanceRate = attendeeCount > 0 ? Math.round((presentCount / attendeeCount) * 100) : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -141,9 +140,9 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
             Back to Events
           </Button>
           <div>
-            <h2 className="tagline-1">{event.title}</h2>
+            <h2 className="tagline-1">{currentEvent.title}</h2>
             <p className="body-lead text-muted-foreground">
-              {format(new Date(event.date), "MMMM d, yyyy")} at {event.time}
+              {format(new Date(currentEvent.date), "MMMM d, yyyy")} at {currentEvent.time}
             </p>
           </div>
         </div>
@@ -197,107 +196,45 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Date</span>
                   </div>
-                  <p className="text-sm">{format(new Date(event.date), "MMMM d, yyyy")}</p>
+                  <p className="text-sm">{format(new Date(currentEvent.date), "MMMM d, yyyy")}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Duration</span>
                   </div>
-                  <p className="text-sm">{event.duration}</p>
+                  <p className="text-sm">{currentEvent.duration}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Trainer</span>
                   </div>
-                  <p className="text-sm">{event.trainer || 'Not assigned'}</p>
+                  <p className="text-sm">{currentEvent.trainer || 'Not assigned'}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Topic</span>
                   </div>
-                  <p className="text-sm">{event.title}</p>
+                  <p className="text-sm">{currentEvent.title}</p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Description</label>
                 <p className="text-sm text-muted-foreground">
-                  {event.description || 'No description available'}
+                  {currentEvent.description || 'No description available'}
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="tagline-2">Attendance</CardTitle>
-                {attendanceUpdated && (
-                  <Button onClick={handleSaveAttendance} className="button-1">
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="label-1">Name</TableHead>
-                    <TableHead className="label-1">Franchise</TableHead>
-                    <TableHead className="label-1 text-center">Status</TableHead>
-                    <TableHead className="label-1 text-center">Attendance</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {event.attendees?.map((attendee: any) => (
-                    <TableRow key={attendee.id}>
-                      <TableCell className="body-1 font-medium">
-                        {attendee.name}
-                      </TableCell>
-                      <TableCell className="body-1">{attendee.franchise}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant="outline"
-                          className={`label-2 ${
-                            selectedAttendees.includes(attendee.id)
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {selectedAttendees.includes(attendee.id) ? "Present" : "Absent"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAttendanceChange(attendee.id)}
-                        >
-                          {selectedAttendees.includes(attendee.id) ? (
-                            <ChevronLeft className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <ChevronRight className="h-5 w-5 text-red-500" />
-                          )}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(!event.attendees || event.attendees.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                        No attendees registered for this event
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          {/* Replaced with the new AttendanceCard component */}
+          <AttendanceCard 
+            event={currentEvent} 
+            onAttendanceUpdate={handleAttendanceUpdate} 
+          />
         </div>
 
         <div className="space-y-6">
@@ -325,8 +262,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
             </CardContent>
           </Card>
 
-          {/* Replace the old notes section with the new NotesCard component */}
-          <NotesCard eventId={event.id} initialNotes={event.notes} />
+          <NotesCard eventId={currentEvent.id} initialNotes={currentEvent.notes} />
 
           <Card>
             <CardHeader>
@@ -336,24 +272,24 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="label-1">Total Attendees</span>
-                  <span className="numbers">{event.attendees?.length || 0}</span>
+                  <span className="numbers">{attendeeCount}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="label-1">Present</span>
                   <span className="numbers text-green-600">
-                    {selectedAttendees.length}
+                    {presentCount}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="label-1">Absent</span>
                   <span className="numbers text-red-600">
-                    {(event.attendees?.length || 0) - selectedAttendees.length}
+                    {absentCount}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="label-1">Attendance Rate</span>
                   <span className="numbers text-blue-600">
-                    {event.attendees?.length ? Math.round((selectedAttendees.length / event.attendees.length) * 100) : 0}%
+                    {attendanceRate}%
                   </span>
                 </div>
               </div>
@@ -363,10 +299,13 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
       </div>
 
       <EditEventDialog
-        event={event}
+        event={currentEvent}
         open={isEditing}
         onOpenChange={setIsEditing}
-        onSuccess={onBack}
+        onSuccess={() => {
+          handleAttendanceUpdate();
+          onBack();
+        }}
       />
     </div>
   );

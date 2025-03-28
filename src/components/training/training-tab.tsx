@@ -27,15 +27,22 @@ export function TrainingTab() {
     try {
       const { data, error } = await supabase
         .from('training_events')
-        .select('*')
+        .select(`
+          *,
+          training_attendance(
+            *,
+            franchises(*)
+          )
+        `)
         .order('date', { ascending: true });
-
+  
       if (error) throw error;
-
+  
       if (data) {
         setEvents(data);
       }
     } catch (error) {
+      console.error("Error loading events:", error);
       toast({
         title: "Error loading events",
         description: "Failed to load training events",
