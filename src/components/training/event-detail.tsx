@@ -38,6 +38,8 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
   const { toast } = useToast();
   const [currentEvent, setCurrentEvent] = useState(event);
   const [rating, setRating] = useState(event.trainer_rating || 0);
+  const [ratingSession, setRatingSession] = useState(event.session_rating || 0);
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -63,6 +65,32 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
       toast({
         title: "Update failed",
         description: "Failed to update the trainer rating",
+        variant: "destructive"
+      });
+    }
+  };
+  const handleRatingChangeSession = async (newRating: number) => {
+    setRatingSession(newRating);
+    
+    try {
+      const { error } = await supabase
+        .from('training_events')
+        .update({
+          session_rating: newRating
+        })
+        .eq('id', currentEvent.id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Rating session updated",
+        description: "The session rating has been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error updating rating:", error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update the session rating",
         variant: "destructive"
       });
     }
@@ -240,7 +268,7 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
         <div className="space-y-6">
         <Card>
             <CardHeader>
-              <CardTitle className="tagline-2">Session Rating // change func</CardTitle>
+              <CardTitle className="tagline-2">Session Rating </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-2">
@@ -249,11 +277,11 @@ export function EventDetail({ event, onBack }: EventDetailProps) {
                     key={star}
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRatingChange(star)}
+                    onClick={() => handleRatingChangeSession(star)}
                   >
                     <Star
                       className={`h-6 w-6 ${
-                        star <= rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"
+                        star <= ratingSession ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"
                       }`}
                     />
                   </Button>
