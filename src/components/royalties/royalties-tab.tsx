@@ -4,9 +4,9 @@ import { RoyaltiesHeader } from "./royalties-header";
 import { StatsCards } from "./stats-cards";
 import { PaymentsTable } from "./payments-table";
 import { PaymentDetailsDialog } from "./payment-details-dialog";
-import { RecordPaymentDialog } from "./record-payment-dialog";
-import { Button } from "@/components/ui/button";
-import { Eye, Receipt } from "lucide-react";
+import { RecordPaymentDialog } from "../franchises/franchise-detail/record-payment-dialog";
+import { EditPaymentDialog } from "../franchises/franchise-detail/edit-payment-dialog";
+import { PaymentLogsDialog } from "../franchises/franchise-detail/payment-logs-dialog"
 import { supabase } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 
@@ -14,12 +14,14 @@ export function RoyaltiesTab() {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [logsDialogOpen, setLogsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedFranchiseId, setSelectedFranchiseId] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [payments, setPayments] = useState([]);
+  const [paymentLogs, setPaymentLogs] = useState({});
   const [franchises, setFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingFranchises, setIsLoadingFranchises] = useState(true);
@@ -54,6 +56,7 @@ export function RoyaltiesTab() {
   const loadAllPayments = async () => {
     setIsLoading(true);
     try {
+      // Load payments
       const { data, error } = await supabase
         .from('royalty_payments')
         .select('*, franchises(*)')
@@ -71,6 +74,40 @@ export function RoyaltiesTab() {
         }
         
         calculateStats(statsData);
+        
+        // Get payment IDs for log count query
+        const paymentIds = data.map(payment => payment.id);
+        
+        // Get log counts for each payment
+        if (paymentIds.length > 0) {
+          try {
+            // Get all logs for these payments
+            const { data: logsData, error: logsError } = await supabase
+              .from('payment_logs')
+              .select('payment_id')
+              .in('payment_id', paymentIds);
+            
+            if (logsError) throw logsError;
+            
+            // Count logs for each payment ID
+            const logsMap = {};
+            
+            if (logsData && logsData.length > 0) {
+              // Count occurrences of each payment_id
+              logsData.forEach(log => {
+                if (logsMap[log.payment_id]) {
+                  logsMap[log.payment_id]++;
+                } else {
+                  logsMap[log.payment_id] = 1;
+                }
+              });
+            }
+            
+            setPaymentLogs(logsMap);
+          } catch (logsErr) {
+            console.error("Error loading payment logs:", logsErr);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading payments:', error);
@@ -185,19 +222,36 @@ export function RoyaltiesTab() {
     setSelectedMonth(month);
   };
 
+  // Handle payment actions
+  const handleViewPaymentDetails = (payment) => {
+    setSelectedPayment(payment);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleRecordPayment = (payment) => {
+    setSelectedPayment(payment);
+    setPaymentDialogOpen(true);
+  };
+
+  const handleEditPayment = (payment) => {
+    setSelectedPayment(payment);
+    setEditDialogOpen(true);
+  };
+
+  const handleViewLogs = (payment) => {
+    setSelectedPayment(payment);
+    setLogsDialogOpen(true);
+  };
+
+  // Check if payment has logs
+  const hasLogs = (paymentId) => {
+    return paymentLogs[paymentId] && paymentLogs[paymentId] > 0;
+  };
+
   // Apply filters to the payments data
   const filteredPayments = payments.filter((payment) => {
     // Apply status filter
     const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
-    
-    // Apply search query filter
-    const matchesSearch = searchQuery === "" || (
-      payment.franchises && (
-        payment.franchises.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        payment.franchises.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        payment.payment_reference?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
     
     // Apply franchise filter
     const matchesFranchise = !selectedFranchiseId || payment.franchise_id === selectedFranchiseId;
@@ -223,7 +277,7 @@ export function RoyaltiesTab() {
       }
     }
     
-    return matchesStatus && matchesSearch && matchesFranchise && matchesDate;
+    return matchesStatus && matchesFranchise && matchesDate;
   });
 
   const getStatusColor = (status) => {
@@ -241,48 +295,12 @@ export function RoyaltiesTab() {
     }
   };
 
-  const renderActionButton = (payment) => {
-    if (payment.status === "upcoming" || payment.status === "pending" || payment.status === "late") {
-      return (
-        <Button
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedPayment(payment);
-            setPaymentDialogOpen(true);
-          }}
-          className="button-2"
-        >
-          <Receipt className="mr-2 h-4 w-4" />
-          Record Payment
-        </Button>
-      );
-    }
-
-    return (
-      <Button
-        variant="ghost"
-        onClick={(e) => {
-          e.stopPropagation();
-          setSelectedPayment(payment);
-          setDetailsDialogOpen(true);
-        }}
-        className="button-2"
-      >
-        <Eye className="mr-2 h-4 w-4" />
-        View Details
-      </Button>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <RoyaltiesHeader
         onFilterChange={setStatusFilter}
-        onSearchChange={setSearchQuery}
         onFranchiseSelect={setSelectedFranchiseId}
         currentFilter={statusFilter}
-        currentSearch={searchQuery}
         franchises={franchises}
         selectedFranchise={selectedFranchiseId}
       />
@@ -298,11 +316,11 @@ export function RoyaltiesTab() {
           ) : (
             <PaymentsTable
               payments={filteredPayments}
-              onPaymentSelect={(payment) => {
-                setSelectedPayment(payment);
-                setDetailsDialogOpen(true);
-              }}
-              renderActionButton={renderActionButton}
+              paymentLogs={paymentLogs}
+              onPaymentSelect={handleViewPaymentDetails}
+              onRecordPayment={handleRecordPayment}
+              onEditPayment={handleEditPayment}
+              onViewLogs={handleViewLogs}
               getStatusColor={getStatusColor}
               franchises={franchises}
               onFilterChange={setStatusFilter}
@@ -314,24 +332,44 @@ export function RoyaltiesTab() {
               selectedYear={selectedYear}
               selectedMonth={selectedMonth}
               onBatchUpdate={handleBatchUpdate}
+              showFranchiseColumn={true}
             />
           )}
         </CardContent>
       </Card>
 
+      {/* Dialogs */}
       {selectedPayment && (
         <>
           <PaymentDetailsDialog
             payment={selectedPayment}
             open={detailsDialogOpen}
             onOpenChange={setDetailsDialogOpen}
-            onPaymentRecorded={loadAllPayments}
+            onEditPayment={handleEditPayment}
+            onRecordPayment={handleRecordPayment}
+            onViewLogs={handleViewLogs}
+            hasLogs={hasLogs}
+            showFranchiseDetails={true}
           />
+          
           <RecordPaymentDialog
             payment={selectedPayment}
             open={paymentDialogOpen}
             onOpenChange={setPaymentDialogOpen}
-            onPaymentRecorded={loadAllPayments}
+            onSuccess={loadAllPayments}
+          />
+          
+          <EditPaymentDialog
+            payment={selectedPayment}
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            onSuccess={loadAllPayments}
+          />
+          
+          <PaymentLogsDialog
+            paymentId={selectedPayment.id}
+            open={logsDialogOpen}
+            onOpenChange={setLogsDialogOpen}
           />
         </>
       )}

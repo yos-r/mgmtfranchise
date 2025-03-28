@@ -107,6 +107,8 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
     setIsLoading(true);
     
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
       // 1. First, create a log of the current payment state before updating
       const { error: logError } = await supabase
         .from('payment_logs')
@@ -119,6 +121,8 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
           due_date: payment.due_date,
           payment_date: payment.payment_date,
           notes: payment.notes,
+          user_email: user?.email, // Add the current user's email
+
           created_at: new Date().toISOString()
         });
       
@@ -127,7 +131,7 @@ export function EditPaymentDialog({ open, onOpenChange, payment, onSuccess }) {
       // 2. Calculate total amount based on royalty and marketing
       // Ensure we're working with numbers, not strings
       const totalAmount = Number(data.royalty_amount) + Number(data.marketing_amount);
-      
+
       // 3. Update payment record
       const { error } = await supabase
         .from('royalty_payments')

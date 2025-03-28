@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Euro, AlertCircle, User } from "lucide-react";
+import { Euro, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,7 +35,10 @@ interface PaymentLog {
   user_id: string;
   action: string;
   details: any;
-  email?: string; // User email
+  profiles?: {
+    full_name?: string;
+    email?: string;
+  };
 }
 
 export function PaymentLogsDialog({
@@ -56,7 +59,6 @@ export function PaymentLogsDialog({
   const loadPaymentLogs = async () => {
     setLoading(true);
     try {
-      // First, fetch the logs
       const { data, error } = await supabase
         .from('payment_logs')
         .select('*')
@@ -65,40 +67,7 @@ export function PaymentLogsDialog({
       
       if (error) throw error;
       
-      if (data && data.length > 0) {
-        // Collect unique user IDs from logs
-        const userIds = [...new Set(data.filter(log => log.user_id).map(log => log.user_id))];
-        
-        // If we have user IDs, fetch their profiles
-        if (userIds.length > 0) {
-          const { data: userData, error: userError } = await supabase
-            .from('team_members')
-            .select('id, email')
-            .in('id', userIds);
-          
-          if (userError) {
-            console.error("Error fetching user profiles:", userError);
-          } else if (userData) {
-            // Create a map of user IDs to emails
-            const userMap = userData.reduce((acc, user) => {
-              acc[user.id] = user.email;
-              return acc;
-            }, {});
-            
-            // Add email to each log
-            const logsWithUserInfo = data.map(log => ({
-              ...log,
-              email: log.user_id ? userMap[log.user_id] : null
-            }));
-            
-            setLogs(logsWithUserInfo);
-          }
-        } else {
-          setLogs(data);
-        }
-      } else {
-        setLogs(data || []);
-      }
+      setLogs(data || []);
     } catch (error) {
       console.error("Error loading payment logs:", error);
       toast({
@@ -195,7 +164,6 @@ export function PaymentLogsDialog({
               <TableHeader>
                 <TableRow>
                   <TableHead>Date & Time</TableHead>
-                  <TableHead>User</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Payment Method</TableHead>
@@ -205,19 +173,11 @@ export function PaymentLogsDialog({
               </TableHeader>
               <TableBody>
                 {logs.map((log) => {
-                  const details = (log);
+                  const details = log;
                   return (
                     <TableRow key={log.id}>
                       <TableCell className="whitespace-nowrap">
                         {format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-sm truncate max-w-[120px]" title={log.email || "Unknown"}>
-                            {log.user_email || "Unknown"}
-                          </span>
-                        </div>
                       </TableCell>
                       <TableCell>
                         {details.status ? getStatusBadge(details.status) : '-'}
@@ -238,7 +198,7 @@ export function PaymentLogsDialog({
                           ? format(new Date(details.payment_date), 'MMM d, yyyy')
                           : '-'}
                       </TableCell>
-                      <TableCell className="max-w-[150px] truncate">
+                      <TableCell className="max-w-[200px] truncate">
                         {details.notes || details.note || '-'}
                       </TableCell>
                     </TableRow>
