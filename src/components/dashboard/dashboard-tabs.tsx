@@ -7,8 +7,8 @@ import { t } from "@/lib/i18n";
 import { OverviewTab } from "../overview/overview-tab";
 import { FranchisesTab } from "../franchises/franchises-tab";
 import { HelpDeskTab } from "../help-desk/help-desk-tab";
-import { MarketAnalysisData } from "../business-development/market-analysis-data";
-import { MarketAnalysis } from "../business-development/market-analysis";
+import { MarketAnalysis } from "../business-development/market-analysiS";
+// import { MarketAnalysis } from "../business-development/market-analysis";
 
 interface DashboardTabsProps {
     viewMode: string;
@@ -54,7 +54,7 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
                 <HelpDeskTab />
             </TabsContent>
             <TabsContent value="dev">
-                <MarketAnalysisData />
+                <MarketAnalysis />
                 {/* <MarketAnalysis /> */}
             </TabsContent>
         </Tabs>

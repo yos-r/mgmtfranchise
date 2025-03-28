@@ -24,8 +24,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// import Map, { Marker } from 'react-map-gl';
-// import 'mapbox-gl/dist/mapbox-gl.css';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for default marker icon
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface AreaDetailProps {
   area: {
@@ -47,17 +56,10 @@ interface AreaDetailProps {
   onBack: () => void;
 }
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJja2V4YW1wbGUiLCJhIjoiY2tleGFtcGxlIn0.example';
-
 export function AreaDetail({ area, onBack }: AreaDetailProps) {
   const [timeframe, setTimeframe] = useState('3m');
   const defaultCenter = { lat: 48.8566, lng: 2.3522 }; // Paris coordinates as fallback
-  
-  const [viewState, setViewState] = useState({
-    longitude: area?.coordinates?.lng ?? defaultCenter.lng,
-    latitude: area?.coordinates?.lat ?? defaultCenter.lat,
-    zoom: 13
-  });
+  const position = area?.coordinates || defaultCenter;
 
   return (
     <div className="space-y-6">
@@ -143,21 +145,24 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
           </CardHeader>
           <CardContent>
             <div className="h-[400px] rounded-lg overflow-hidden">
-              <Map
-                {...viewState}
-                onMove={evt => setViewState(evt.viewState)}
-                mapStyle="mapbox://styles/mapbox/light-v11"
-                mapboxAccessToken={MAPBOX_TOKEN}
+              <MapContainer 
+                center={[position.lat, position.lng]} 
+                zoom={13} 
+                style={{ height: '100%', width: '100%' }}
               >
-                {area.coordinates && (
-                  <Marker
-                    longitude={area.coordinates.lng}
-                    latitude={area.coordinates.lat}
-                  >
-                    <MapPin className="h-8 w-8 text-primary" />
-                  </Marker>
-                )}
-              </Map>
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={[position.lat, position.lng]}>
+                  <Popup>
+                    <div className="p-2">
+                      <h3 className="font-semibold">{area.areaName}</h3>
+                      <p className="text-sm">{area.areaCode}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              </MapContainer>
             </div>
           </CardContent>
         </Card>
