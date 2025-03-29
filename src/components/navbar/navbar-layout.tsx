@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { SettingsDropdown } from './settings-dropdown';
 import { ThemeToggle } from '../theme-toggle';
 import { LanguageToggle } from '../language-toggle';
+import { CurrencyToggle } from '../currency-toggle';
+
 interface NavbarLayoutProps {
   children: ReactNode;
   setCurrentSection: React.Dispatch<React.SetStateAction<"main" | "settings">>;
@@ -45,8 +47,8 @@ export const NavbarLayout: React.FC<NavbarLayoutProps> = ({
               setSettingsSection={setSettingsSection}
             />
             <ThemeToggle />
-            <LanguageToggle/>
-
+            <LanguageToggle />
+            <CurrencyToggle />
           </div>
         </div>
       </div>
