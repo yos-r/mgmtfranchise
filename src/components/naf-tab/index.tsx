@@ -48,12 +48,23 @@ interface MarketingAction {
   attachments?: { name: string; url: string; type: string; size: string }[];
 }
 
+interface BudgetData {
+  totalBudget: number;
+  totalCollected: number;
+  remainingBudget: number;
+}
+
 export function NAFTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAction, setSelectedAction] = useState<MarketingAction | null>(null);
   const [marketingActions, setMarketingActions] = useState<MarketingAction[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [budgetData, setBudgetData] = useState<BudgetData>({
+    totalBudget: 0,
+    totalCollected: 0,
+    remainingBudget: 0
+  });
   const { toast } = useToast();
 
   // Generate array of years from 2020 to current year
@@ -61,6 +72,95 @@ export function NAFTab() {
     { length: new Date().getFullYear() - 2020 + 1 },
     (_, i) => (2020 + i).toString()
   ).reverse();
+
+  async function calculateMarketingBudget(franchiseId = null, year = null) {
+    try {
+      // Build base queries
+      let budgetQuery = supabase
+        .from('royalty_payments')
+        .select('marketing_amount, due_date')
+        .neq('status', 'grace');
+        
+      let spentQuery = supabase
+        .from('royalty_payments')
+        .select('marketing_amount, due_date')
+        .eq('status', 'paid');
+      
+      // Add franchise filter if provided
+      if (franchiseId) {
+        budgetQuery = budgetQuery.eq('franchise_id', franchiseId);
+        spentQuery = spentQuery.eq('franchise_id', franchiseId);
+      }
+      
+      // Add year filter if provided
+      if (year) {
+        // Create date range for the specified year
+        const startOfYear = new Date(parseInt(year), 0, 1).toISOString();
+        const endOfYear = new Date(parseInt(year), 11, 31, 23, 59, 59).toISOString();
+        
+        // Filter both queries by the date range
+        budgetQuery = budgetQuery
+          .gte('due_date', startOfYear)
+          .lte('due_date', endOfYear);
+          
+        spentQuery = spentQuery
+          .gte('due_date', startOfYear)
+          .lte('due_date', endOfYear);
+      }
+      
+      // Execute both queries in parallel
+      const [budgetResult, spentResult] = await Promise.all([
+        budgetQuery,
+        spentQuery
+      ]);
+      
+      // Check for errors
+      if (budgetResult.error) {
+        throw budgetResult.error;
+      }
+      
+      if (spentResult.error) {
+        throw spentResult.error;
+      }
+      
+      // Calculate totals
+      const totalBudget = budgetResult.data.reduce(
+        (sum, payment) => sum + (payment.marketing_amount || 0), 
+        0
+      );
+      
+      const totalCollected = spentResult.data.reduce(
+        (sum, payment) => sum + (payment.marketing_amount || 0), 
+        0
+      );
+      
+      return {
+        totalBudget,
+        totalCollected,
+        remainingBudget: totalBudget - totalCollected
+      };
+    } catch (error) {
+      console.error('Error calculating marketing budget:', error);
+      throw error;
+    }
+  }
+
+  // Load budget data
+  // Load budget data
+const loadBudgetData = async () => {
+  try {
+    // Pass the selected year to the calculateMarketingBudget function
+    const data = await calculateMarketingBudget(null, selectedYear);
+    setBudgetData(data);
+  } catch (error) {
+    console.error("Error loading budget data:", error);
+    toast({
+      title: "Error loading budget data",
+      description: "Failed to load marketing budget information",
+      variant: "destructive",
+    });
+  }
+};
 
   const loadMarketingActions = async () => {
     try {
@@ -118,8 +218,10 @@ export function NAFTab() {
     }
   };
 
+  // Load data when component mounts or year changes
   useEffect(() => {
     loadMarketingActions();
+    loadBudgetData();
   }, [selectedYear]);
 
   // Handle creating a new action
@@ -155,9 +257,6 @@ export function NAFTab() {
     });
   };
 
-  // Calculate statistics for the selected year
-  const totalBudget = marketingActions.reduce((sum, action) => sum + action.budget, 0); // annual expected budget from royalties table
-  const totalSpent = marketingActions.reduce((sum, action) => sum + action.spent, 0);
   const activeActions = marketingActions.filter(action => action).length;
 
   if (selectedAction) {
@@ -211,9 +310,9 @@ export function NAFTab() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">€{totalBudget.toLocaleString()}</div>
+            <div className="numbers text-2xl font-bold">€{budgetData.totalBudget.toLocaleString()}</div>
             <p className="legal text-muted-foreground">
-              Budget for {selectedYear} // from marketing royalties except grace
+              Budget for {selectedYear}
             </p>
           </CardContent>
         </Card>
@@ -223,9 +322,9 @@ export function NAFTab() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">€{totalBudget.toLocaleString()}</div>
+            <div className="numbers text-2xl font-bold">€{budgetData.totalCollected.toLocaleString()}</div>
             <p className="legal text-muted-foreground">
-              {selectedYear} // paid marketing royalties 
+              Paid marketing royalties in {selectedYear} 
             </p>
           </CardContent>
         </Card>
@@ -235,9 +334,9 @@ export function NAFTab() {
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">€{totalBudget.toLocaleString()}</div>
+            <div className="numbers text-2xl font-bold">{budgetData.totalBudget > 0 ? Math.round((budgetData.totalCollected / budgetData.totalBudget) * 100) : 0}%</div>
             <p className="legal text-muted-foreground">
-              {totalBudget > 0 ? Math.round((totalBudget / totalBudget) * 100) : 0}% of budget
+              Collected marketing royalties
             </p>
           </CardContent>
         </Card>
@@ -249,7 +348,7 @@ export function NAFTab() {
           <CardContent>
             <div className="numbers text-2xl font-bold">{activeActions}</div>
             <p className="legal text-muted-foreground">
-           In  {selectedYear}
+              In {selectedYear}
             </p>
           </CardContent>
         </Card>
@@ -259,9 +358,9 @@ export function NAFTab() {
             <PiggyBank className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">€{(totalBudget - totalSpent).toLocaleString()}</div>
+            <div className="numbers text-2xl font-bold">€{budgetData.remainingBudget.toLocaleString()}</div>
             <p className="legal text-muted-foreground">
-              Collected - spent
+              ?
             </p>
           </CardContent>
         </Card>
