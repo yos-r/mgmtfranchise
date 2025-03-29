@@ -101,7 +101,7 @@ const BuildingEvolutionChart = () => {
   
   return (
     <Card className="w-full md:w-1/ shadow-sm">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 border-b">
         <CardTitle className="text-xl font-medium text-gray-800">
           Évolution du nombre de bâtiment selon le type
         </CardTitle>

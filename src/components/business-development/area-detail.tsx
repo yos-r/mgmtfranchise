@@ -13,6 +13,12 @@ import RealEstateMetrics from './real-estate-metrics';
 import BuildingDonutChart from './building-donut-chart';
 import AreaMap from './area-map';
 import MarketMetrics from './market-metrics';
+import ApartmentPriceChart from './apartment-price-chart';
+import HousePriceChart from './house-price-chart';
+import OfficePriceChart from './office-price-chart';
+import RealEstateTransactions from './real-estate-transactions';
+import CommuneInfo from './commune-info';
+import AreaStatsCard from './area-stats-card';
 
 interface AreaDetailProps {
   area: {
@@ -50,9 +56,10 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
         </div>
       </div>
       
-      {/* Key Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+      <CommuneInfo></CommuneInfo>
+
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="tagline-3">Average Price</CardTitle>
             <Euro className="h-4 w-4 text-muted-foreground" />
@@ -64,9 +71,10 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
               <p className="legal text-green-500">+3.2% from last month</p>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
+        <AreaStatsCard totalAgencies={area.totalAgencies} population={area.population}></AreaStatsCard>
 
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="tagline-3">Total Agencies</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -75,20 +83,11 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
             <div className="numbers text-2xl font-bold">{area.totalAgencies}</div>
             <p className="legal text-muted-foreground">Active in the area</p>
           </CardContent>
-        </Card>
+        </Card> */}
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Market Share</CardTitle>
-            <Percent className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">25%</div>
-            <p className="legal text-muted-foreground">Of total listings</p>
-          </CardContent>
-        </Card>
+        
 
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="tagline-3">Population</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -97,7 +96,10 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
             <div className="numbers text-2xl font-bold">{area.population.toLocaleString()}</div>
             <p className="legal text-muted-foreground">Residents</p>
           </CardContent>
-        </Card>
+        </Card> */}
+      
+
+
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -112,12 +114,20 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
           listingsForRent={area.listingsForRent}
         />
         
-        <PriceEvolutionCard />
+        {/* <PriceEvolutionCard /> */}
+        
       </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+      <ApartmentPriceChart></ApartmentPriceChart>
+      <HousePriceChart></HousePriceChart>
+      {/* <OfficePriceChart></OfficePriceChart> */}
+      <RealEstateTransactions></RealEstateTransactions>
+
+</div>
       
       <AgencesWidget2 />
 
-      <div className="grid gap-6 grid-cols-3"> 
+      <div className="grid gap-6 grid-cols-2"> 
         <RealEstateMetrics />
         <BuildingDonutChart />
       </div>

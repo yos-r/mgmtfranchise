@@ -1,6 +1,6 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Card } from '../ui/card';
+import { Card, CardHeader } from '../ui/card';
 
 const BuildingDonutChart = () => {
   // Data for the donut chart
@@ -52,12 +52,17 @@ const BuildingDonutChart = () => {
 
   return (
     <Card>
+       <CardHeader className=" border-b pb-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-gray-800">Bâtiments par type en 2024</h2>
+                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-[#beaf87]/50 text-[#746649]">Statbel</span>
+                </div>
+            </CardHeader>
       <div className="w-full bg-white p-6 rounded-lg">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Bâtiments par type en 2024</h2>
       
         <div className="flex flex-col">
           {/* Chart container */}
-          <div className="w-full h-72 flex justify-center items-center">
+          <div className="w-full h-72 flex justify-center items-center -mt-12">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <Pie
@@ -66,7 +71,7 @@ const BuildingDonutChart = () => {
                   cy="50%"
                   labelLine={false}
                   label={renderCustomizedLabel}
-                  outerRadius={90}
+                  outerRadius={100}
                   innerRadius={50}
                   fill="#8884d8"
                   dataKey="value"
@@ -82,8 +87,7 @@ const BuildingDonutChart = () => {
             </ResponsiveContainer>
           </div>
       
-          {/* Legend container - now positioned below */}
-          <div className="w-full mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="w-full mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {data.map((entry, index) => (
               <div key={`legend-${index}`} className="flex items-center">
                 <div className="w-4 h-4 mr-2" style={{ backgroundColor: entry.color }}></div>
