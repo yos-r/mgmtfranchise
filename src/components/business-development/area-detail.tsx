@@ -101,6 +101,8 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
 
 
       </div>
+      
+      <AgencesWidget2 />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <AreaMap 
@@ -125,7 +127,6 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
 
 </div>
       
-      <AgencesWidget2 />
 
       <div className="grid gap-6 grid-cols-2"> 
         <RealEstateMetrics />
