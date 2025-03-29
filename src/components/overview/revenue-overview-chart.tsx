@@ -5,7 +5,8 @@ import {
   XAxis, 
   YAxis, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer, 
+  Legend
 } from 'recharts';
 
 // Generate mock data for 24 months of revenue
@@ -24,7 +25,7 @@ export const RevenueOverviewChart: React.FC = () => {
   const revenueData = generateRevenueData();
 
   return (
-    <div className="w-full h-[200px]">
+    <div className="w-full h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart 
           data={revenueData}
@@ -42,6 +43,11 @@ export const RevenueOverviewChart: React.FC = () => {
           />
           <Tooltip 
             formatter={(value) => [`$${value.toLocaleString()}`, 'Revenue']}
+          />
+          
+          <Legend 
+            verticalAlign="bottom" 
+            height={36}
           />
           <Bar 
             dataKey="revenue" 
