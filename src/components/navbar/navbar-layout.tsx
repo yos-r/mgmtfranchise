@@ -23,8 +23,8 @@ export const NavbarLayout: React.FC<NavbarLayoutProps> = ({
   backButtonText = '← Back to Dashboard',
   title = 'CENTURY 21 Franchise Management'
 }) => {
-  return (
-    <div className="hidden flex-col md:flex">
+return (
+    <div className=" flex-col md:flex">
       <div className="border-b">
         <div className="flex h-16 items-center px-4">
           <div className="flex items-center gap-2">

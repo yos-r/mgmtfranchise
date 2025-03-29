@@ -18,7 +18,7 @@ export const CURRENCY_PRESETS = {
     code: 'EUR',
     symbol: '€',
     position: 'before',
-    decimalPlaces: 2,
+    decimalPlaces: 0,
     thousandsSeparator: '.',
     decimalSeparator: ','
   },

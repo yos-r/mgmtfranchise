@@ -61,6 +61,12 @@ export default {
           4: 'hsl(var(--chart-4))',
           5: 'hsl(var(--chart-5))',
         },
+        relentlessgold: '#beaf87',
+        darkgold: '#746649',
+        obsessedgrey: '#252526',
+        digitalblue: '#517394',
+        digitalbluetoo: '#28394A',
+        digitalblack: '#121212'
       },
       keyframes: {
         'accordion-down': {

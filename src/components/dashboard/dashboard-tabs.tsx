@@ -19,7 +19,7 @@ interface DashboardTabsProps {
 export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: DashboardTabsProps) {
     return (
         <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
+            <TabsList className="gri">
                 <TabsTrigger value="overview" className="button-2">{t('overview')}</TabsTrigger>
                 <TabsTrigger value="franchises" className="button-2">{t('franchises')}</TabsTrigger>
                 <TabsTrigger value="royalties" className="button-2">{t('royalties')}</TabsTrigger>

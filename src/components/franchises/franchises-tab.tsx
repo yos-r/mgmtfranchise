@@ -77,7 +77,7 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                 new Date(latestContract.expiration_date) >= currentDate;
                 
             const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(currentDate.getDate() - 180);
+            thirtyDaysAgo.setDate(currentDate.getDate() - 60);
             const isNew = new Date(latestContract?.start_date) >= thirtyDaysAgo; //creation date
             
             const isTerminated = franchise.franchise_contracts?.every(
@@ -263,13 +263,13 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                                         checked={activeFilters.includes("expiringFranchises")}
                                         onCheckedChange={() => toggleFilter("expiringFranchises")}
                                     >
-                                        Expiring Soon (30 Days)
+                                        Expiring Soon (180 Days)
                                     </DropdownMenuCheckboxItem>
                                     <DropdownMenuCheckboxItem
                                         checked={activeFilters.includes("newFranchises")}
                                         onCheckedChange={() => toggleFilter("newFranchises")}
                                     >
-                                        New Franchises (30 Days)
+                                        New Franchises (60 Days)
                                     </DropdownMenuCheckboxItem>
                                     <DropdownMenuCheckboxItem
                                         checked={activeFilters.includes("terminatedFranchises")}

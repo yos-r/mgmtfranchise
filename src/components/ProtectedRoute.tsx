@@ -17,7 +17,7 @@ const LoadingSpinner = () => {
             <div className="flex items-center justify-center w-full h-full">
               <img 
                 src="https://images.seeklogo.com/logo-png/32/2/century-21-logo-png_seeklogo-328619.png" 
-                className="w-16 h-16 object-contain -ml-2"
+                className="w-16 h-16 object-contain -ml-2.5"
                 alt="Century 21 logo"
                 style={{ transform: 'translateY(0px)' }} // Fine-tune position if needed
               /> 
