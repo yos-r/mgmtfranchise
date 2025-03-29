@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Euro, Plus, Receipt, Eye, Edit, MoreHorizontal, History, Calendar, Filter } from "lucide-react";
+import { Plus, Receipt, Eye, Edit, MoreHorizontal, History, Calendar, Filter, Banknote } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/auth";
 import { RecordPaymentDialog } from './record-payment-dialog';
@@ -41,8 +41,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { useCurrency } from '@/hooks/useCurrency';
 export function PaymentsHistory({ franchise }: any) {
+  const {formatCurrency} =useCurrency();
   const [payments, setPayments] = useState<any[]>([]);
   const [paymentLogs, setPaymentLogs] = useState<Record<string, number>>({});
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
@@ -456,20 +457,20 @@ export function PaymentsHistory({ franchise }: any) {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
-                        <Euro className="h-3 w-3 text-muted-foreground" />
-                        <span>{payment.amount?.toLocaleString() || payment.total_amount?.toLocaleString()}</span>
+                        <Banknote className="h-3 w-3 text-muted-foreground" />
+                        <span>{formatCurrency(payment.amount) }</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
-                        <Euro className="h-3 w-3 text-muted-foreground" />
-                        <span>{payment.royalty_amount?.toLocaleString() || payment.total_amount?.toLocaleString()}</span>
+                        <Banknote className="h-3 w-3 text-muted-foreground" />
+                        <span>{formatCurrency(payment.royalty_amount)} f</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
-                        <Euro className="h-3 w-3 text-muted-foreground" />
-                        <span>{payment.marketing_amount?.toLocaleString() || payment.total_amount?.toLocaleString()}</span>
+                        <Banknote className="h-3 w-3 text-muted-foreground" />
+                        <span>{formatCurrency(payment.marketing_amount)}</span>
                       </div>
                     </TableCell>
                     <TableCell>{format(new Date(payment.due_date), 'MMM d, yyyy')}</TableCell>

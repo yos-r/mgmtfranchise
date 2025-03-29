@@ -12,10 +12,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { TrendingUp, TrendingDown } from 'lucide-react';
-
+import { useCurrency } from '@/hooks/useCurrency';
 const TopPerformingRegionsCard = () => {
   const [viewMode, setViewMode] = useState('revenue');
-  
+  const { formatCurrency } = useCurrency();
   // Sample data for top performing regions with more context
   const regionData = [
     { name: "Paris", revenue: 842500, growth: 12.3 },
@@ -31,9 +31,7 @@ const TopPerformingRegionsCard = () => {
   );
   
   // Format currency values
-  const formatCurrency = (value) => {
-    return `€${value.toLocaleString()}`;
-  };
+  
 
   // Format growth values with + or - sign
   const formatGrowth = (value) => {

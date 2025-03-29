@@ -12,11 +12,13 @@ import {
   Ban,
   Edit,
   Trash2,
+  Banknote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useCurrency } from '@/hooks/useCurrency';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,7 +71,7 @@ export function FranchiseHeader({ franchise, contract, loadFranchises, onDelete,
   const [isTerminating, setIsTerminating] = useState(false);
   const [isRenewing, setIsRenewing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  
+  const {formatCurrency}=useCurrency();
   // Check if contract exists before accessing its properties
   const hasContract = contract !== undefined;
   const isContractTerminated = hasContract && contract.terminated === true;
@@ -433,24 +435,24 @@ export function FranchiseHeader({ franchise, contract, loadFranchises, onDelete,
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <Euro className="h-4 w-4 text-muted-foreground" />
+                        <Banknote className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">Initial Fee</span>
                       </div>
-                      <p className="text-lg font-semibold">€{contract.initial_fee.toLocaleString()}</p>
+                      <p className="text-lg font-semibold">{formatCurrency(contract.initial_fee)}</p>
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <Euro className="h-4 w-4 text-muted-foreground" />
+                        <Banknote className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">Monthly Royalty</span>
                       </div>
-                      <p className="text-lg font-semibold">€{contract.royalty_amount.toLocaleString()}</p>
+                      <p className="text-lg font-semibold">{formatCurrency(contract.royalty_amount)}</p>
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <Euro className="h-4 w-4 text-muted-foreground" />
+                        <Banknote className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">Marketing Fee</span>
                       </div>
-                      <p className="text-lg font-semibold">€{contract.marketing_amount.toLocaleString()}</p>
+                      <p className="text-lg font-semibold">{formatCurrency(contract.marketing_amount)}</p>
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">

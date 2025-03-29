@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { FranceRegionsMap } from "./france-region-map";
 import TopPerformingRegionsCard from "./top-performing-regions-card";
-
+import { useCurrency } from "@/hooks/useCurrency";
 interface OverviewStats {
   totalFranchises: number;
   monthlyRevenue: number;
@@ -25,6 +25,7 @@ export function OverviewTab() {
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { formatCurrency } = useCurrency();
 
   const loadStats = async () => {
     try {
@@ -244,20 +245,7 @@ export function OverviewTab() {
             </p>
           </CardContent>
         </Card>
-        {/* <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">
-              {t('franchiseGrowth')}
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{stats?.franchiseGrowth.toFixed(1)}%</div>
-            <p className="legal text-muted-foreground">
-              Month-over-month growth rate
-            </p>
-          </CardContent>
-        </Card> */}
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="tagline-3">
@@ -266,7 +254,7 @@ export function OverviewTab() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">€{stats?.monthlyRevenue.toLocaleString()}</div>
+            <div className="numbers text-2xl font-bold">{formatCurrency(stats?.monthlyRevenue)}</div>
             <p className="legal text-muted-foreground">
               {stats?.revenueGrowth > 0 ? '+' : ''}{stats?.revenueGrowth.toFixed(1)}% from last month
             </p>
