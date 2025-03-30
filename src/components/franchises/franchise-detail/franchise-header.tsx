@@ -433,13 +433,20 @@ export function FranchiseHeader({ franchise, contract, loadFranchises, onDelete,
                 <div className="space-y-2">
                   <h3 className="font-semibold">Contract Details</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    {contract.initial_fee>0 && <div>
                       <div className="flex items-center space-x-2">
                         <Banknote className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">Initial Fee</span>
                       </div>
                       <p className="text-lg font-semibold">{formatCurrency(contract.initial_fee)}</p>
-                    </div>
+                    </div>}
+                    {contract.renewal_fee>0 && <div>
+                      <div className="flex items-center space-x-2">
+                        <Banknote className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Renewal Fee</span>
+                      </div>
+                      <p className="text-lg font-semibold">{formatCurrency(contract.renewal_fee)}</p>
+                    </div>}
                     <div>
                       <div className="flex items-center space-x-2">
                         <Banknote className="h-4 w-4 text-muted-foreground" />

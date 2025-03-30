@@ -109,7 +109,7 @@ export function RenewFranchiseContract({ franchise, contract, loadFranchises }: 
                     annual_increase: values.annualIncrease,
                     grace_period_months: values.gracePeriodMonths
                 })
-                .select()
+            .select()
                 .single();
 
             if (contractError) throw contractError;
@@ -132,6 +132,7 @@ export function RenewFranchiseContract({ franchise, contract, loadFranchises }: 
                 
                 const payment = {
                     franchise_id: franchise.id,
+                    contract_id: newContractData.id,
                     due_date: currentDate.toISOString(),
                     amount: monthlyRoyalty + monthlyMarketing,
                     royalty_amount: monthlyRoyalty,

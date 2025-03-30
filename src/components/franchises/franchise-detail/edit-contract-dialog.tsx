@@ -45,6 +45,78 @@ interface EditContractDialogProps {
   franchiseId: string;
 }
 
+// Function to generate monthly payments
+async function generateMonthlyPayments(
+  franchiseId, 
+  contractId, 
+  startDate, 
+  durationYears, 
+  royaltyAmount, 
+  marketingAmount, 
+  annualIncrease,
+  graceMonths = 0
+) {
+  const payments = [];
+  let currentDate = new Date(startDate);
+  const endDate = new Date(startDate);
+  endDate.setFullYear(endDate.getFullYear() + durationYears);
+
+  let monthlyRoyalty = royaltyAmount;
+  let monthlyMarketing = marketingAmount;
+  let monthCounter = 0; // Track which month we're on
+
+  while (currentDate < endDate) {
+    // Determine status based on grace period
+    const status = monthCounter < graceMonths ? 'grace' : 'upcoming';
+    
+    const payment = {
+      franchise_id: franchiseId,
+      contract_id: contractId,
+      due_date: currentDate.toISOString(),
+      amount: monthlyRoyalty + monthlyMarketing,
+      royalty_amount: monthlyRoyalty,
+      marketing_amount: monthlyMarketing,
+      status: status
+    };
+
+    payments.push(payment);
+
+    // Move to next month
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    monthCounter++; // Increment month counter
+
+    // Annual increase (when we reach same month as start date)
+    if (currentDate.getMonth() === new Date(startDate).getMonth()) {
+      monthlyRoyalty *= (1 + annualIncrease / 100);
+      monthlyMarketing *= (1 + annualIncrease / 100);
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('royalty_payments')
+    .insert(payments);
+
+  if (error) {
+    console.error('Error inserting payments:', error);
+    throw error;
+  }
+
+  return payments;
+}
+
+// Function to delete existing payments for a contract
+async function deleteExistingPayments(contractId) {
+  const { error } = await supabase
+    .from('royalty_payments')
+    .delete()
+    .eq('contract_id', contractId);
+
+  if (error) {
+    console.error('Error deleting existing payments:', error);
+    throw error;
+  }
+}
+
 export function EditContractDialog({
   contract,
   open,
@@ -124,9 +196,27 @@ export function EditContractDialog({
         throw error;
       }
 
+      // Delete existing payments for this contract
+      await deleteExistingPayments(contract.id);
+
+      // Regenerate payments for the updated contract
+      // Only regenerate if contract is not terminated
+      if (!isTerminated) {
+        await generateMonthlyPayments(
+          franchiseId,
+          contract.id,
+          startDate,
+          durationYears,
+          royaltyAmount,
+          marketingAmount,
+          annualIncrease,
+          gracePeriodMonths
+        );
+      }
+
       toast({
         title: "Contract Updated",
-        description: "Contract has been successfully updated",
+        description: "Contract and payment schedule have been successfully updated",
       });
       
       onOpenChange(false);

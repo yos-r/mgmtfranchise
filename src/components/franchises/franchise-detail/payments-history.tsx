@@ -464,7 +464,7 @@ export function PaymentsHistory({ franchise }: any) {
                     <TableCell>
                       <div className="flex items-center space-x-1">
                         <Banknote className="h-3 w-3 text-muted-foreground" />
-                        <span>{formatCurrency(payment.royalty_amount)} f</span>
+                        <span>{formatCurrency(payment.royalty_amount)} </span>
                       </div>
                     </TableCell>
                     <TableCell>

@@ -107,6 +107,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
 
   async function generateMonthlyPayments(
     franchiseId: number, 
+    contractId: number,
     startDate: Date, 
     durationYears: number, 
     royaltyAmount: number, 
@@ -129,6 +130,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
         
         const payment = {
           franchise_id: franchiseId,
+          contract_id: contractId,
           due_date: currentDate.toISOString(),
           amount: monthlyRoyalty+monthlyMarketing,
           royalty_amount: monthlyRoyalty,
@@ -204,7 +206,8 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
 
       // Generate payments
       await generateMonthlyPayments(
-        data.id,
+        data.id, // newly created franchise
+        contractData.id, // newly created contract
         new Date(validatedData.startDate),
         validatedData.contractDuration,
         validatedData.royaltyAmount,

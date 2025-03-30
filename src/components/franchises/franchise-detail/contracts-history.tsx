@@ -186,14 +186,14 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
                         <Eye className="mr-2 h-4 w-4" />
                         View
                       </Button>
-                      {/* <Button
+                      <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditContract(contract)}
                       >
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
-                      </Button> */}
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
