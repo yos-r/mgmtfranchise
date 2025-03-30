@@ -28,9 +28,9 @@ return (
       <div className="border-b">
         <div className="flex h-16 items-center px-4">
           <div className="flex items-center gap-2">
-            <img src='https://upload.wikimedia.org/wikipedia/commons/9/93/Century_21_seal_2018.svg' className='w-10 h-10'></img>
+            <img src='https://upload.wikimedia.org/wikipedia/commons/9/93/Century_21_seal_2018.svg' className='w-9 h-9'></img>
 
-            <h1 className="text-xl">{title}</h1>
+            <h1 className="text-xl font-semibold ">{title}</h1>
           </div>
           <div className="ml-auto flex items-center space-x-4">
             {onBackClick && (

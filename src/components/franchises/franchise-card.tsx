@@ -97,14 +97,31 @@ export function FranchiseCard({ franchise, onSelect }: FranchiseCardProps) {
       <CardContent className="p-6">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">{franchise.name}</h3>
-              <p className="text-sm text-muted-foreground">{franchise.owner_name}</p>
+            <div className="flex items-center gap-3">
+              {/* Logo */}
+              <div className="flex-shrink-0">
+                {franchise.logo ? (
+                  <img src={franchise.logo} alt={franchise.name} className="w-12 h-12 rounded-sm object-contain" />
+                ) : (
+                  <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/9/93/Century_21_seal_2018.svg" 
+                    alt="Century 21" 
+                    className="w-10 h-10 rounded-sm" 
+                  />
+                )}
+              </div>
+              
+              {/* Franchise name and owner */}
+              <div>
+                <h3 className="font-medium">{franchise.name}</h3>
+                <p className="text-sm text-muted-foreground">{franchise.owner_name}</p>
+              </div>
             </div>
             <Badge className={getStatusColor(franchise.status)}>
               {franchise.status}
             </Badge>
           </div>
+          
           <div className="flex items-center text-sm">
             <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
             <span>{franchise.address}</span>

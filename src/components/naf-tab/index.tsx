@@ -9,6 +9,7 @@ import {
   Eye,
   Euro,
   Calendar,
+  Info,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { MarketingActionDetail } from "./marketing-action-detail";
 import { CreateActionDialog } from "./create-action-dialog";
@@ -146,21 +153,20 @@ export function NAFTab() {
   }
 
   // Load budget data
-  // Load budget data
-const loadBudgetData = async () => {
-  try {
-    // Pass the selected year to the calculateMarketingBudget function
-    const data = await calculateMarketingBudget(null, selectedYear);
-    setBudgetData(data);
-  } catch (error) {
-    console.error("Error loading budget data:", error);
-    toast({
-      title: "Error loading budget data",
-      description: "Failed to load marketing budget information",
-      variant: "destructive",
-    });
-  }
-};
+  const loadBudgetData = async () => {
+    try {
+      // Pass the selected year to the calculateMarketingBudget function
+      const data = await calculateMarketingBudget(null, selectedYear);
+      setBudgetData(data);
+    } catch (error) {
+      console.error("Error loading budget data:", error);
+      toast({
+        title: "Error loading budget data",
+        description: "Failed to load marketing budget information",
+        variant: "destructive",
+      });
+    }
+  };
 
   const loadMarketingActions = async () => {
     try {
@@ -258,6 +264,8 @@ const loadBudgetData = async () => {
   };
 
   const activeActions = marketingActions.filter(action => action).length;
+  const totalSpent = marketingActions.reduce((sum, action) => sum + (action.spent || 0), 0);
+  const ytdSpentPercentage = budgetData.totalBudget > 0 ? Math.round((totalSpent / budgetData.totalBudget) * 100) : 0;
 
   if (selectedAction) {
     return (
@@ -330,13 +338,27 @@ const loadBudgetData = async () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">YTD Spent</CardTitle>
+            <CardTitle className="tagline-3">
+              <div className="flex items-center gap-2">
+                YTD Spent
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>This percentage represents the ratio of funds spent on marketing actions (€{totalSpent.toLocaleString()}) to the total annual budget (€{budgetData.totalBudget.toLocaleString()}).</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">{budgetData.totalBudget > 0 ? Math.round((budgetData.totalCollected / budgetData.totalBudget) * 100) : 0}%</div>
+            <div className="numbers text-2xl font-bold">{ytdSpentPercentage}%</div>
             <p className="legal text-muted-foreground">
-              Collected marketing royalties
+              Of annual marketing budget
             </p>
           </CardContent>
         </Card>
@@ -354,13 +376,28 @@ const loadBudgetData = async () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Available Balance</CardTitle>
+            <CardTitle className="tagline-3 flex gap-x-2">
+              Available Balance <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>This value represents the difference between the collected marketing royalties (€{budgetData.totalCollected.toLocaleString()}) and the funds spent on marketing actions (€{totalSpent.toLocaleString()}) .</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider></CardTitle>
+            
             <PiggyBank className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">€{budgetData.remainingBudget.toLocaleString()}</div>
+            <div 
+              className={`numbers text-2xl font-bold ${budgetData.totalCollected - totalSpent < 0 ? 'text-red-500' : ''}`}
+            >
+              €{(budgetData.totalCollected - totalSpent).toLocaleString()}
+            </div>
             <p className="legal text-muted-foreground">
-              ?
+              Remaining marketing funds
             </p>
           </CardContent>
         </Card>
@@ -379,8 +416,7 @@ const loadBudgetData = async () => {
                 <TableRow>
                   <TableHead className="label-1">Action</TableHead>
                   <TableHead className="label-1">Type</TableHead>
-                  <TableHead className="label-1">Budget</TableHead>
-                  {/* <TableHead className="label-1">Spent</TableHead> */}
+                  <TableHead className="label-1">Spent</TableHead>
                   <TableHead className="label-1">Start Date</TableHead>
                   <TableHead className="label-1">End Date</TableHead>
                   <TableHead className="label-1">Status</TableHead>
@@ -397,15 +433,9 @@ const loadBudgetData = async () => {
                     <TableCell>
                       <div className="flex items-center space-x-1">
                         <Euro className="h-3 w-3 text-muted-foreground" />
-                        <span>{action.budget.toLocaleString()}</span>
-                      </div>
-                    </TableCell>
-                    {/* <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <Euro className="h-3 w-3 text-muted-foreground" />
                         <span>{action.spent.toLocaleString()}</span>
                       </div>
-                    </TableCell> */}
+                    </TableCell>
                     <TableCell>{format(new Date(action.start_date), 'MMM d, yyyy')}</TableCell>
                     <TableCell>{format(new Date(action.end_date), 'MMM d, yyyy')}</TableCell>
                     <TableCell>

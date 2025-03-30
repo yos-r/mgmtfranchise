@@ -26,7 +26,7 @@ interface MarketingAction {
   id: string;
   title: string;
   type: string;
-  budget: number;
+  // budget: number;
   spent: number;
   status: string;
   start_date: string;
@@ -57,7 +57,7 @@ export function EditActionDialog({
   const [formData, setFormData] = useState({
     title: '',
     type: '',
-    budget: '',
+    spent: '',
     status: '',
     startDate: '',
     endDate: '',
@@ -71,7 +71,7 @@ export function EditActionDialog({
       setFormData({
         title: action.title || '',
         type: action.type || '',
-        budget: action.budget?.toString() || '',
+        spent: action.spent?.toString() || '',
         status: action.status || 'planned',
         startDate: action.start_date?.split('T')[0] || '',
         endDate: action.end_date?.split('T')[0] || '',
@@ -119,7 +119,7 @@ export function EditActionDialog({
       setIsSubmitting(true);
       
       // Validate required fields
-      if (!formData.title || !formData.type || !formData.budget || !formData.startDate || !formData.endDate || !formData.status) {
+      if (!formData.title || !formData.type || !formData.spent || !formData.startDate || !formData.endDate || !formData.status) {
         toast({
           title: "Validation Error",
           description: "Please fill in all required fields",
@@ -135,7 +135,7 @@ export function EditActionDialog({
         .update({
           title: formData.title,
           type: formData.type,
-          budget: parseFloat(formData.budget),
+          spent: parseFloat(formData.spent),
           status: formData.status,
           start_date: formData.startDate,
           end_date: formData.endDate,
@@ -152,7 +152,7 @@ export function EditActionDialog({
         ...action,
         title: actionData.title,
         type: actionData.type,
-        budget: actionData.budget,
+        spent: actionData.spent,
         status: actionData.status,
         start_date: actionData.start_date,
         end_date: actionData.end_date,
@@ -365,12 +365,12 @@ export function EditActionDialog({
             </div>
           </div>
           <div className="grid gap-2">
-            <Label>Budget</Label>
+            <Label>Spent</Label>
             <Input
               type="number"
               placeholder="0.00"
-              value={formData.budget}
-              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+              value={formData.spent}
+              onChange={(e) => setFormData({ ...formData, spent: e.target.value })}
             />
           </div>
           <div className="grid gap-2">

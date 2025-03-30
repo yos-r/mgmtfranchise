@@ -268,15 +268,15 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                 <h3 className="text-sm font-medium">Budget Overview</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-sm text-muted-foreground">Total Budget</span>
-                    <p className="text-xl font-semibold">€{currentAction.budget.toLocaleString()}</p>
-                  </div>
-                  <div>
                     <span className="text-sm text-muted-foreground">Spent</span>
                     <p className="text-xl font-semibold">€{currentAction.spent.toLocaleString()}</p>
                   </div>
+                  {/* <div>
+                    <span className="text-sm text-muted-foreground">Spent</span>
+                    <p className="text-xl font-semibold">€{currentAction.spent.toLocaleString()}</p>
+                  </div> */}
                 </div>
-                <div className="w-full h-2 bg-secondary rounded-full mt-2">
+                {/* <div className="w-full h-2 bg-secondary rounded-full mt-2">
                   <div
                     className="h-2 bg-primary rounded-full"
                     style={{ width: `${Math.min((currentAction.spent / currentAction.budget) * 100, 100)}%` }}
@@ -284,7 +284,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                 </div>
                 <p className="text-sm text-muted-foreground text-right">
                   {Math.round((currentAction.spent / currentAction.budget) * 100)}% of budget used
-                </p>
+                </p> */}
               </div>
             </CardContent>
           </Card>

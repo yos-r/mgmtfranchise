@@ -11,39 +11,40 @@ export function TrainingHistory({ franchise }) {
 
   useEffect(() => {
     const fetchTrainingData = async () => {
-      if (!franchise?.id) return;
+      if (!franchise?.id) {
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
       
       try {
-        // First, get all training events
-        const { data: eventsData, error: eventsError } = await supabase
-          .from('training_events')
-          .select('*')
-          .order('date', { ascending: false });
-        
-        if (eventsError) throw eventsError;
-        
-        // Then, get attendance records for this franchise
+        // First, get the attendance records for this franchise
         const { data: attendanceData, error: attendanceError } = await supabase
           .from('training_attendance')
-          .select('*')
+          .select('*, training_events(*)')
           .eq('franchise_id', franchise.id);
         
         if (attendanceError) throw attendanceError;
         
-        // Map attendance data to events
-        const trainingWithAttendance = eventsData.map(event => {
-          const attendanceRecord = attendanceData.find(a => a.event_id === event.id);
+        // Map the joined data to our desired format
+        const trainingHistory = attendanceData.map(record => {
           return {
-            ...event,
-            attended: attendanceRecord ? attendanceRecord.attended : false,
-            // If no attendance record exists, the franchise didn't attend
-            attendanceId: attendanceRecord ? attendanceRecord.id : null
+            id: record.training_events.id,
+            title: record.training_events.title,
+            type: record.training_events.type,
+            date: record.training_events.date,
+            duration: record.training_events.duration,
+            trainer: record.training_events.trainer,
+            attended: record.attended,
+            attendanceId: record.id
           };
         });
         
-        setTrainings(trainingWithAttendance);
+        // Sort by date (newest first)
+        trainingHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        setTrainings(trainingHistory);
       } catch (error) {
         console.error('Error fetching training data:', error);
       } finally {

@@ -15,6 +15,7 @@ interface OverviewStats {
   monthlyRevenue: number;
   topPerformers: number;
   activeTickets: number;
+  assistanceVisits: number;
   revenueGrowth: number;
   franchiseGrowth: number;
   newFranchises: number;
@@ -33,7 +34,7 @@ export function OverviewTab() {
       const { data: franchises, error: franchisesError } = await supabase
         .from('franchises')
         .select('id, status');
-        // .not('status', 'eq', 'terminated');
+      // .not('status', 'eq', 'terminated');
 
       if (franchisesError) throw franchisesError;
 
@@ -75,19 +76,27 @@ export function OverviewTab() {
         .select('id, status')
         .in('status', ['open', 'in_progress']);
 
+
       if (ticketsError) throw ticketsError;
+
 
       // Calculate stats
       const monthlyRevenue = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
       const totalFranchises = franchises?.length || 0;
       const activeTickets = tickets?.length || 0;
-      
+
       // Get last month's stats for comparison
       const lastMonth = new Date();
       lastMonth.setMonth(lastMonth.getMonth() - 1);
       lastMonth.setDate(1);
       lastMonth.setHours(0, 0, 0, 0);
-
+      // Get visites d'assistance
+      const { data: assistance, error: assistanceError } = await supabase
+        .from('support_visits')
+        .select('date')
+        .gte('date', lastMonth.toISOString());
+        // .lt('date',startOfMonth.toISOString());
+      const assistanceVisits=assistance?.length || 0;
       const { data: lastMonthPayments } = await supabase
         .from('royalty_payments')
         .select('amount')
@@ -101,21 +110,21 @@ export function OverviewTab() {
       // Calculate franchise growth percentage
       const sixtyDaysAgo = new Date();
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-      
+
       const { data: previousPeriodContracts } = await supabase
         .from('franchise_contracts')
         .select('franchise_id, start_date')
         .gte('start_date', sixtyDaysAgo.toISOString())
         .lt('start_date', thirtyDaysAgo.toISOString());
-      
+
       const uniquePreviousFranchiseIds = new Set();
       previousPeriodContracts?.forEach(contract => {
         uniquePreviousFranchiseIds.add(contract.franchise_id);
       });
       const previousNewFranchises = uniquePreviousFranchiseIds.size;
-      
-      const franchiseGrowth = previousNewFranchises 
-        ? ((newFranchises - previousNewFranchises) / previousNewFranchises) * 100 
+
+      const franchiseGrowth = previousNewFranchises
+        ? ((newFranchises - previousNewFranchises) / previousNewFranchises) * 100
         : 0;
 
       // Calculate ticket resolution rate
@@ -128,8 +137,8 @@ export function OverviewTab() {
         .from('help_desk_tickets')
         .select('id');
 
-      const ticketResolutionRate = totalTickets?.length 
-        ? (resolvedTickets?.length || 0) / totalTickets.length * 100 
+      const ticketResolutionRate = totalTickets?.length
+        ? (resolvedTickets?.length || 0) / totalTickets.length * 100
         : 0;
 
       setStats({
@@ -137,6 +146,7 @@ export function OverviewTab() {
         monthlyRevenue,
         topPerformers: Math.round(totalFranchises * 0.15), // Assuming top 15% are top performers
         activeTickets,
+        assistanceVisits,
         revenueGrowth,
         franchiseGrowth,
         newFranchises,
@@ -241,11 +251,11 @@ export function OverviewTab() {
           <CardContent>
             <div className="numbers text-2xl font-bold">{stats?.totalFranchises}</div>
             <p className="legal text-muted-foreground">
-              +{stats?.newFranchises} new in the last 30 days
+              +{stats?.newFranchises}   depuis les 30 derniers jours
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="tagline-3">
@@ -256,21 +266,21 @@ export function OverviewTab() {
           <CardContent>
             <div className="numbers text-2xl font-bold">{formatCurrency(stats?.monthlyRevenue)}</div>
             <p className="legal text-muted-foreground">
-               Including marketing contributions
+              Including marketing contributions
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="tagline-3">
-              {t('topPerformers')}
+              Visites d'assistance
             </CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="numbers text-2xl font-bold">{stats?.topPerformers}</div>
+            <div className="numbers text-2xl font-bold">{stats?.assistanceVisits}</div>
             <p className="legal text-muted-foreground">
-              Exceeded targets this quarter
+              Réalisées dans les 30 derniers jours
             </p>
           </CardContent>
         </Card>
@@ -357,10 +367,10 @@ export function OverviewTab() {
             </div>
           </CardContent>
         </Card> */}
-          {/* <FranceRegionsMap /> */}
+        {/* <FranceRegionsMap /> */}
 
-        
-       
+
+
       </div>
     </div>
   );

@@ -42,12 +42,12 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
     if (!franchise.franchise_contracts || franchise.franchise_contracts.length === 0) {
       return "No contract";
     }
-    
+
     // Sort contracts by start_date to get the first one
     const sortedContracts = [...franchise.franchise_contracts].sort(
       (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
     );
-    
+
     return formatDate(sortedContracts[0].start_date);
   };
 
@@ -56,16 +56,16 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
     if (!franchise.franchise_contracts || franchise.franchise_contracts.length === 0) {
       return "No contract";
     }
-    
+
     // Sort contracts by start_date to get the last one
     const sortedContracts = [...franchise.franchise_contracts].sort(
       (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
     );
-    
+
     const lastContract = sortedContracts[sortedContracts.length - 1];
     const startDate = new Date(lastContract.start_date);
     startDate.setFullYear(startDate.getFullYear() + lastContract.duration_years);
-    
+
     return formatDate(startDate.toISOString());
   };
 
@@ -74,18 +74,18 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
     if (!franchise.franchise_contracts || franchise.franchise_contracts.length === 0) {
       return null;
     }
-    
+
     // Find terminated contract
     const terminatedContract = franchise.franchise_contracts.find(
       (contract: any) => contract.terminated === "yes" || contract.terminated === true
     );
-    
+
     return terminatedContract ? formatDate(terminatedContract.termination_date) : null;
   };
 
   const filteredFranchises = franchises.filter(franchise => {
     if (!searchQuery) return true;
-    
+
     const searchTerm = searchQuery.toLowerCase();
     return (
       (franchise.name || '').toLowerCase().includes(searchTerm) ||
@@ -116,6 +116,7 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
         <Table>
           <TableHeader>
             <TableRow>
+
               <TableHead className="w-[250px]">Franchise</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Status</TableHead>
@@ -126,32 +127,39 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFranchises.map((franchise) => {
+          {filteredFranchises.map((franchise) => {
               const isTerminated = franchise.status === "terminated";
               const terminationDate = getTerminationDate(franchise);
               const startDate = getStartDate(franchise);
               const expirationDate = getExpirationDate(franchise);
-              
+
               return (
                 <TableRow
                   key={franchise.id}
                   className="cursor-pointer"
                   onClick={() => onFranchiseSelect(franchise)}
                 >
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{franchise.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {franchise.owner_name}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <span>{franchise.address}</span>
-                    </div>
-                  </TableCell>
+                  <TableCell className="flex items-center gap-3">
+    {/* Logo */}
+    <div className="flex-shrink-0">
+      {franchise.logo && <img src={franchise.logo} alt="" className="w-12 rounded-sm" />}
+      {!franchise.logo && <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Century_21_seal_2018.svg" className="w-10 h-10 rounded-sm" />}
+    </div>
+    
+    {/* Franchise name and owner */}
+    <div>
+      <div className="font-medium">{franchise.name}</div>
+      <div className="text-sm text-muted-foreground">
+        {franchise.owner_name}
+      </div>
+    </div>
+  </TableCell>
+  <TableCell>
+    <div className="flex items-center">
+      <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+      <span>{franchise.address}</span>
+    </div>
+  </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(franchise.status)}>
                       {franchise.status}

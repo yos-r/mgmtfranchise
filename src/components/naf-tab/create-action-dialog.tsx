@@ -26,7 +26,7 @@ interface MarketingAction {
   id: string;
   title: string;
   type: string;
-  budget: number;
+  // budget: number;
   spent: number;
   status: string;
   start_date: string;
@@ -50,7 +50,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
   const [formData, setFormData] = useState({
     title: '',
     type: '',
-    budget: '',
+    spent: '',
     startDate: '',
     endDate: '',
     description: '',
@@ -70,7 +70,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
     setFormData({
       title: '',
       type: '',
-      budget: '',
+      spent: '',
       startDate: '',
       endDate: '',
       description: '',
@@ -97,7 +97,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
       setIsSubmitting(true);
       
       // Validate required fields
-      if (!formData.title || !formData.type || !formData.budget || !formData.startDate || !formData.endDate) {
+      if (!formData.title || !formData.type || !formData.spent || !formData.startDate || !formData.endDate) {
         toast({
           title: "Validation Error",
           description: "Please fill in all required fields",
@@ -113,12 +113,12 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
         .insert({
           title: formData.title,
           type: formData.type,
-          budget: parseFloat(formData.budget),
+          spent: parseFloat(formData.spent),
           start_date: formData.startDate,
           end_date: formData.endDate,
           description: formData.description,
           status: 'planned',
-          spent: 0,
+          // spent: 0,
         })
         .select()
         .single();
@@ -130,8 +130,8 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
         id: actionData.id,
         title: actionData.title,
         type: actionData.type,
-        budget: actionData.budget,
         spent: actionData.spent,
+        // spent: actionData.spent,
         status: actionData.status,
         start_date: actionData.start_date,
         end_date: actionData.end_date,
@@ -287,12 +287,12 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
             </div>
           </div>
           <div className="grid gap-2">
-            <Label>Budget</Label>
+            <Label>Spent</Label>
             <Input
               type="number"
               placeholder="0.00"
-              value={formData.budget}
-              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+              value={formData.spent}
+              onChange={(e) => setFormData({ ...formData, spent: e.target.value })}
             />
           </div>
           <div className="grid gap-2">
