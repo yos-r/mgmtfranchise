@@ -178,7 +178,7 @@ const MarketMetrics = ({
                                         <Clock className="h-4 w-4 text-darkgold" />
                                     </div>
                                     <div>
-                                        <p className="text-5xl font-bold text-darkgold">{averageDaysOnMarket}</p>
+                                        <p className="text-5xl font-bold text-darkgold">{averageDaysOnMarket} <p className="-ml-2 text-lg inline">days</p></p>
                                         <div className="flex items-center mt-1">
                                             <span className="text-sm text-darkgold">{daysRating}</span>
                                             {/* <span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${daysRating === "Excellent" ? "bg-darkgold text-white" :

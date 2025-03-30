@@ -1,5 +1,8 @@
 import React from 'react';
+ import immowebLogo from '../../public/immoweb.png';
+
 import {
+
     LineChart, Line, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
@@ -59,9 +62,9 @@ const InventoryChart = () => {
             <CardHeader className="border-b pb-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-gray-800">Inventaire des annonces immobilières</h2>
-                    <div className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border-2 flex gap-x-1 items-center">
-                            <img src="https://play-lh.googleusercontent.com/TtrYB0lXuRx5tJFP0Q8L2xFn245LLP5vRbZaPh0x7PxuSwUfmbV3WLiHwrRp296pVCg" className="w-4 h-4 inline rounded-sm" />
-                            <span>Immoweb</span>
+                    <div className=" text-blue-800 text-sm font-medium -mx-3 mt-1 -p rounded-lg  flex gap-x-1 items-center">
+                    <img src={immowebLogo} className="h-6 inline rounded-sm" alt="Immoweb" />
+                    {/* <span>Immoweb</span> */}
                         </div>
                 </div>
             </CardHeader>

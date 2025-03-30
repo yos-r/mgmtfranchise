@@ -9,6 +9,8 @@ import {
     SelectValue
 } from '@/components/ui/select';
 import { Card } from '../ui/card';
+ import immowebLogo from '../../public/immoweb.png';
+
 const AgencesWidget2 = () => {
     // Use the currency formatting hook
     const { formatCurrency } = useCurrency();
@@ -136,10 +138,10 @@ const AgencesWidget2 = () => {
                         <p className="text-gray-500"><b>92 </b>agences immobilières pour <b>564</b> biens en vente et <b>336</b> biens en location</p>
                     </div>
                     <div>
-                        <div className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border-2 flex gap-x-1 items-center">
-                            <img src="https://play-lh.googleusercontent.com/TtrYB0lXuRx5tJFP0Q8L2xFn245LLP5vRbZaPh0x7PxuSwUfmbV3WLiHwrRp296pVCg" className="w-4 h-4 inline rounded-sm" />
-                            <span>Immoweb</span>
-                        </div>
+                        <div className=" text-blue-800 text-sm font-medium -mx-3 mt-1 -p rounded-lg  flex gap-x-1 items-center">
+                                            <img src={immowebLogo} className="h-6 inline rounded-sm" alt="Immoweb" />
+                                            {/* <span>Immoweb</span> */}
+                                                </div>
                         {/* <Select value={viewMode} onValueChange={setViewMode}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Mode d'affichage" />
