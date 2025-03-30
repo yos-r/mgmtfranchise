@@ -18,11 +18,17 @@ const CommuneInfo = () => {
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Population  </h2>
+        </div>
+
+          <div className="flex gap-x-4 items-center">
+            <div className="bg-[#beaf87]/20 p-2 rounded-lg flex gap-x-2 items-center text-sm font">
+              <PersonIcon className="h-4 w-4 text-[#746649]" />
+              <b>120 000</b> habitants
+              </div>
+            <div className='bg-gray-100 p-2 -mx-2 border rounded-lg -mb-2 -mt-2'>
+              <img src="https://upload.wikimedia.org/wikipedia/fr/b/bc/Statbel_%28logo%29.svg" className='h-4 ' alt="" />
+            </div>
           </div>
-          <div className="bg-[#beaf87]/20 p-2 rounded-full flex gap-x-2 items-center text-sm font">
-          
-            <PersonIcon className="h-4 w-4 text-[#746649]" />
-            <b>120 000</b> habitants           </div>
 
         </div>
       </CardHeader>
@@ -65,7 +71,7 @@ const CommuneInfo = () => {
           </div>
         </div>
 
-        
+
       </CardContent>
     </Card>
   );

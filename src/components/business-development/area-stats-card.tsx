@@ -10,7 +10,7 @@ const AreaStatsCard = ({ areaName = "Quartier Centre", totalAgencies, population
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Marché </h2>
           </div>
-          <div className="bg-[#beaf87]/20 p-2 rounded-full">
+          <div className="bg-[#beaf87]/20 p-2 rounded-lg">
             <BarChart className="h-5 w-5 text-[#746649]" />
           </div>
         </div>
@@ -20,8 +20,8 @@ const AreaStatsCard = ({ areaName = "Quartier Centre", totalAgencies, population
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-6 mt-6">
           {/* nombre de biens stat */}
           <div className="flex flex-col items-center">
-            <div className="p-3 rounded-sm bg-[#beaf87]/20 mb-2">
-              <MapPinHouse className="h-6 w-6 text-[#746649]" />
+            <div className="p-3 rounded-sm  bg-gray-100 mb-2">
+              <MapPinHouse className="h-6 w-6 text-obsessedgrey" />
               {/* <MapPinHouse></MapPinHouse> */}
             </div>
             <p className="text-2xl font-bold text-gray-800">900</p>

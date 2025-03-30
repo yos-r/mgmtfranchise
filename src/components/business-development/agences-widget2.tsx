@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useCurrency } from '@/hooks/useCurrency';
 import {
     Select,
-    SelectContent,
+SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue

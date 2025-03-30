@@ -84,7 +84,7 @@ const RealEstateMetrics = () => {
 
 
 
-                    <div className="flex flex-col justify-between p-4 bg-[#252526]/10 rounded-lg shadow-sm h-40">
+                    {/* <div className="flex flex-col justify-between p-4 bg-[#252526]/10 rounded-lg shadow-sm h-40">
                         <div className="flex justify-between items-start">
                             <span className="text-xs font-medium text-obsessedblack bg-white bg-opacity-70 px-2 py-1 rounded-full">
                                 Ancienneté
@@ -99,7 +99,7 @@ const RealEstateMetrics = () => {
                             <History className="h-3 w-3 text-obsessedblack" />
                             <span className="text-xs text-obsessedblack">31% avant 1950</span>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </CardContent>
         </Card>
