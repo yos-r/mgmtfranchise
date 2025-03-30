@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,8 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import { TrendingUp, TrendingDown, Percent, Building2, ListFilter } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AlertTriangle, TrendingUp, TrendingDown, Percent, Building2, ListFilter } from "lucide-react";
 import { RevenueTrendChart } from "./revenue-trend-chart";
 import { MarketShareDistribution } from "./market-share-distribution";
 import { PerformanceMetrics } from "./performance-metrics";
@@ -123,73 +129,109 @@ function MetricCard({ title, value, change, icon: Icon, trend }: {
   );
 }
 
-export function PerformanceTab() {
+export function PerformanceTab({ onHome }) {
   const [timeframe, setTimeframe] = useState("3m");
+  const [warningOpen, setWarningOpen] = useState(true);
+  
+  // Force dialog to stay open
+  useEffect(() => {
+    if (!warningOpen) {
+      setWarningOpen(true);
+    }
+  }, [warningOpen]);
+  
   const totalListings = performanceMetrics.reduce((acc, curr) => acc + curr.listings, 0);
   const totalTransactions = performanceMetrics.reduce((acc, curr) => acc + curr.transactions, 0);
   const avgConversionRate = performanceMetrics.reduce((acc, curr) => acc + curr.conversionRate, 0) / performanceMetrics.length;
+  
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="tagline-1">Performance Analytics</h2>
-          <p className="body-lead text-muted-foreground">
-            Track and analyze franchise performance metrics
-          </p>
+    <>
+      {/* Warning Dialog that cannot be closed */}
+      <Dialog open={warningOpen} onOpenChange={setWarningOpen, onHome}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogHeader className="flex flex-col items-center text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-2">
+              <AlertTriangle className="h-6 w-6 text-red-600" />
+            </div>
+            <DialogTitle className="text-xl font-semibold">Connexion au CRM requise</DialogTitle>
+            <DialogDescription className="pt-2 text-center">
+              Vous devez connecter le CRM de votre agence pour charger les données ici.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center mt-4">
+            <Button className="bg-relentlessgold " onClick={onHome}>
+              Configurer la connexion CRM
+            </Button>
+          </div>
+          <div className="text-center text-sm text-gray-500 mt-2">
+            Contactez le support technique si vous avez besoin d'aide
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Main content (blurred) */}
+      <div className="space-y-6 filter blur pointer-events-none">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="tagline-1">Performance Analytics</h2>
+            <p className="body-lead text-muted-foreground">
+              Track and analyze franchise performance metrics
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Select defaultValue={timeframe} onValueChange={setTimeframe}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select timeframe" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1m">Last Month</SelectItem>
+                <SelectItem value="3m">Last 3 Months</SelectItem>
+                <SelectItem value="6m">Last 6 Months</SelectItem>
+                <SelectItem value="1y">Last Year</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" className="button-2">
+              <ListFilter className="mr-2 h-4 w-4" />
+              Filters
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Select defaultValue={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select timeframe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1m">Last Month</SelectItem>
-              <SelectItem value="3m">Last 3 Months</SelectItem>
-              <SelectItem value="6m">Last 6 Months</SelectItem>
-              <SelectItem value="1y">Last Year</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" className="button-2">
-            <ListFilter className="mr-2 h-4 w-4" />
-            Filters
-          </Button>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <MetricCard
+            title="Total Listings"
+            value={totalListings}
+            change={5.2}
+            icon={Building2}
+            trend="up"
+          />
+          <MetricCard
+            title="Total Transactions"
+            value={totalTransactions}
+            change={3.8}
+            icon={TrendingUp}
+            trend="up"
+          />
+          <MetricCard
+            title="Conversion Rate"
+            value={`${avgConversionRate.toFixed(1)}%`}
+            change={-1.2}
+            icon={Percent}
+            trend="down"
+          />
+          <MetricCard
+            title="Market Share"
+            value="70.7%"
+            change={2.1}
+            icon={TrendingUp}
+            trend="up"
+          />
         </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <RevenueTrendChart monthlyData={monthlyData} />
+          <MarketShareDistribution marketShareData={marketShareData} />
+        </div>
+        <PerformanceMetrics performanceMetrics={performanceMetrics} />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Total Listings"
-          value={totalListings}
-          change={5.2}
-          icon={Building2}
-          trend="up"
-        />
-        <MetricCard
-          title="Total Transactions"
-          value={totalTransactions}
-          change={3.8}
-          icon={TrendingUp}
-          trend="up"
-        />
-        <MetricCard
-          title="Conversion Rate"
-          value={`${avgConversionRate.toFixed(1)}%`}
-          change={-1.2}
-          icon={Percent}
-          trend="down"
-        />
-        <MetricCard
-          title="Market Share"
-          value="70.7%"
-          change={2.1}
-          icon={TrendingUp}
-          trend="up"
-        />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <RevenueTrendChart monthlyData={monthlyData} />
-        <MarketShareDistribution marketShareData={marketShareData} />
-      </div>
-      <PerformanceMetrics performanceMetrics={performanceMetrics} />
-    </div>
+    </>
   );
 }

@@ -132,11 +132,15 @@ const AgencesWidget2 = () => {
             <div className="bg-white p-6 rounded-xl shadow-xl w-full">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-800">Meilleures agences immobilières</h2>
-                        <p className="text-gray-500">Ratio vente/location par agence</p>
+                        <h2 className="text-2xl font-bold text-gray-800">Les agences immobilières et le marché</h2>
+                        <p className="text-gray-500"><b>92 </b>agences immobilières pour <b>564</b> biens en vente et <b>336</b> biens en location</p>
                     </div>
                     <div>
-                        <Select value={viewMode} onValueChange={setViewMode}>
+                        <div className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-lg border-2 flex gap-x-1 items-center">
+                            <img src="https://play-lh.googleusercontent.com/TtrYB0lXuRx5tJFP0Q8L2xFn245LLP5vRbZaPh0x7PxuSwUfmbV3WLiHwrRp296pVCg" className="w-4 h-4 inline rounded-sm" />
+                            <span>Immoweb</span>
+                        </div>
+                        {/* <Select value={viewMode} onValueChange={setViewMode}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Mode d'affichage" />
                             </SelectTrigger>
@@ -144,7 +148,7 @@ const AgencesWidget2 = () => {
                                 <SelectItem value="volume">Nombre de biens</SelectItem>
                                 <SelectItem value="revenue">Revenus</SelectItem>
                             </SelectContent>
-                        </Select>
+                        </Select> */}
                     </div>
                 </div>
                 <div className="grid gap-8 lg:grid-cols-2">
@@ -190,6 +194,8 @@ const AgencesWidget2 = () => {
                                             <th className="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Vente (%)</th>
                                             <th className="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Location (%)</th>
                                             <th className="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Biens</th>
+                                            <th className="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Market Share (%)</th>
+
                                         </>
                                     ) : (
                                         <>
@@ -204,12 +210,12 @@ const AgencesWidget2 = () => {
                                 {dataWithRatios.map((agence, index) => (
                                     <tr
                                         key={agence.nom}
-                                        className={`hover:bg-gray-50 transition-colors ${index === 0 ? 'bg-indigo-50' : ''}`}
+                                        className={`hover:bg-gray-50 transition-colors ${index === 0 ? 'bg-relentlessgold/20' : ''}`}
                                     >
                                         <td className="py-3 px-4 text-gray-800 font-medium">
                                             <div className="flex items-center">
                                                 {index === 0 && (
-                                                    <span className="inline-flex items-center justify-center w-6 h-6 mr-2 rounded-full text-xs font-bold" style={{ backgroundColor: `${venteColor}20`, color: venteColor }}>1</span>
+                                                    <span className="inline-flex items-center justify-center w-6 h-6 mr-2 rounded-full text-xs font-bold" style={{ backgroundColor: `${venteColor}80`, color: 'white' }}>1</span>
                                                 )}
                                                 {agence.nom}
                                             </div>
@@ -229,6 +235,8 @@ const AgencesWidget2 = () => {
                                                     </div>
                                                 </td>
                                                 <td className="py-3 px-4 text-center text-gray-800 font-bold">{agence.total}</td>
+                                                <td className="py-3 px-4 text-center text-gray-800 font-bold">{Math.floor(agence.total / 500 * 100)}%</td>
+
                                             </>
                                         ) : (
                                             <>

@@ -13,8 +13,10 @@ const RealEstateMetrics = () => {
             <CardHeader className=" border-b pb-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-gray-800">Statistiques des bâtiments </h2>
-                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-[#beaf87]/50 text-[#746649]">Census 2021-2024 Statbel</span>
-                </div>
+                    <div className='bg-gray-100 p-2 -mx-2 border rounded-lg -mb-2 -mt-2'>
+                        <img src="https://upload.wikimedia.org/wikipedia/fr/b/bc/Statbel_%28logo%29.svg" className='h-4 ' alt="" />
+                    </div>                    
+                                </div>
             </CardHeader>
             <CardContent className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -78,9 +80,9 @@ const RealEstateMetrics = () => {
                         </div>
                     </div>
 
-                    
 
-                    
+
+
 
                     <div className="flex flex-col justify-between p-4 bg-[#252526]/10 rounded-lg shadow-sm h-40">
                         <div className="flex justify-between items-start">

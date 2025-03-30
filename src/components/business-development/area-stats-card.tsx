@@ -8,16 +8,25 @@ const AreaStatsCard = ({ areaName = "Quartier Centre", totalAgencies, population
       <CardHeader className="border-b py-4">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Aperçu </h2>
+            <h2 className="text-2xl font-bold text-gray-900">Marché </h2>
           </div>
           <div className="bg-[#beaf87]/20 p-2 rounded-full">
-            <BarChart className="h-6 w-6 text-[#746649]" />
+            <BarChart className="h-5 w-5 text-[#746649]" />
           </div>
         </div>
       </CardHeader>
       
       <CardContent>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-6 mt-6">
+          {/* nombre de biens stat */}
+          <div className="flex flex-col items-center">
+            <div className="p-3 rounded-sm bg-[#beaf87]/20 mb-2">
+              <MapPinHouse className="h-6 w-6 text-[#746649]" />
+              {/* <MapPinHouse></MapPinHouse> */}
+            </div>
+            <p className="text-2xl font-bold text-gray-800">900</p>
+            <p className="text-xs text-gray-500 text-center">Biens <br /> disponibles</p>
+          </div>
             {/* Population stat */}
           <div className="flex flex-col items-center">
             <div className="p-3 rounded-sm bg-[#beaf87]/20 mb-2">
@@ -35,26 +44,19 @@ const AreaStatsCard = ({ areaName = "Quartier Centre", totalAgencies, population
               <Building2 className="h-6 w-6 text-gray-600" />
             </div>
             <p className="text-2xl font-bold text-gray-800">{totalAgencies}</p>
-            <p className="text-xs text-gray-500 text-center"> Agences actives</p>
+            <p className="text-xs text-gray-500 text-center"> Agences <br /> actives</p>
           </div>
           
-          {/* Population stat */}
-          <div className="flex flex-col items-center">
-            <div className="p-3 rounded-sm bg-[#beaf87]/20 mb-2">
-              <MapPinHouse className="h-6 w-6 text-[#746649]" />
-              {/* <MapPinHouse></MapPinHouse> */}
-            </div>
-            <p className="text-2xl font-bold text-gray-800">900</p>
-            <p className="text-xs text-gray-500 text-center">Biens disponibles</p>
-          </div>
+          
           
           {/* Market share stat */}
           <div className="flex flex-col items-center">
-            <div className="p-3 rounded-sm bg-gray-100 mb-2">
-              <Percent className="h-6 w-6 text-gray-600" />
+            <div className="p-2 rounded-sm bg-gray-100 mb-2">
+              {/* <Percent className="h-6 w-6 text-gray-600" /> */}
+              <img className="h-8 w-" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Century_21_seal_2018.svg/470px-Century_21_seal_2018.svg.png?20180306135049" ></img>
             </div>
-            <p className="text-2xl font-bold text-gray-800">{marketShare}</p>
-            <p className="text-xs text-gray-500 text-center">Market Share</p>
+            <p className="text-2xl font-bold text-gray-800">2 </p>
+            <p className="text-xs text-gray-500 text-center">Agences <br />CENTURY 21</p>
           </div>
         </div>
       </CardContent>

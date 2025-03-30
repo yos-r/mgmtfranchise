@@ -17,11 +17,13 @@ const CommuneInfo = () => {
       <CardHeader className="border-b py-4">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Population </h2>
+            <h2 className="text-2xl font-bold text-gray-900">Population  </h2>
           </div>
-          <div className="bg-[#beaf87]/20 p-2 rounded-full">
-            <PersonIcon className="h-6 w-6 text-[#746649]" />
-          </div>
+          <div className="bg-[#beaf87]/20 p-2 rounded-full flex gap-x-2 items-center text-sm font">
+          
+            <PersonIcon className="h-4 w-4 text-[#746649]" />
+            <b>120 000</b> habitants           </div>
+
         </div>
       </CardHeader>
       <CardContent>

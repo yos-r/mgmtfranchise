@@ -51,34 +51,34 @@ const MarketMetrics = ({
     const healthIndicatorCards = [
         // Days on Market
         {
-            icon: <Clock className="h-5 w-5 text-blue-500" />,
+            icon: <Clock className="h-5 w-5 text-relentlessgold" />,
             title: "Days on Market",
             value: `${averageDaysOnMarket} days`,
-            alertIcon: <AlertCircle className="h-4 w-4 text-amber-500 mr-2" />,
+            alertIcon: <AlertCircle className="h-4 w-4 text-relentlessgold mr-2" />,
             description: `This is ${averageDaysOnMarket < 45 ? 'faster' : 'slower'} than the city average of 45 days`
         },
         // Market Growth
         {
-            icon: <BarChart3 className="h-5 w-5 text-green-500" />,
+            icon: <BarChart3 className="h-5 w-5 text-obsessedgrey" />,
             title: "Market Growth",
             value: marketGrowth,
-            alertIcon: <AlertCircle className="h-4 w-4 text-green-500 mr-2" />,
+            alertIcon: <AlertCircle className="h-4 w-4 text-obsessedgrey mr-2" />,
             description: `The market is ${isGrowthPositive ? 'growing' : 'shrinking'} year-over-year`
         },
         // Property Diversity
         {
-            icon: <Home className="h-5 w-5 text-purple-500" />,
+            icon: <Home className="h-5 w-5 text-relentlessgold" />,
             title: "Property Diversity",
             value: `${propertyTypes} types`,
-            alertIcon: <AlertCircle className="h-4 w-4 text-purple-500 mr-2" />,
+            alertIcon: <AlertCircle className="h-4 w-4 text-relentlessgold mr-2" />,
             description: "Diverse market with multiple property options"
         },
         // Price Trend
         {
-            icon: <LineChart className="h-5 w-5 text-amber-500" />,
+            icon: <LineChart className="h-5 w-5 text-obsessedgrey" />,
             title: "Price Trend",
             value: priceTrend,
-            alertIcon: <AlertCircle className="h-4 w-4 text-amber-500 mr-2" />,
+            alertIcon: <AlertCircle className="h-4 w-4 text-obsessedgrey mr-2" />,
             description: `Prices are ${priceTrend.toLowerCase() === "upward" ? 'increasing' : 'decreasing'} steadily`
         }
     ];
@@ -114,10 +114,10 @@ const MarketMetrics = ({
 
     return (
         <Card className="shadow-md overflow-hidden">
-            <CardHeader className="">
+            <CardHeader className="border-b pb-4 mb-2">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-gray-800">Market Metrics</h2>
-                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-[#beaf87]/50 text-[#746649]">Updated today</span>
+                    <h2 className="text-2xl font-bold text-gray-800">Market metrics</h2>
+                    {/* <span className="text-xs font-medium px-2 py-1 rounded-full bg-[#beaf87]/50 text-[#746649]">Updated today</span> */}
                 </div>
             </CardHeader>
 
@@ -173,15 +173,15 @@ const MarketMetrics = ({
                                 <div className="flex flex-col justify-between p-3 bg-relentlessgold/30 rounded-lg">
                                     <div className="flex justify-between items-start">
                                         <span className="text-xs font-medium text-darkgold bg-white bg-opacity-50 px-2 py-1 rounded-full">
-                                            Time to Sell
+                                            Days on market
                                         </span>
                                         <Clock className="h-4 w-4 text-darkgold" />
                                     </div>
                                     <div>
-                                        <p className="text-2xl font-bold text-darkgold">{averageDaysOnMarket}</p>
+                                        <p className="text-5xl font-bold text-darkgold">{averageDaysOnMarket}</p>
                                         <div className="flex items-center mt-1">
-                                            <span className="text-xs text-darkgold">{daysRating}</span>
-                                            <span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${daysRating === "Excellent" ? "bg-darkgold text-white" :
+                                            <span className="text-sm text-darkgold">{daysRating}</span>
+                                            {/* <span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${daysRating === "Excellent" ? "bg-darkgold text-white" :
                                                     daysRating === "Good" ? "bg-darkgold text-white" :
                                                         daysRating === "Average" ? "bg-darkgold text-white" :
                                                             "bg-red-100 text-red-800"
@@ -190,7 +190,7 @@ const MarketMetrics = ({
                                                 {daysRating === "Good" && "Normal"}
                                                 {daysRating === "Average" && "Moderate"}
                                                 {daysRating === "Slow" && "Slow Market"}
-                                            </span>
+                                            </span> */}
                                         </div>
                                     </div>
                                 </div>
@@ -204,12 +204,12 @@ const MarketMetrics = ({
                                         <Home className="h-4 w-4 text-white" />
                                     </div>
                                     <div>
-                                        <p className="text-2xl font-bold text-white">{propertyTypes}</p>
+                                        <p className="text-5xl font-bold text-white">{propertyTypes}</p>
                                         <div className="flex items-center mt-1">
-                                            <span className="text-xs text-white">Property Types</span>
-                                            <span className="text-xs ml-2 px-1.5 py-0.5 rounded bg-white text-obsessedgrey">
+                                            <span className="text-sm text-white">Property Types</span>
+                                            {/* <span className="text-xs ml-2 px-1.5 py-0.5 rounded bg-white text-obsessedgrey">
                                                 Diverse
-                                            </span>
+                                            </span> */}
                                         </div>
                                     </div>
                                 </div>
@@ -225,10 +225,10 @@ const MarketMetrics = ({
                                         <BarChart3 className="h-4 w-4 text-white" />
                                     </div>
                                     <div>
-                                        <p className="text-2xl font-bold text-white">{marketGrowth}</p>
+                                        <p className="text-3xl font-bold text-white">{marketGrowth}</p>
                                         <div className="flex items-center mt-1">
-                                            <span className="text-xs text-white">Annual Change</span>
-                                            {isGrowthPositive ? (
+                                            <span className="text-sm text-white">Annual Change</span>
+                                            {/* {isGrowthPositive ? (
                                                 <span className="flex items-center text-xs ml-2 px-1.5 py-0.5 rounded bg-white text-darkgold">
                                                     <TrendingUp className="h-3 w-3 mr-1" /> Rising
                                                 </span>
@@ -236,7 +236,7 @@ const MarketMetrics = ({
                                                 <span className="flex items-center text-xs ml-2 px-1.5 py-0.5 rounded bg-white text-darkgold">
                                                     <TrendingDown className="h-3 w-3 mr-1" /> Falling
                                                 </span>
-                                            )}
+                                            )} */}
                                         </div>
                                     </div>
                                 </div>
@@ -252,14 +252,14 @@ const MarketMetrics = ({
                                     <div>
                                         <p className="text-2xl font-bold text-obsessedgrey">{priceTrend}</p>
                                         <div className="flex items-center mt-1">
-                                            <span className="text-xs text-obsessedgrey">Price Trend</span>
-                                            <span className="flex items-center text-xs ml-2 px-1.5 py-0.5 rounded bg-obsessedgrey text-white">
+                                            <span className="text-sm text-obsessedgrey">Price Trend</span>
+                                            {/* <span className="flex items-center text-xs ml-2 px-1.5 py-0.5 rounded bg-obsessedgrey text-white">
                                                 {priceTrend.toLowerCase() === "upward" ? (
                                                     <><TrendingUp className="h-3 w-3 mr-1" /> Rising</>
                                                 ) : (
                                                     <><TrendingDown className="h-3 w-3 mr-1" /> Falling</>
                                                 )}
-                                            </span>
+                                            </span> */}
                                         </div>
                                     </div>
                                 </div>

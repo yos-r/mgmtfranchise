@@ -46,8 +46,9 @@ const HousePriceChart = () => {
             <CardHeader className=" border-b pb-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-gray-800">Maisons - Prix au m² moyen</h2>
-                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-[#beaf87]/50 text-[#746649]">Statbel</span>
-                </div>
+                    <div className='bg-gray-100 p-2 -mx-2 border rounded-lg -mb-2 -mt-2'>
+                        <img src="https://upload.wikimedia.org/wikipedia/fr/b/bc/Statbel_%28logo%29.svg" className='h-4 ' alt="" />
+                    </div>                </div>
             </CardHeader>
 
 
@@ -70,13 +71,13 @@ const HousePriceChart = () => {
                             margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
                         >
                             <defs>
-                                <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#1f295d" stopOpacity={0.8} />
-                                    <stop offset="95%" stopColor="#1f295d" stopOpacity={0.2} />
+                                <linearGradient id="colorPrice2" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#252526" stopOpacity={0.8} />
+                                    <stop offset="95%" stopColor="#252526" stopOpacity={0.2} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                            <XAxis
+                        <XAxis
                                 dataKey="year"
                                 axisLine={false}
                                 tickLine={false}
@@ -97,7 +98,7 @@ const HousePriceChart = () => {
                                 stroke="#252526"
                                 strokeWidth={3}
                                 fillOpacity={1}
-                                fill="url(#colorPrice)"
+                                fill="url(#colorPrice2)"
                             />
                         </AreaChart>
                     </ResponsiveContainer>
