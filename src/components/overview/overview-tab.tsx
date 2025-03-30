@@ -184,7 +184,7 @@ export function OverviewTab() {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <Card key={i}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Skeleton className="h-4 w-32" />
@@ -214,7 +214,7 @@ export function OverviewTab() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
+                {[...Array(4)].map((_, i) => (
                   <div key={i} className="flex justify-between items-center">
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-4 w-24" />
@@ -256,7 +256,7 @@ export function OverviewTab() {
           <CardContent>
             <div className="numbers text-2xl font-bold">{formatCurrency(stats?.monthlyRevenue)}</div>
             <p className="legal text-muted-foreground">
-              {stats?.revenueGrowth > 0 ? '+' : ''}{stats?.revenueGrowth.toFixed(1)}% from last month
+               Including marketing contributions
             </p>
           </CardContent>
         </Card>
@@ -298,7 +298,7 @@ export function OverviewTab() {
             <RevenueOverviewChart />
           </CardContent>
         </Card>
-        <TopPerformingRegionsCard/>
+        {/* <TopPerformingRegionsCard/> */}
 
 
         <Card className="col-span-3">
@@ -311,12 +311,12 @@ export function OverviewTab() {
         </Card>
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle className="tagline-2">Latest Franchise Activities</CardTitle>
+            <CardTitle className="tagline-2">Upcoming Franchise Training / Support Visits</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {[
-                { name: "Franchise Lyon East", action: "Contract renewed", date: "2 days ago" },
+                { name: "Franchise Lyon East", action: "Contract renewed", date: "2 days from now" },
                 { name: "Franchise Marseille Central", action: "Payment received", date: "3 days ago" },
                 { name: "Franchise Paris North", action: "New location opened", date: "1 week ago" },
                 { name: "Franchise Nantes", action: "Training completed", date: "2 weeks ago" },
