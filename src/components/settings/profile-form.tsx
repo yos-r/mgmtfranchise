@@ -14,9 +14,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, User, Mail, AtSign } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const profileFormSchema = z.object({
   firstName: z
@@ -40,14 +42,6 @@ const profileFormSchema = z.object({
       required_error: "Please select an email to display.",
     })
     .email(),
-  // bio: z.string().max(160).optional(), // Made bio optional since it's commented out in the form
-  // urls: z
-  //   .array(
-  //     z.object({
-  //       value: z.string().url({ message: "Please enter a valid URL." }),
-  //     })
-  //   )
-  //   .optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -57,8 +51,6 @@ const emptyDefaultValues: ProfileFormValues = {
   firstName: "",
   lastName: "",
   email: "",
-  // bio: "",
-  // urls: [{ value: "" }],
 };
 
 export function ProfileForm() {
@@ -66,11 +58,12 @@ export function ProfileForm() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [originalEmail, setOriginalEmail] = useState<string>("");
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: emptyDefaultValues,
-    mode: "onSubmit", // Changed from onChange to make submission easier
+    mode: "onChange",
   });
 
   // Fetch the current user's profile data when component mounts
@@ -96,6 +89,7 @@ export function ProfileForm() {
         }
         
         setUserId(user.id);
+        setOriginalEmail(user.email || "");
         
         // Fetch the user's profile data from the profiles table
         const { data: profile, error: profileError } = await supabase
@@ -114,8 +108,6 @@ export function ProfileForm() {
             firstName: profile.first_name || "",
             lastName: profile.last_name || "",
             email: profile.email || user.email || "",
-            // bio: profile.bio || "",
-            // urls: profile.urls || [{ value: "" }],
           });
         } else {
           // If no profile exists yet, populate with user auth data
@@ -133,8 +125,6 @@ export function ProfileForm() {
             firstName,
             lastName,
             email: user.email || "",
-            // bio: "",
-            // urls: [{ value: "" }],
           });
         }
       } catch (error: any) {
@@ -152,27 +142,8 @@ export function ProfileForm() {
     fetchUserProfile();
   }, [toast, form]);
 
-  // Add a new URL field
-  const addUrl = () => {
-    const currentUrls = form.getValues("urls") || [];
-    form.setValue("urls", [...currentUrls, { value: "" }]);
-  };
-
-  // Remove a URL field
-  const removeUrl = (index: number) => {
-    const currentUrls = form.getValues("urls") || [];
-    if (currentUrls.length > 1) {
-      form.setValue(
-        "urls",
-        currentUrls.filter((_, i) => i !== index)
-      );
-    }
-  };
-
   // Handle form submission
   async function onSubmit(data: ProfileFormValues) {
-    console.log('Submitting form with data:', data);
-    
     if (!userId) {
       toast({
         title: "Authentication error",
@@ -185,56 +156,51 @@ export function ProfileForm() {
     setIsSaving(true);
     
     try {
-      // Check if profile exists
-      // const { data: existingProfile, error: checkError } = await supabase
-      //   .from("team_members")
-      //   .select("id")
-      //   .eq("user_id", userId)
-      //   .maybeSingle();
+      // Check if email is being changed
+      const isEmailChanged = data.email !== originalEmail;
       
-      // if (checkError) {
-      //   throw checkError;
-      // }
+      // First update the team_members table
+      const { error: profileError } = await supabase
+        .from("team_members")
+        .update({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
       
-      let result;
-      console.log('updating ', data.email)
+      if (profileError) {
+        throw profileError;
+      }
       
-      // if (existingProfile) {
-        // Update existing profile
-        // eslint-disable-next-line prefer-const
-        result = await supabase
-          .from("team_members")
-          .update({
-            first_name: data.firstName,
-            last_name: data.lastName,
-            email: data.email,
-            
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", userId);
-      // } else {
-      //   // Create new profile
-      //   result = await supabase
-      //     .from("team_members")
-      //     .insert({
-      //       user_id: userId,
-      //       first_name: data.firstName,
-      //       last_name: data.lastName,
-      //       email: data.email,
-            
-      //       created_at: new Date().toISOString(),
-      //       updated_at: new Date().toISOString(),
-      //     });
-      // }
-      
-      if (result.error) {
-        throw result.error;
+      // If email is being changed, update the auth.users table
+      if (isEmailChanged) {
+        // Update email in Supabase Auth
+        const { error: authUpdateError } = await supabase.auth.updateUser({
+          email: data.email,
+        });
+        
+        if (authUpdateError) {
+          throw authUpdateError;
+        }
+        
+        // Email verification is typically required by Supabase
+        toast({
+          title: "Email verification required",
+          description: "A verification email has been sent to your new email address. Please check your inbox.",
+        });
       }
       
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
+      
+      // Update the stored original email if it was changed
+      if (isEmailChanged) {
+        setOriginalEmail(data.email);
+      }
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
@@ -257,90 +223,111 @@ export function ProfileForm() {
   }
 
   return (
-    <Form {...form}>
-      <form 
-        onSubmit={form.handleSubmit(
-          (data) => { 
-            console.log("Validation Passed", data); 
-            onSubmit(data);
-          },
-          (errors) => {
-            console.error("Validation Failed", errors);
-            toast({
-              title: "Form validation failed",
-              description: "Please check the form for errors.",
-              variant: "destructive",
-            });
-          }
-        )} 
-        className="space-y-8"
-      >
-        <div>
-          <FormLabel className="label-1 block mb-2">Name</FormLabel>
-          <FormDescription className="legal text-muted-foreground mb-2">
-            This is your public display name.
-          </FormDescription>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder="First name" className="body-1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder="Last name" className="body-1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="label-1">Email</FormLabel>
-              <FormControl>
-                <Input placeholder="Your email" className="body-1" {...field} />
-              </FormControl>
-              <FormDescription className="legal text-muted-foreground">
-                This is the email that will be displayed on your profile.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <Button 
-          type="submit" 
-          className="button-1"
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save changes'
-          )}
-        </Button>
-      </form>
-    </Form>
+    <div className="space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Personal Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <FormLabel className="text-base font-medium flex items-center gap-2">
+                    {/* <User className="h-4 w-4 text-muted-foreground" /> */}
+                    Name
+                  </FormLabel>
+                  <FormDescription className="text-sm text-muted-foreground mb-4">
+                    This is your public display name.
+                  </FormDescription>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="label-1">First name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="First name" className="body-1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="label-1">Last name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Last name" className="body-1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                <Separator className="my-6" />
+                
+                <div>
+                  <FormLabel className="text-base font-medium flex items-center gap-2">
+                    {/* <Mail className="h-4 w-4 text-muted-foreground" /> */}
+                    Contact Information
+                  </FormLabel>
+                  <FormDescription className="text-sm text-muted-foreground mb-4">
+                    This email will be used for account access and notifications.
+                  </FormDescription>
+                  
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="label-1">Email Address</FormLabel>
+                        <div className="relative">
+                          <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <FormControl>
+                            <Input 
+                              placeholder="Your email" 
+                              className="pl-10 body-1" 
+                              {...field}
+                            />
+                          </FormControl>
+                        </div>
+                        {field.value !== originalEmail && (
+                          <FormDescription className="text-amber-500 mt-2">
+                            Changing your email will require verification of your new address.
+                          </FormDescription>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="mt-6"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save changes'
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

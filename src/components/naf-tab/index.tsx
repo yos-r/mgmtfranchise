@@ -314,7 +314,18 @@ export function NAFTab() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Annual Budget</CardTitle>
+            <CardTitle className="tagline-3 flex gap-x-2">Annual Budget
+            <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>This value represents the total marketing royalties (€{budgetData.totalBudget.toLocaleString()}) for the year {selectedYear} .</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+            </CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -326,7 +337,18 @@ export function NAFTab() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Collected Budget</CardTitle>
+            <CardTitle className="tagline-3 flex gap-x-2">Collected Budget
+            <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>This value represents the total paid marketing royalties (€{budgetData.totalCollected.toLocaleString()}) for the year {selectedYear} .</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+            </CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -364,7 +386,18 @@ export function NAFTab() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3"> Campaigns</CardTitle>
+            <CardTitle className="tagline-3 flex gap-x-2"> Campaigns
+            <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>This value represents the campaigns organized for the year {selectedYear} .</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

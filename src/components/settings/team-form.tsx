@@ -40,6 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 const teamMemberSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -203,6 +204,11 @@ export function TeamForm() {
   }
 
   return (
+    <Card>
+      <CardHeader>
+    <CardTitle className="text-xl">Team settings</CardTitle>
+      </CardHeader>
+      <CardContent>
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -358,5 +364,7 @@ export function TeamForm() {
         )}
       </div>
     </div>
+    </CardContent>
+    </Card>
   );
 }
