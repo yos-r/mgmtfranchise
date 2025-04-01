@@ -16,7 +16,8 @@ import {
   Upload,
   ArrowLeft,
   Hourglass,
-  FileUp
+  FileUp,
+  Image
 } from "lucide-react";
 import {
   Form,
@@ -25,6 +26,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Card,
@@ -43,7 +45,7 @@ const formSchema = z.object({
   ownerName: z.string().min(2, "Name must be at least 2 characters"),
   ownerEmail: z.string().email("Invalid email address"),
   ownerPhone: z.string().min(8, "Phone number must be at least 8 characters"),
-
+  ownerAvatar: z.any().optional(),
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
   century21Name: z.string().min(2, "Century 21 name must be at least 2 characters"),
   companyTaxId: z.string().min(5, "Tax ID must be at least 5 characters"),
@@ -61,6 +63,7 @@ const formSchema = z.object({
   initialFee: z.number().min(0, 'Initial fee must be at least 0 '),
   gracePeriodMonths: z.number().min(0, 'Grace period must be at least 0 '),
   contractDocument: z.any().optional(), // This will store the File object
+  companyLogo: z.any().optional(), // This will store the File object for logo
 });
 
 interface AddFranchiseProps {
@@ -69,8 +72,13 @@ interface AddFranchiseProps {
 
 export function AddFranchise({ onCancel }: AddFranchiseProps) {
   const [agencyImage, setAgencyImage] = useState<File | null>(null);
-  const [ownerImage, setOwnerImage] = useState<File | null>(null);
   const [contractDocument, setContractDocument] = useState<File | null>(null);
+  const [companyLogo, setCompanyLogo] = useState<File | null>(null);
+  const [ownerImage, setOwnerImage] = useState<File | null>(null);
+
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -92,7 +100,31 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
     accept: { 'image/*': [] },
     maxFiles: 1,
     onDrop: (acceptedFiles) => {
+      const file = acceptedFiles[0];
       setOwnerImage(acceptedFiles[0]);
+      form.setValue('ownerAvatar', file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    },
+  });
+
+  const { getRootProps: getLogoRootProps, getInputProps: getLogoInputProps } = useDropzone({
+    accept: { 'image/*': [] },
+    maxFiles: 1,
+    onDrop: (acceptedFiles) => {
+      const file = acceptedFiles[0];
+      setCompanyLogo(file);
+      form.setValue('companyLogo', file);
+      
+      // Create a preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     },
   });
 
@@ -165,7 +197,58 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
     try {
       const validatedData = formSchema.parse(values);
       
-      // Insert franchise data
+      // Initialize logo URL variable
+      let logoUrl = null;
+      let avatarUrl=null;
+      
+      // Upload logo if available
+      if (companyLogo) {
+        // Create a unique file path for the logo
+        const fileExt = companyLogo.name.split('.').pop();
+        const fileName = `logo_${Date.now()}_${validatedData.companyName.replace(/\s+/g, '_')}.${fileExt}`;
+        const filePath = fileName;
+        
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('franchise-attachments')
+          .upload(filePath, companyLogo, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (uploadError) throw uploadError;
+        
+        // Get the public URL for the logo
+        const { data: urlData } = supabase.storage
+          .from('franchise-attachments')
+          .getPublicUrl(filePath);
+        
+        logoUrl = urlData.publicUrl;
+      }
+      if (ownerImage){
+        const fileExt = ownerImage.name.split('.').pop();
+        const fileName = `avatar${Date.now()}.${fileExt}`;
+        const filePath = fileName;
+        
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('franchise-attachments')
+          .upload(filePath, ownerImage, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (uploadError) throw uploadError;
+        
+        // Get the public URL for the logo
+        const { data: urlData } = supabase.storage
+          .from('franchise-attachments')
+          .getPublicUrl(filePath);
+        
+        avatarUrl = urlData.publicUrl;
+
+      }
+      // Insert franchise data with logo URL
       const { data, error } = await supabase
         .from('franchises')
         .insert({
@@ -179,7 +262,10 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
           commune: validatedData.commune,
           email: validatedData.companyEmail,
           phone: validatedData.companyPhone,
-          status: 'active'
+          status: 'active',
+          logo: logoUrl, // Store the logo URL in the database,
+          owner_avatar:avatarUrl
+
         })
         .select()
         .single();
@@ -221,10 +307,10 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
       if (contractDocument) {
         // Create a unique file path
         const fileExt = contractDocument.name.split('.').pop();
-      const fileName = `contract_${Date.now()}_${contractData.id}.${fileExt}`;
-const filePath = fileName; // No folders, just the file
+        const fileName = `contract_${Date.now()}_${contractData.id}.${fileExt}`;
+        const filePath = fileName; // No folders, just the file
         
-      //   // Upload to Supabase Storage
+        // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('franchise-documents')
           .upload(filePath, contractDocument, {
@@ -234,14 +320,14 @@ const filePath = fileName; // No folders, just the file
         
         if (uploadError) throw uploadError;
         
-      //   // Get the public URL for the file
+        // Get the public URL for the file
         const { data: urlData } = supabase.storage
           .from('franchise-documents')
           .getPublicUrl(filePath);
         
         documentUrl = urlData.publicUrl;
         
-      //   // Update the contract record with the document URL
+        // Update the contract record with the document URL
         const { error: updateError } = await supabase
           .from('franchise_contracts')
           .update({ document_url: documentUrl })
@@ -352,6 +438,66 @@ const filePath = fileName; // No folders, just the file
                     </FormItem>
                   )}
                 />
+                {/* Logo Upload Section */}
+                <FormField
+                  control={form.control}
+                  name="ownerAvatar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="label-1">
+                        Owner Avatar
+                      </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground">
+                        Upload the owner avatar in high resolution format
+                      </FormDescription>
+                      <FormControl>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div 
+                            {...getOwnerRootProps()} 
+                            className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                          >
+                            <input {...getOwnerInputProps()} />
+                            <Image className="h-8 w-8 mx-auto text-muted-foreground" />
+                            <p className="body-1 mt-2 font-medium">
+                              {ownerImage ? ownerImage.name : "Upload Avatar"}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {ownerImage ? 
+                                `${(ownerImage.size / 1024 / 1024).toFixed(2)} MB` : 
+                                "Drop your avatar here or click to browse (PNG, JPG, SVG)"}
+                            </p>
+                          </div>
+                          
+                          {avatarPreview && (
+                            <div className="flex flex-col items-center justify-center">
+                              <div className="relative w-32 h-32 rounded-lg overflow-hidden border shadow-sm">
+                                <img 
+                                  src={avatarPreview} 
+                                  alt="avatar preview" 
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="mt-2 text-xs text-destructive hover:text-destructive/90"
+                                onClick={() => {
+                                  setOwnerImage(null);
+                                  setAvatarPreview(null);
+                                  form.setValue('ownerAvatar', undefined);
+                                }}
+                              >
+                                Remove Avatar
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 
@@ -402,6 +548,8 @@ const filePath = fileName; // No folders, just the file
                     )}
                   />
                 </div>
+
+                
 
                 <FormField
                   control={form.control}
@@ -487,37 +635,100 @@ const filePath = fileName; // No folders, just the file
                   />
                 </div>
                 
+                <div className="grid sm:grid-cols-2 gap-x-4">
+                  <FormField
+                    control={form.control}
+                    name="companyEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="label-1">
+                          <RequiredLabel>Company Email</RequiredLabel>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input className="pl-9" placeholder="xyz@century21.be" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="companyPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="label-1">
+                          <RequiredLabel>Company Phone</RequiredLabel>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input className="pl-9" placeholder="+32 xxx xxx xxx" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Logo Upload Section */}
                 <FormField
                   control={form.control}
-                  name="companyEmail"
+                  name="companyLogo"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="label-1">
-                        <RequiredLabel>Company Email</RequiredLabel>
+                        Company Logo
                       </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground">
+                        Upload the franchise logo in high resolution format
+                      </FormDescription>
                       <FormControl>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input className="pl-9" placeholder="xyz@century21.be" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="companyPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="label-1">
-                        <RequiredLabel>Company Phone</RequiredLabel>
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input className="pl-9" placeholder="+32 xxx xxx xxx" {...field} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div 
+                            {...getLogoRootProps()} 
+                            className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                          >
+                            <input {...getLogoInputProps()} />
+                            <Image className="h-8 w-8 mx-auto text-muted-foreground" />
+                            <p className="body-1 mt-2 font-medium">
+                              {companyLogo ? companyLogo.name : "Upload Logo"}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {companyLogo ? 
+                                `${(companyLogo.size / 1024 / 1024).toFixed(2)} MB` : 
+                                "Drop your logo here or click to browse (PNG, JPG, SVG)"}
+                            </p>
+                          </div>
+                          
+                          {logoPreview && (
+                            <div className="flex flex-col items-center justify-center">
+                              <div className="relative w-32 h-32 rounded-lg overflow-hidden border shadow-sm">
+                                <img 
+                                  src={logoPreview} 
+                                  alt="Logo preview" 
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="mt-2 text-xs text-destructive hover:text-destructive/90"
+                                onClick={() => {
+                                  setCompanyLogo(null);
+                                  setLogoPreview(null);
+                                  form.setValue('companyLogo', undefined);
+                                }}
+                              >
+                                Remove Logo
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -661,6 +872,7 @@ const filePath = fileName; // No folders, just the file
               </div>
             </CardContent>
           </Card>
+
 
           {/* Contract Information */}
           <Card>
