@@ -11,7 +11,7 @@ export default {
     extend: {
       fontFamily: {
         'typold': ['Typold', 'sans-serif'],
-        'typold-extended': ['Typold Extended', 'sans-serif'],
+        'typoldextended': ['Typold Extended', 'sans-serif'],
         'oakes': ['Oakes', 'sans-serif'],
         'barlow-semi': ['Barlow Semi Condensed', 'sans-serif'],
       },
