@@ -52,21 +52,21 @@ export function FranchiseMap({ franchises, onSelect }: FranchiseMapProps) {
         <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader className="flex flex-col items-center text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-2">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+              <MapPin className="h-6 w-6 text-red-600" />
             </div>
-            <DialogTitle className="text-xl font-semibold">Connexion au CRM requise</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">Coordonnées de géolocalisation introuvables</DialogTitle>
             <DialogDescription className="pt-2 text-center">
-              Vous devez connecter le CRM de votre agence pour charger les données ici.
+              Vous pouvez contacter votre administrateur pour partager les coordonnées de géolocalisation.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-center mt-4">
+          {/* <div className="flex justify-center mt-4">
             <Button className="bg-relentlessgold " >
               Configurer la connexion CRM
             </Button>
           </div>
           <div className="text-center text-sm text-gray-500 mt-2">
             Contactez le support technique si vous avez besoin d'aide
-          </div>
+          </div> */}
         </DialogContent>
       </Dialog>
       {/* </AlertDialog> */}

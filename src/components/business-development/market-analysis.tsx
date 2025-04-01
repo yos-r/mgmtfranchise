@@ -50,9 +50,9 @@ interface MarketData {
 
 const marketData: MarketData[] = [
   {
-    id: '1',
-    areaName: 'Paris 16e',
-    areaCode: '75016',
+    id: '3',
+    areaName: 'Woluwe-Saint-Pierre',
+    areaCode: '1150',
     totalAgencies: 145,
     listingsForSale: 892,
     listingsForRent: 456,
@@ -68,7 +68,7 @@ const marketData: MarketData[] = [
   },
   {
     id: '2',
-    areaName: 'Lyon 6e',
+    areaName: 'Brussels City',
     areaCode: '69006',
     totalAgencies: 78,
     listingsForSale: 445,
@@ -84,9 +84,9 @@ const marketData: MarketData[] = [
     }
   },
   {
-    id: '3',
-    areaName: 'Bordeaux Centre',
-    areaCode: '33000',
+    id: '1',
+    areaName: 'Ixelles',
+    areaCode: '1050',
     totalAgencies: 92,
     listingsForSale: 567,
     listingsForRent: 345,
@@ -102,8 +102,8 @@ const marketData: MarketData[] = [
   },
   {
     id: '4',
-    areaName: 'Marseille 8e',
-    areaCode: '13008',
+    areaName: 'Etterbeek',
+    areaCode: '1040',
     totalAgencies: 65,
     listingsForSale: 389,
     listingsForRent: 278,
@@ -119,8 +119,8 @@ const marketData: MarketData[] = [
   },
   {
     id: '5',
-    areaName: 'Nantes Centre',
-    areaCode: '44000',
+    areaName: 'Uccle',
+    areaCode: '1180',
     totalAgencies: 83,
     listingsForSale: 478,
     listingsForRent: 289,
