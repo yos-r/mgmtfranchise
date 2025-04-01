@@ -13,6 +13,7 @@ import {
   Edit,
   Trash2,
   Banknote,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -35,6 +36,7 @@ import { supabase } from "@/lib/auth";
 import { AddFranchiseContract } from './add-franchise-contract';
 import { RenewFranchiseContract } from './renew-franchise-contracts';
 import { EditFranchiseDialog } from './edit-franchise-dialog';
+import { PersonIcon } from '@radix-ui/react-icons';
 
 interface FranchiseHeaderProps {
   franchise: {
@@ -42,6 +44,7 @@ interface FranchiseHeaderProps {
     name: string;
     owner_name: string;
     owner_email: string;
+    owner_avatar:string;
     phone: string;
     address: string;
     company_name: string;
@@ -368,22 +371,27 @@ export function FranchiseHeader({ franchise, contract, loadFranchises, onDelete,
             <div className="space-y-4">
               <div className="space-y-2">
                 <h3 className="font-semibold">Owner Information</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span>{franchise.owner_name}</span>
+                <div className="flex gap-x-4 items-center">
+                  <div>
+                    <img src={franchise.owner_avatar} className='w-16 rounded-full border' /> 
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href={`mailto:${franchise.owner_email}`} className="text-primary hover:underline">
-                      {franchise.owner_email}
-                    </a>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <a href={`tel:${franchise.owner_phone}`} className="text hover:underline">
-                      {franchise.owner_phone}
-                    </a>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{franchise.owner_name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <a href={`mailto:${franchise.owner_email}`} className="text-primary hover:underline">
+                        {franchise.owner_email}
+                      </a>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <a href={`tel:${franchise.owner_phone}`} className="text hover:underline">
+                        {franchise.owner_phone}
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
