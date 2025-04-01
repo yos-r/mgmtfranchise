@@ -17,11 +17,12 @@ const AgencesWidget2 = () => {
 
     // Fictional agency data with revenue values
     const agencesData = [
-        { nom: "Agence Moderne", vente: 42, location: 28, revenuVente: 420000, revenuLocation: 112000 },
-        { nom: "Immobilier Elite", vente: 38, location: 31, revenuVente: 380000, revenuLocation: 124000 },
-        { nom: "Century 21", vente: 35, location: 24, revenuVente: 350000, revenuLocation: 96000 },
-        { nom: "Orpi", vente: 31, location: 27, revenuVente: 310000, revenuLocation: 108000 },
-        { nom: "FNAIM", vente: 29, location: 19, revenuVente: 290000, revenuLocation: 76000 },
+        { nom: "ERA Châtelain", vente: 77, location: 41, revenuVente: 380000, revenuLocation: 124000,logo: "https://www.ixelles.city/_custom_storage/shop_logos/shop_logo_339__20240509_69786_m.png.webp" },
+        { nom: "CENTURY 21 Boondael", vente: 51, location: 5, revenuVente: 310000, revenuLocation: 108000 , logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ03IE1TnH8u5GAi-6nSd3XrFedfgbX6Q0Y6w&s"},
+        { nom: "CENTURY 21 Molière", vente: 21, location: 1, revenuVente: 310000, revenuLocation: 108000, logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSL_AXvvwnqjebOj5sjNocHIC9ygZ53_u2k3w&s" },
+        { nom: "RE/MAX Premium", vente: 21, location: 0, revenuVente: 310000, revenuLocation: 108000, logo:"https://api-image.immovlan.be/v1/prouser/VLAN96139233/logo/French/webp/Small" },
+        { nom: "Oralis Real Estate", vente: 70, location: 58, revenuVente: 420000, revenuLocation: 112000, logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCC4PRSYIAg0gLPkVfL6_dJvaJVLBv4sKRPA&s" },
+        // { nom: "We Invest", vente: 7, location: 8, revenuVente: 290000, revenuLocation: 76000 },
     ];
 
     // Add total and calculate percentages for ratios
@@ -154,37 +155,6 @@ const AgencesWidget2 = () => {
                     </div>
                 </div>
                 <div className="grid gap-8 lg:grid-cols-2">
-                    {/* Left side: Horizontal bars with consistent styling */}
-                    <div className="rounded-lg border border-gray-200 p-4 bg-white">
-                        <div className="space-y-3">
-                            {dataWithRatios.map((agence, index) => {
-                                const ventePctValue = agence[ventePct];
-                                const locationPctValue = agence[locationPct];
-                                return (
-                                    <div key={`ratio-${agence.nom}`} className="flex flex-col">
-                                        <div className="flex justify-between text-sm text-gray-600 mb-1">
-                                            <span className="font-medium">{agence.nom}</span>
-                                            <span>{formatPercentage(ventePctValue)} / {formatPercentage(locationPctValue)}</span>
-                                        </div>
-                                        <div className="h-7 w-full bg-gray-100 rounded-md overflow-hidden flex">
-                                            <div
-                                                className="h-full flex items-center justify-end pr-2 text-xs text-white font-medium"
-                                                style={{ width: `${ventePctValue}%`, backgroundColor: venteColor }}
-                                            >
-                                                {ventePctValue > 15 && 'Vente'}
-                                            </div>
-                                            <div
-                                                className="h-full flex items-center justify-start pl-2 text-xs text-white font-medium"
-                                                style={{ width: `${locationPctValue}%`, backgroundColor: locationColor }}
-                                            >
-                                                {locationPctValue > 15 && 'Location'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
                     {/* Right side: Table with consistent styling */}
                     <div className="rounded-lg border border-gray-200 overflow-hidden">
                         <table className="min-w-full bg-white">
@@ -216,6 +186,8 @@ const AgencesWidget2 = () => {
                                     >
                                         <td className="py-3 px-4 text-gray-800 font-medium">
                                             <div className="flex items-center">
+                                            <img src={agence.logo} className='w-12 rounded-sm inline mr-4' ></img>
+
                                                 {index === 0 && (
                                                     <span className="inline-flex items-center justify-center w-6 h-6 mr-2 rounded-full text-xs font-bold" style={{ backgroundColor: `${venteColor}80`, color: 'white' }}>1</span>
                                                 )}
@@ -237,7 +209,7 @@ const AgencesWidget2 = () => {
                                                     </div>
                                                 </td>
                                                 <td className="py-3 px-4 text-center text-gray-800 font-bold">{agence.total}</td>
-                                                <td className="py-3 px-4 text-center text-gray-800 font-bold">{Math.floor(agence.total / 500 * 100)}%</td>
+                                                <td className="py-3 px-4 text-center text-gray-800 font-bold">{Math.floor(agence.total / 1363 * 100)}%</td>
 
                                             </>
                                         ) : (
@@ -262,6 +234,38 @@ const AgencesWidget2 = () => {
                             </tbody>
                         </table>
                     </div>
+                    {/* Left side: Horizontal bars with consistent styling */}
+                    <div className="rounded-lg border border-gray-200 p-4 bg-white">
+                        <div className="space-y-3">
+                            {dataWithRatios.map((agence, index) => {
+                                const ventePctValue = agence[ventePct];
+                                const locationPctValue = agence[locationPct];
+                                return (
+                                    <div key={`ratio-${agence.nom}`} className="flex flex-col">
+                                        <div className="flex justify-between text-sm text-gray-600 mb-1">
+                                            <span className="font-medium">{agence.nom}</span>
+                                            <span>{formatPercentage(ventePctValue)} / {formatPercentage(locationPctValue)}</span>
+                                        </div>
+                                        <div className="h-7 w-full bg-gray-100 rounded-md overflow-hidden flex">
+                                            <div
+                                                className="h-full flex items-center justify-end pr-2 text-xs text-white font-medium"
+                                                style={{ width: `${ventePctValue}%`, backgroundColor: venteColor }}
+                                            >
+                                                {ventePctValue > 15 && 'Vente'}
+                                            </div>
+                                            <div
+                                                className="h-full flex items-center justify-start pl-2 text-xs text-white font-medium"
+                                                style={{ width: `${locationPctValue}%`, backgroundColor: locationColor }}
+                                            >
+                                                {locationPctValue > 15 && 'Location'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    
                 </div>
             </div>
         </Card>

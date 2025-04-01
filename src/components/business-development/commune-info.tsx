@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Users, Briefcase, Clock, HomeIcon, Building, Pin, MapPin, BarChart, PersonStanding } from 'lucide-react';
 import { PersonIcon } from '@radix-ui/react-icons';
 
-const CommuneInfo = () => {
+const CommuneInfo = ({area}:any) => {
   // Static data for commune
   const communeName = "Bordeaux Centre";
   const totalHouseholds = 13230;
@@ -23,9 +23,9 @@ const CommuneInfo = () => {
           <div className="flex gap-x-4 items-center">
             <div className="bg-[#beaf87]/20 p-2 rounded-lg flex gap-x-2 items-center text-sm font">
               <PersonIcon className="h-4 w-4 text-[#746649]" />
-              <b>120 000</b> habitants
+              <b>{area.population.toLocaleString('fr-FR')}</b> habitants
               </div>
-            <div className='bg-gray-100 p-2 -mx-2 border rounded-lg -mb-2 -mt-2'>
+            <div className='bg-gray-50/50 p-2 -mx-2 border rounded-lg -mb-2 -mt-2'>
               <img src="https://upload.wikimedia.org/wikipedia/fr/b/bc/Statbel_%28logo%29.svg" className='h-4 ' alt="" />
             </div>
           </div>
@@ -39,7 +39,7 @@ const CommuneInfo = () => {
             <div className="p-3 rounded-sm bg-gray-100 mb-2">
               <HomeIcon className="h-6 w-6 text-gray-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-800">{totalHouseholds.toLocaleString('fr-FR')}</p>
+            <p className="text-2xl font-bold text-gray-800">{area.individuals.toLocaleString('fr-FR')}</p>
             <p className="text-xs text-gray-500">Ménages</p>
           </div>
 

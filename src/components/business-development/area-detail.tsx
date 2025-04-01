@@ -61,7 +61,7 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-      <CommuneInfo></CommuneInfo>
+      <CommuneInfo area={area}></CommuneInfo>
 
         <AreaStatsCard totalAgencies={area.totalAgencies} population={area.population}></AreaStatsCard>
 

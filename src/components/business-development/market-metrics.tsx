@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+ import immowebLogo from '../../public/immoweb.png';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   Clock, Home, BarChart3, LineChart, TrendingUp, TrendingDown, 
@@ -117,6 +118,8 @@ const MarketMetrics = ({
             <CardHeader className="border-b pb-4 mb-2">
                 <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-gray-800">Market metrics</h2>
+                    <img src={immowebLogo} className="h-6 inline rounded-sm" alt="Immoweb" />
+
                     {/* <span className="text-xs font-medium px-2 py-1 rounded-full bg-[#beaf87]/50 text-[#746649]">Updated today</span> */}
                 </div>
             </CardHeader>

@@ -46,7 +46,7 @@ const ApartmentPriceChart = () => {
             <CardHeader className=" border-b pb-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-gray-800">Appartements - Prix au m² moyen</h2>
-                    <div className='bg-gray-100 p-2 -mx-2 border rounded-lg -mb-2 -mt-2'>
+                    <div className='bg-gray-50/50 p-2 -mx-2 border rounded-lg -mb-2 -mt-2'>
                         <img src="https://upload.wikimedia.org/wikipedia/fr/b/bc/Statbel_%28logo%29.svg" className='h-4 ' alt="" />
                     </div>
                 </div>
@@ -55,7 +55,8 @@ const ApartmentPriceChart = () => {
 
             <div className=" p-6 pt-5">
                 <div className="text-5xl font-bold text-gray-900">
-                    {priceData[priceData.length - 2].price.toLocaleString()}€/m²
+                    {/* {priceData[priceData.length - 2].price.toLocaleString()}€/m² */}
+                    4,241€/m²
                 </div>
 
                 <div className="flex items-center mt-2">

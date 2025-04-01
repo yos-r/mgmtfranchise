@@ -48,7 +48,7 @@ interface MarketData {
   };
 }
 
-const marketData: MarketData[] = [
+const marketData: any[] = [
   {
     id: '3',
     areaName: 'Woluwe-Saint-Pierre',
@@ -88,13 +88,21 @@ const marketData: MarketData[] = [
     areaName: 'Ixelles',
     areaCode: '1050',
     totalAgencies: 92,
-    listingsForSale: 567,
-    listingsForRent: 345,
+    listingsForSale: 825,
+    listingsForRent: 538,
     marketCap: 1230000000,
     century21Presence: true,
-    population: 257068,
+    population: 89278,
+    individuals: 50700,
+    availableProperties: 1363,
+    avgSquareMeter: 2500,
+    c21agencies: 2,
+    totalAgencies: 132,
+    menageType: 'Personnes seules',
+    age: '25-29 ans',
     averagePrice: 5900,
-    marketPotential: 'medium',
+    
+    marketPotential: 'high',
     coordinates: {
       lat: 44.8378,
       lng: -0.5792
@@ -172,6 +180,7 @@ export function MarketAnalysis() {
   const filteredAndSortedData = useMemo(() => {
     return marketData
       .filter((item) => {
+        const id= item.id==1;
         const matchesSearch =
           item.areaName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.areaCode.includes(searchTerm);
@@ -181,7 +190,7 @@ export function MarketAnalysis() {
         const matchesPotential =
           filters.marketPotential.length === 0 ||
           filters.marketPotential.includes(item.marketPotential);
-        return matchesSearch && matchesC21Filter && matchesPotential;
+        return matchesSearch && matchesC21Filter && matchesPotential &&id;
       })
       .sort((a, b) => {
         const aValue = a[sortConfig.key];

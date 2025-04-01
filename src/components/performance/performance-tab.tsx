@@ -136,7 +136,7 @@ export function PerformanceTab({ onHome }) {
   // Force dialog to stay open
   useEffect(() => {
     if (!warningOpen) {
-      setWarningOpen(true);
+      setWarningOpen(false);
     }
   }, [warningOpen]);
   
@@ -147,7 +147,7 @@ export function PerformanceTab({ onHome }) {
   return (
     <>
       {/* Warning Dialog that cannot be closed */}
-      <Dialog open={warningOpen} onOpenChange={setWarningOpen, onHome}>
+      <Dialog open={warningOpen} onOpenChange={setWarningOpen}>
         <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader className="flex flex-col items-center text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-2">
@@ -159,9 +159,9 @@ export function PerformanceTab({ onHome }) {
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center mt-4">
-            <Button className="bg-relentlessgold " onClick={onHome}>
+            {/* <Button className="bg-relentlessgold " onClick={onHome}>
               Configurer la connexion CRM
-            </Button>
+            </Button> */}
           </div>
           <div className="text-center text-sm text-gray-500 mt-2">
             Contactez le support technique si vous avez besoin d'aide
@@ -170,7 +170,7 @@ export function PerformanceTab({ onHome }) {
       </Dialog>
 
       {/* Main content (blurred) */}
-      <div className="space-y-6 filter blur pointer-events-none">
+      <div className="space-y-6 filter  pointer-events-none">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="tagline-1">Performance Analytics</h2>
