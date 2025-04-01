@@ -554,38 +554,100 @@ export function PaymentsTable({
       </div>
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex justify-center space-x-2 mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
-          
-          {Array.from({ length: totalPages }).map((_, index) => (
-            <Button
-              key={index}
-              variant={currentPage === index + 1 ? "default" : "outline"}
-              size="sm"
-              onClick={() => handlePageChange(index + 1)}
+      {/* Pagination Controls */}
+{totalPages > 1 && (
+  <div className="flex justify-center space-x-2 mt-4">
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+      disabled={currentPage === 1}
+    >
+      Previous
+    </Button>
+    
+    {(() => {
+      // Calculate which page numbers to display (max 6)
+      const getPageNumbers = () => {
+        // For 6 or fewer pages, show all page numbers
+        if (totalPages <= 6) {
+          return Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+        
+        // For more than 6 pages, show a window of pages around the current page
+        let startPage = Math.max(currentPage - 2, 1);
+        let endPage = Math.min(startPage + 4, totalPages);
+        
+        // Adjust start if we're near the end
+        if (endPage === totalPages) {
+          startPage = Math.max(endPage - 4, 1);
+        }
+        
+        const pages = [];
+        
+        // Always show first page
+        if (startPage > 1) {
+          pages.push(1);
+          // Add ellipsis if there's a gap
+          if (startPage > 2) {
+            pages.push('ellipsis-start');
+          }
+        }
+        
+        // Add pages in the calculated range
+        for (let i = startPage; i <= endPage; i++) {
+          pages.push(i);
+        }
+        
+        // Always show last page
+        if (endPage < totalPages) {
+          // Add ellipsis if there's a gap
+          if (endPage < totalPages - 1) {
+            pages.push('ellipsis-end');
+          }
+          pages.push(totalPages);
+        }
+        
+        return pages;
+      };
+      
+      const pageNumbers = getPageNumbers();
+      
+      return pageNumbers.map((page, index) => {
+        if (page === 'ellipsis-start' || page === 'ellipsis-end') {
+          return (
+            <div 
+              key={`ellipsis-${index}`} 
+              className="flex items-center justify-center h-8 w-8"
             >
-              {index + 1}
-            </Button>
-          ))}
-          
+              <span className="text-gray-400">...</span>
+            </div>
+          );
+        }
+        
+        return (
           <Button
-            variant="outline"
+            key={`page-${page}`}
+            variant={currentPage === page ? "default" : "outline"}
             size="sm"
-            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(page)}
           >
-            Next
+            {page}
           </Button>
-        </div>
-      )}
+        );
+      });
+    })()}
+    
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+      disabled={currentPage === totalPages}
+    >
+      Next
+    </Button>
+  </div>
+)}
     </div>
   );
 }

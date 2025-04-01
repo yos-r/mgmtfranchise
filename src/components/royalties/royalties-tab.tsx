@@ -53,68 +53,157 @@ export function RoyaltiesTab() {
   };
 
   // Load ALL payments for stats and filtering
-  const loadAllPayments = async () => {
-    setIsLoading(true);
-    try {
-      // Load payments
-      const { data, error } = await supabase
-        .from('royalty_payments')
-        .select('*, franchises(*)')
-        .order('due_date', { ascending: true });
+  // Optimized loadAllPayments function with performance debugging
+const loadAllPayments = async () => {
+  setIsLoading(true);
+  console.time('loadPayments'); // Start timing
+  
+  try {
+    console.time('fetchPayments'); // Time just the initial query
+    // Only select the columns you actually need
+    const { data, error } = await supabase
+      .from('royalty_payments')
+      .select(`
+        id, 
+        franchise_id, 
+        due_date, 
+        amount, 
+        status,
+        franchises(id, name)
+      `)
+      .order('due_date', { ascending: true });
+    console.timeEnd('fetchPayments'); // End timing for initial query
+    
+    if (error) throw error;
+    
+    if (data) {
+      console.log(`Fetched ${data.length} payments`); // Log count
       
-      if (error) throw error;
+      console.time('processingData'); // Time the data processing
+      setPayments(data);
       
-      if (data) {
-        setPayments(data);
-        
-        // Apply franchise filter for stats calculation
-        let statsData = data;
-        if (selectedFranchiseId) {
-          statsData = data.filter(payment => payment.franchise_id === selectedFranchiseId);
-        }
-        
-        calculateStats(statsData);
-        
-        // Get payment IDs for log count query
-        const paymentIds = data.map(payment => payment.id);
-        
-        // Get log counts for each payment
-        if (paymentIds.length > 0) {
-          try {
-            // Get all logs for these payments
-            const { data: logsData, error: logsError } = await supabase
-              .from('payment_logs')
-              .select('payment_id')
-              .in('payment_id', paymentIds);
-            
-            if (logsError) throw logsError;
-            
-            // Count logs for each payment ID
-            const logsMap = {};
-            
-            if (logsData && logsData.length > 0) {
-              // Count occurrences of each payment_id
-              logsData.forEach(log => {
-                if (logsMap[log.payment_id]) {
-                  logsMap[log.payment_id]++;
-                } else {
-                  logsMap[log.payment_id] = 1;
-                }
-              });
-            }
-            
-            setPaymentLogs(logsMap);
-          } catch (logsErr) {
-            console.error("Error loading payment logs:", logsErr);
-          }
-        }
+      // Apply franchise filter for stats calculation
+      let statsData = data;
+      if (selectedFranchiseId) {
+        statsData = data.filter(payment => payment.franchise_id === selectedFranchiseId);
       }
-    } catch (error) {
-      console.error('Error loading payments:', error);
-    } finally {
-      setIsLoading(false);
+      
+      calculateStats(statsData);
+      console.timeEnd('processingData');
+      
+      // Only fetch logs if we have payments
+      if (data.length > 0) {
+        console.time('fetchLogs'); // Time log fetching
+        // Get payment IDs for log count query - limit to most recent if there are too many
+        const paymentIds = data.slice(0, 100).map(payment => payment.id);
+        
+        try {
+          // Use count instead of fetching all logs
+          const { data: logsData, error: logsError } = await supabase
+            .from('payment_logs')
+            .select('payment_id, count', { count: 'exact' })
+            .in('payment_id', paymentIds)
+            .order('payment_id');
+          
+          if (logsError) throw logsError;
+          
+          // Count logs for each payment ID
+          const logsMap = {};
+          
+          if (logsData && logsData.length > 0) {
+            logsData.forEach(log => {
+              if (!logsMap[log.payment_id]) {
+                logsMap[log.payment_id] = 1;
+              } else {
+                logsMap[log.payment_id]++;
+              }
+            });
+          }
+          
+          setPaymentLogs(logsMap);
+        } catch (logsErr) {
+          console.error("Error loading payment logs:", logsErr);
+        }
+        console.timeEnd('fetchLogs'); // End timing for logs
+      }
     }
-  };
+  } catch (error) {
+    console.error('Error loading payments:', error);
+  } finally {
+    console.timeEnd('loadPayments'); // End overall timing
+    setIsLoading(false);
+  }
+};
+
+// Alternative approach using pagination
+const loadPaymentsWithPagination = async () => {
+  setIsLoading(true);
+  console.time('loadPaymentsWithPagination');
+  
+  try {
+    // Step 1: Load only recent/relevant payments first for immediate display
+    const currentDate = new Date();
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
+    
+    const { data: recentData, error: recentError } = await supabase
+      .from('royalty_payments')
+      .select(`
+        id, 
+        franchise_id, 
+        due_date, 
+        amount, 
+        status,
+        franchises(id, name)
+      `)
+      .gte('due_date', threeMonthsAgo.toISOString().split('T')[0])
+      .order('due_date', { ascending: false })
+      .limit(50);
+    
+    if (recentError) throw recentError;
+    
+    if (recentData) {
+      // Immediately display recent data
+      setPayments(recentData);
+      calculateStats(recentData);
+      
+      // Then fetch older data if needed
+      const { data: olderData, error: olderError } = await supabase
+        .from('royalty_payments')
+        .select(`
+          id, 
+          franchise_id, 
+          due_date, 
+          amount, 
+          status,
+          franchises(id, name)
+        `)
+        .lt('due_date', threeMonthsAgo.toISOString().split('T')[0])
+        .order('due_date', { ascending: false })
+        .limit(350); // Adjust this limit as needed
+      
+      if (olderError) throw olderError;
+      
+      if (olderData) {
+        // Combine recent and older data
+        const allData = [...recentData, ...olderData];
+        setPayments(allData);
+        
+        // Recalculate stats with all data
+        let statsData = allData;
+        if (selectedFranchiseId) {
+          statsData = allData.filter(payment => payment.franchise_id === selectedFranchiseId);
+        }
+        calculateStats(statsData);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading payments:', error);
+  } finally {
+    console.timeEnd('loadPaymentsWithPagination');
+    setIsLoading(false);
+  }
+};
 
   // Calculate stats based on the provided data
   const calculateStats = (data) => {
