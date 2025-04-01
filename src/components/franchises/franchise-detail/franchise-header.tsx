@@ -14,6 +14,7 @@ import {
   Trash2,
   Banknote,
   User,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -36,7 +37,6 @@ import { supabase } from "@/lib/auth";
 import { AddFranchiseContract } from './add-franchise-contract';
 import { RenewFranchiseContract } from './renew-franchise-contracts';
 import { EditFranchiseDialog } from './edit-franchise-dialog';
-import { PersonIcon } from '@radix-ui/react-icons';
 
 interface FranchiseHeaderProps {
   franchise: {
@@ -47,6 +47,7 @@ interface FranchiseHeaderProps {
     owner_avatar:string;
     phone: string;
     address: string;
+    commune: string;
     company_name: string;
     logo: string;
     email: string;
@@ -237,6 +238,12 @@ export function FranchiseHeader({ franchise, contract, loadFranchises, onDelete,
 
   return (
     <div className="grid gap-6">
+      <div className="flex items-center gap-x-6">
+              <Button variant="ghost" onClick={onDelete} className="mr-2">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+            </div>
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
@@ -401,7 +408,7 @@ export function FranchiseHeader({ franchise, contract, loadFranchises, onDelete,
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{franchise.address}</span>
+                    <span>{franchise.address} – {franchise.commune} </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
@@ -498,12 +505,12 @@ export function FranchiseHeader({ franchise, contract, loadFranchises, onDelete,
                 <div className="text-center p-6 bg-muted rounded-lg">
                   <h3 className="font-semibold mb-2">No Active Contract</h3>
                   <p className="text-muted-foreground mb-4">This franchise doesn't have an active contract.</p>
-                  {!hasContract && (
+                  {/* {!hasContract && (
                     <AddFranchiseContract
                       franchise={franchise}
                       loadFranchises={loadFranchises}
                     />
-                  )}
+                  )} */}
                 </div>
               </div>
             )}

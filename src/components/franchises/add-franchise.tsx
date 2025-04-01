@@ -78,7 +78,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  
+
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -118,7 +118,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
       const file = acceptedFiles[0];
       setCompanyLogo(file);
       form.setValue('companyLogo', file);
-      
+
       // Create a preview
       const reader = new FileReader();
       reader.onload = () => {
@@ -138,76 +138,76 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
   });
 
   async function generateMonthlyPayments(
-    franchiseId: number, 
+    franchiseId: number,
     contractId: number,
-    startDate: Date, 
-    durationYears: number, 
-    royaltyAmount: number, 
-    marketingAmount: number, 
+    startDate: Date,
+    durationYears: number,
+    royaltyAmount: number,
+    marketingAmount: number,
     annualIncrease: number,
     graceMonths: number // New parameter with default of 0
   ) {
-      const payments = [];
-      let currentDate = new Date(startDate);
-      const endDate = new Date(startDate);
-      endDate.setFullYear(endDate.getFullYear() + durationYears);
-  
-      let monthlyRoyalty = royaltyAmount;
-      let monthlyMarketing = marketingAmount;
-      let monthCounter = 0; // Track which month we're on
-  
-      while (currentDate < endDate) {
-        // Determine status based on grace period
-        const status = monthCounter < graceMonths ? 'grace' : 'upcoming';
-        
-        const payment = {
-          franchise_id: franchiseId,
-          contract_id: contractId,
-          due_date: currentDate.toISOString(),
-          amount: monthlyRoyalty+monthlyMarketing,
-          royalty_amount: monthlyRoyalty,
-          marketing_amount: monthlyMarketing,
-          status: status
-        };
-  
-        payments.push(payment);
-  
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        monthCounter++; // Increment month counter
-  
-        if (currentDate.getMonth() === startDate.getMonth()) {
-          monthlyRoyalty *= (1 + annualIncrease / 100);
-          monthlyMarketing *= (1 + annualIncrease / 100);
-        }
+    const payments = [];
+    let currentDate = new Date(startDate);
+    const endDate = new Date(startDate);
+    endDate.setFullYear(endDate.getFullYear() + durationYears);
+
+    let monthlyRoyalty = royaltyAmount;
+    let monthlyMarketing = marketingAmount;
+    let monthCounter = 0; // Track which month we're on
+
+    while (currentDate < endDate) {
+      // Determine status based on grace period
+      const status = monthCounter < graceMonths ? 'grace' : 'upcoming';
+
+      const payment = {
+        franchise_id: franchiseId,
+        contract_id: contractId,
+        due_date: currentDate.toISOString(),
+        amount: monthlyRoyalty + monthlyMarketing,
+        royalty_amount: monthlyRoyalty,
+        marketing_amount: monthlyMarketing,
+        status: status
+      };
+
+      payments.push(payment);
+
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      monthCounter++; // Increment month counter
+
+      if (currentDate.getMonth() === startDate.getMonth()) {
+        monthlyRoyalty *= (1 + annualIncrease / 100);
+        monthlyMarketing *= (1 + annualIncrease / 100);
       }
-  
-      const { data, error } = await supabase
-        .from('royalty_payments')
-        .insert(payments);
-  
-      if (error) {
-        console.error('Error inserting payments:', error);
-        throw error;
-      }
-  
-      return payments;
+    }
+
+    const { data, error } = await supabase
+      .from('royalty_payments')
+      .insert(payments);
+
+    if (error) {
+      console.error('Error inserting payments:', error);
+      throw error;
+    }
+
+    return payments;
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const validatedData = formSchema.parse(values);
-      
+
       // Initialize logo URL variable
       let logoUrl = null;
-      let avatarUrl=null;
-      
+      let avatarUrl = null;
+
       // Upload logo if available
       if (companyLogo) {
         // Create a unique file path for the logo
         const fileExt = companyLogo.name.split('.').pop();
         const fileName = `logo_${Date.now()}_${validatedData.companyName.replace(/\s+/g, '_')}.${fileExt}`;
         const filePath = fileName;
-        
+
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('franchise-attachments')
@@ -215,21 +215,21 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
             cacheControl: '3600',
             upsert: false
           });
-        
+
         if (uploadError) throw uploadError;
-        
+
         // Get the public URL for the logo
         const { data: urlData } = supabase.storage
           .from('franchise-attachments')
           .getPublicUrl(filePath);
-        
+
         logoUrl = urlData.publicUrl;
       }
-      if (ownerImage){
+      if (ownerImage) {
         const fileExt = ownerImage.name.split('.').pop();
         const fileName = `avatar${Date.now()}.${fileExt}`;
         const filePath = fileName;
-        
+
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('franchise-attachments')
@@ -237,14 +237,14 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
             cacheControl: '3600',
             upsert: false
           });
-        
+
         if (uploadError) throw uploadError;
-        
+
         // Get the public URL for the logo
         const { data: urlData } = supabase.storage
           .from('franchise-attachments')
           .getPublicUrl(filePath);
-        
+
         avatarUrl = urlData.publicUrl;
 
       }
@@ -264,7 +264,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
           phone: validatedData.companyPhone,
           status: 'active',
           logo: logoUrl, // Store the logo URL in the database,
-          owner_avatar:avatarUrl
+          owner_avatar: avatarUrl
 
         })
         .select()
@@ -309,7 +309,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
         const fileExt = contractDocument.name.split('.').pop();
         const fileName = `contract_${Date.now()}_${contractData.id}.${fileExt}`;
         const filePath = fileName; // No folders, just the file
-        
+
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('franchise-documents')
@@ -317,22 +317,22 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
             cacheControl: '3600',
             upsert: false
           });
-        
+
         if (uploadError) throw uploadError;
-        
+
         // Get the public URL for the file
         const { data: urlData } = supabase.storage
           .from('franchise-documents')
           .getPublicUrl(filePath);
-        
+
         documentUrl = urlData.publicUrl;
-        
+
         // Update the contract record with the document URL
         const { error: updateError } = await supabase
           .from('franchise_contracts')
           .update({ document_url: documentUrl })
           .eq('id', contractData.id);
-        
+
         if (updateError) throw updateError;
       }
 
@@ -340,7 +340,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
         title: "Franchise Contract created",
         description: "The franchise contract has been successfully created",
       });
-      
+
       onCancel();
     } catch (error) {
       console.error('Error creating franchise:', error);
@@ -351,7 +351,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
       });
     }
   }
-  
+
   const RequiredLabel = ({ children }: { children: React.ReactNode }) => (
     <span className="flex items-center gap-1">
       {children}
@@ -361,12 +361,19 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
 
   return (
     <div className="container mx-auto p-6 pt-0 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="tagline-1 mt-2">Add New Franchise</h1>
-          <p className="body-lead text-muted-foreground">
-            Create a new franchise with all required information
-          </p>
+      <div className="flex items-center gap-x-6">
+        <Button variant="ghost" onClick={onCancel} className="mr-2">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+      <div>
+        <h1 className="tagline-1 mt-2">Add New Franchise</h1>
+        <p className="body-lead text-muted-foreground">
+          Create a new franchise with all required information
+        </p>
+        </div>
+        <div className="flex items-center">
+
         </div>
       </div>
 
@@ -452,8 +459,8 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                       </FormDescription>
                       <FormControl>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div 
-                            {...getOwnerRootProps()} 
+                          <div
+                            {...getOwnerRootProps()}
                             className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
                           >
                             <input {...getOwnerInputProps()} />
@@ -462,18 +469,18 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                               {ownerImage ? ownerImage.name : "Upload Avatar"}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              {ownerImage ? 
-                                `${(ownerImage.size / 1024 / 1024).toFixed(2)} MB` : 
+                              {ownerImage ?
+                                `${(ownerImage.size / 1024 / 1024).toFixed(2)} MB` :
                                 "Drop your avatar here or click to browse (PNG, JPG, SVG)"}
                             </p>
                           </div>
-                          
+
                           {avatarPreview && (
                             <div className="flex flex-col items-center justify-center">
                               <div className="relative w-32 h-32 rounded-lg overflow-hidden border shadow-sm">
-                                <img 
-                                  src={avatarPreview} 
-                                  alt="avatar preview" 
+                                <img
+                                  src={avatarPreview}
+                                  alt="avatar preview"
                                   className="w-full h-full object-contain"
                                 />
                               </div>
@@ -549,7 +556,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                   />
                 </div>
 
-                
+
 
                 <FormField
                   control={form.control}
@@ -589,7 +596,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="commune"
@@ -634,7 +641,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                     )}
                   />
                 </div>
-                
+
                 <div className="grid sm:grid-cols-2 gap-x-4">
                   <FormField
                     control={form.control}
@@ -654,7 +661,7 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="companyPhone"
@@ -689,8 +696,8 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                       </FormDescription>
                       <FormControl>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div 
-                            {...getLogoRootProps()} 
+                          <div
+                            {...getLogoRootProps()}
                             className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
                           >
                             <input {...getLogoInputProps()} />
@@ -699,18 +706,18 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                               {companyLogo ? companyLogo.name : "Upload Logo"}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              {companyLogo ? 
-                                `${(companyLogo.size / 1024 / 1024).toFixed(2)} MB` : 
+                              {companyLogo ?
+                                `${(companyLogo.size / 1024 / 1024).toFixed(2)} MB` :
                                 "Drop your logo here or click to browse (PNG, JPG, SVG)"}
                             </p>
                           </div>
-                          
+
                           {logoPreview && (
                             <div className="flex flex-col items-center justify-center">
                               <div className="relative w-32 h-32 rounded-lg overflow-hidden border shadow-sm">
-                                <img 
-                                  src={logoPreview} 
-                                  alt="Logo preview" 
+                                <img
+                                  src={logoPreview}
+                                  alt="Logo preview"
                                   className="w-full h-full object-contain"
                                 />
                               </div>
@@ -942,8 +949,8 @@ export function AddFranchise({ onCancel }: AddFranchiseProps) {
                             {contractDocument ? contractDocument.name : "Upload Contract Document"}
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {contractDocument ? 
-                              `${(contractDocument.size / 1024 / 1024).toFixed(2)} MB` : 
+                            {contractDocument ?
+                              `${(contractDocument.size / 1024 / 1024).toFixed(2)} MB` :
                               "Drop your file here or click to browse (PDF, DOC, DOCX)"}
                           </p>
                         </div>

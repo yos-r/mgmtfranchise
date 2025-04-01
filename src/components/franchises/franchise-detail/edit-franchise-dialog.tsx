@@ -201,9 +201,7 @@ export function EditFranchiseDialog({
         
         updateData.logo = urlData.publicUrl;
       }
-      else{
-        updateData.logo=null
-      }
+      
       
       // Upload owner avatar if changed
       if (ownerAvatar) {
@@ -226,9 +224,7 @@ export function EditFranchiseDialog({
         
         updateData.owner_avatar = urlData.publicUrl;
       }
-      else{
-        updateData.owner_avatar=null
-      }
+      
 
       // Update the franchise record with all data
       const { data, error } = await supabase

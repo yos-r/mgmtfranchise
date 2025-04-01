@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { MapPin, AlertTriangle } from "lucide-react";
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -31,14 +31,14 @@ interface FranchiseMapProps {
       lng: number;
     };
   }>;
-  onSelect: (id: number) => void;
+  onSelect: (franchise: any) => void; // Changed to pass the entire franchise object
 }
 
 export function FranchiseMap({ franchises, onSelect }: FranchiseMapProps) {
   const [viewState, setViewState] = useState({
-    longitude: 4.298558312213245,
-    latitude: 50.83003140632331,
-    zoom: 14
+    longitude: 4.3499721822997515,
+    latitude: 50.83357740595144, 
+    zoom: 13
   });
 
   // Initial warning dialog state - set to true so it shows on render
@@ -47,7 +47,6 @@ export function FranchiseMap({ franchises, onSelect }: FranchiseMapProps) {
   return (
     <>
       {/* Warning Dialog - appears immediately on render */}
-      {/* <AlertDialog open={warningDialogOpen} onOpenChange={setWarningDialogOpen}> */}
       <Dialog open={warningDialogOpen} onOpenChange={setWarningDialogOpen}>
         <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader className="flex flex-col items-center text-center">
@@ -59,19 +58,10 @@ export function FranchiseMap({ franchises, onSelect }: FranchiseMapProps) {
               Vous pouvez contacter votre administrateur pour partager les coordonnées de géolocalisation.
             </DialogDescription>
           </DialogHeader>
-          {/* <div className="flex justify-center mt-4">
-            <Button className="bg-relentlessgold " >
-              Configurer la connexion CRM
-            </Button>
-          </div>
-          <div className="text-center text-sm text-gray-500 mt-2">
-            Contactez le support technique si vous avez besoin d'aide
-          </div> */}
         </DialogContent>
       </Dialog>
-      {/* </AlertDialog> */}
 
-      {/* Map Container - original component unchanged */}
+      {/* Map Container */}
       <div className="h-[600px] rounded-lg overflow-hidden">
         <MapContainer
           center={[viewState.latitude, viewState.longitude]}
@@ -89,7 +79,19 @@ export function FranchiseMap({ franchises, onSelect }: FranchiseMapProps) {
                 key={franchise.id}
                 position={[franchise.coordinates.lat, franchise.coordinates.lng]}
                 eventHandlers={{
-                  click: () => onSelect(franchise.id),
+                  click: () => {
+                    // Execute your select function when marker is clicked
+                    onSelect(franchise);
+                  },
+                  mouseover: (e) => {
+                    // Open popup when mouse hovers over the marker
+                    e.target.openPopup();
+                  },
+                  mouseout: (e) => {
+                    // Optionally close popup when mouse leaves the marker
+                    // Comment this line if you want popups to stay open until clicked elsewhere
+                    // e.target.closePopup();
+                  },
                 }}
               >
                 <Popup>
