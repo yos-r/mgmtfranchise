@@ -88,10 +88,10 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
         </TabsList>
       </div>
 
-      {/* Desktop view - Original layout */}
-      <div className="hidden lg:block">
-        <TabsList className="flex justify-between">
-          <div>
+      {/* Desktop view - Separated tab groups */}
+      <div className="hidden lg:flex lg:justify-between lg:items-center">
+        <div className="tablist-primary">
+          <TabsList className="bg-muted rounded-md">
             {primaryTabs.map(tab => (
               <TabsTrigger 
                 key={tab.value}
@@ -101,8 +101,10 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
                 {tab.label}
               </TabsTrigger>
             ))}
-          </div>
-          <div>
+          </TabsList>
+        </div>
+        <div className="tablist-secondary">
+          <TabsList className="bg-muted rounded-md">
             {secondaryTabs.map(tab => (
               <TabsTrigger 
                 key={tab.value}
@@ -112,8 +114,8 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
                 {tab.label}
               </TabsTrigger>
             ))}
-          </div>
-        </TabsList>
+          </TabsList>
+        </div>
       </div>
 
       {/* Tab content - remains the same for all screen sizes */}
@@ -145,16 +147,7 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
         <NAFTab />
       </TabsContent>
 
-      {/* CSS for hiding scrollbar */}
-      <style jsx global>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+      {/*  */}
     </Tabs>
   );
 }
