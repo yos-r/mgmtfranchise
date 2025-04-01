@@ -5,6 +5,7 @@ import {
   Percent,
   Users,
   TrendingUp,
+  ArrowLeft,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AgencesWidget2 from './agences-widget2';
@@ -20,6 +21,7 @@ import RealEstateTransactions from './real-estate-transactions';
 import CommuneInfo from './commune-info';
 import AreaStatsCard from './area-stats-card';
 import InventoryChart from './inventory-chart';
+import { Button } from '../ui/button';
 
 interface AreaDetailProps {
   area: {
@@ -48,6 +50,10 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
+          <Button variant="ghost" onClick={onBack} className="mr-2">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
           <div>
             <h2 className="tagline-1 text-3xl font-bold">{area.areaName}</h2>
             <p className="body-lead text-muted-foreground">
@@ -59,33 +65,33 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
           High Opportunity
         </div>
       </div>
-      
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-      <CommuneInfo area={area}></CommuneInfo>
+        <CommuneInfo area={area}></CommuneInfo>
 
         <AreaStatsCard totalAgencies={area.totalAgencies} population={area.population}></AreaStatsCard>
 
       </div>
-      
+
       <AgencesWidget2 />
 
       <div className="grid gap-6 lg:grid-cols-2">
-      <MarketMetrics
+        <MarketMetrics
           listingsForSale={area.listingsForSale}
           listingsForRent={area.listingsForRent}
-        />        
+        />
         <InventoryChart></InventoryChart>
-        
+
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
-      <ApartmentPriceChart></ApartmentPriceChart>
-      <HousePriceChart></HousePriceChart>
-      <RealEstateTransactions></RealEstateTransactions>
+        <ApartmentPriceChart></ApartmentPriceChart>
+        <HousePriceChart></HousePriceChart>
+        <RealEstateTransactions></RealEstateTransactions>
 
-</div>
-      
+      </div>
 
-      <div className="grid gap-6 sm:grid-cols-2"> 
+
+      <div className="grid gap-6 sm:grid-cols-2">
         <RealEstateMetrics />
         <BuildingDonutChart />
       </div>
