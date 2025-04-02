@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { PlanVisitDialog } from "./plan-visit-dialog";
-import { VisitDetail } from "./visit-detail";
+// import { VisitDetail } from "./visit-detail";
 import { VisitList } from "./visit-list";
-
+import VisitDetail from "./visit-detail";
 export function SupportTab() {
   const [visits, setVisits] = useState([]);
   const [consultants, setConsultants] = useState({});
@@ -237,10 +237,10 @@ export function SupportTab() {
 
   if (selectedVisit) {
     return <VisitDetail 
-      visit={selectedVisit} 
+      assistanceId={selectedVisit.id} 
       onBack={handleBack} 
-      consultants={consultants}
-      franchises={franchises}
+      // consultants={consultants}
+      // franchises={franchises}
       onVisitUpdated={refreshData}
     />;
   }

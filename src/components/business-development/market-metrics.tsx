@@ -23,7 +23,7 @@ const MarketMetrics = ({
     listingsForRent,
     averageDaysOnMarket = 45,
     propertyTypes = 8,
-    marketGrowth = "+5.2%",
+    marketGrowth = "+1.9%",
     priceTrend = "Upward"
 }: MarketMetricsProps) => {
     // Calculate percentage for pie chart

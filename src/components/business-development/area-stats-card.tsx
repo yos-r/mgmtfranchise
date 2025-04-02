@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Building2, Users, Percent, MapPin, ChartBar, BarChart, House, HousePlugIcon, HousePlusIcon, MapPinHouse } from 'lucide-react';
 
-const AreaStatsCard = ({ areaName = "Quartier Centre", totalAgencies, population, marketShare = "25%" }) => {
+const AreaStatsCard = ({ area,areaName = "Quartier Centre", totalAgencies, population, marketShare = "25%" }) => {
   return (
     <Card className="w-full shadow-sm">
       <CardHeader className="border-b py-4">
@@ -24,7 +24,7 @@ const AreaStatsCard = ({ areaName = "Quartier Centre", totalAgencies, population
               <MapPinHouse className="h-6 w-6 text-obsessedgrey" />
               {/* <MapPinHouse></MapPinHouse> */}
             </div>
-            <p className="text-2xl font-bold text-gray-800">900</p>
+            <p className="text-2xl font-bold text-gray-800">{area.listingsForSale+area.listingsForRent}</p>
             <p className="text-xs text-gray-500 text-center">Biens <br /> disponibles</p>
           </div>
             {/* Population stat */}
@@ -33,9 +33,9 @@ const AreaStatsCard = ({ areaName = "Quartier Centre", totalAgencies, population
               <House className="h-6 w-6 text-[#746649]" />
               
             </div>
-            <p className="text-2xl font-bold text-gray-800">€6,452</p>
+            <p className="text-2xl font-bold text-gray-800">€{area.avgSquareMeter.toLocaleString('en-US')}</p>
             <p className="text-xs text-gray-500 text-center">Prix moyen du <br />mètre carré 2024</p>
-            <p className="text-xs font-semibold text-green-700 text-center">+3.25% depuis 2023 </p>
+            <p className="text-xs font-semibold text-green-700 text-center">+2% depuis 2023 </p>
 
           </div>
           {/* Agencies stat */}
@@ -43,7 +43,7 @@ const AreaStatsCard = ({ areaName = "Quartier Centre", totalAgencies, population
             <div className="p-3 rounded-sm bg-gray-100 mb-2">
               <Building2 className="h-6 w-6 text-gray-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-800">{totalAgencies}</p>
+            <p className="text-2xl font-bold text-gray-800">{area.totalAgencies}</p>
             <p className="text-xs text-gray-500 text-center"> Agences <br /> actives</p>
           </div>
           
@@ -55,7 +55,7 @@ const AreaStatsCard = ({ areaName = "Quartier Centre", totalAgencies, population
               {/* <Percent className="h-6 w-6 text-gray-600" /> */}
               <img className="h-8 w-" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Century_21_seal_2018.svg/470px-Century_21_seal_2018.svg.png?20180306135049" ></img>
             </div>
-            <p className="text-2xl font-bold text-gray-800">2 </p>
+            <p className="text-2xl font-bold text-gray-800">{area.c21agencies} </p>
             <p className="text-xs text-gray-500 text-center">Agences <br />CENTURY 21</p>
           </div>
         </div>

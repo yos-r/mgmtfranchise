@@ -46,13 +46,13 @@ const CommuneInfo = ({area}) => {
     },
     {
       icon: <PercentSquare className="h-6 w-6 text-gray-600" />,
-      value: employmentRate,
+      value: area.employmentRate + `%`,
       label: "Taux d'emploi",
       bgColor: "bg-gray-100"
     },
     {
       icon: <Euro className="h-6 w-6 text-[#746649]" />,
-      value: averageRevenue,
+      value: '€ '+area.avgRevenue.toLocaleString('fr-FR'),
       label: "Revenu moyen annuel",
       bgColor: "bg-[#beaf87]/20"
     }

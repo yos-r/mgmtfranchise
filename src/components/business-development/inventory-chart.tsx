@@ -9,7 +9,7 @@ import {
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
-const InventoryChart = () => {
+const InventoryChart = ({area}:any) => {
     // Static data for inventory evolution
     const inventoryData = [
         { month: 'Jan 23', sale: 25, rent: 31 },
@@ -23,18 +23,19 @@ const InventoryChart = () => {
         { month: 'May 24', sale: 27, rent: 41 },
         { month: 'Jul 24', sale: 24, rent: 38 },
         { month: 'Sep 24', sale: 22, rent: 37 },
-        { month: 'Nov 24', sale: 23, rent: 39 },
+        { month: 'Nov 24', sale: 24, rent: 35 },
     ];
 
     // Calculate percentage changes over last period
-    const currentSale = inventoryData[inventoryData.length - 1].sale;
+    // const currentSale = [inventoryData.length - 1].sale;
+    const currentSale=area.listingsForSale
     const previousSale = inventoryData[inventoryData.length - 2].sale;
-    const salePercentChange = ((currentSale - previousSale) / previousSale * 100).toFixed(1);
+    const salePercentChange = ((inventoryData[inventoryData.length - 1].sale - previousSale) / previousSale * 100).toFixed(1);
     const isSaleIncreasing = salePercentChange > 0;
 
-    const currentRent = inventoryData[inventoryData.length - 1].rent;
+    const currentRent = area.listingsForRent;
     const previousRent = inventoryData[inventoryData.length - 2].rent;
-    const rentPercentChange = ((currentRent - previousRent) / previousRent * 100).toFixed(1);
+    const rentPercentChange = ((inventoryData[inventoryData.length - 1].rent - previousRent) / previousRent * 100).toFixed(1);
     const isRentIncreasing = rentPercentChange > 0;
 
     // Custom tooltip

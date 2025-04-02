@@ -69,7 +69,7 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         <CommuneInfo area={area}></CommuneInfo>
 
-        <AreaStatsCard totalAgencies={area.totalAgencies} population={area.population}></AreaStatsCard>
+        <AreaStatsCard area={area} totalAgencies={area.totalAgencies} population={area.population}></AreaStatsCard>
 
       </div>
 
@@ -80,7 +80,7 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
           listingsForSale={area.listingsForSale}
           listingsForRent={area.listingsForRent}
         />
-        <InventoryChart></InventoryChart>
+        <InventoryChart area={area}></InventoryChart>
 
       </div>
       <div className="grid gap-6 lg:grid-cols-3">

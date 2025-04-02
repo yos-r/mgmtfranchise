@@ -54,12 +54,16 @@ const RealEstateTransactions = () => {
     (currentPage + 1) * transactionsPerPage
   );
 
-  // Pagination handlers
+  // Pagination handlers with dialog trigger
   const goToPreviousPage = () => {
     setCurrentPage(prevPage => Math.max(0, prevPage - 1));
   };
 
   const goToNextPage = () => {
+    // Show export dialog when paginating to next page
+    setShowExportDialog(true);
+    
+    // Optionally, still change the page
     setCurrentPage(prevPage => Math.min(pageCount - 1, prevPage + 1));
   };
 
@@ -194,7 +198,6 @@ const RealEstateTransactions = () => {
                 </Button>
               </div>
             </div>
-          {/* </div> */}
           </TabsContent>
       </Tabs>
 
