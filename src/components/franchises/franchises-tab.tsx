@@ -93,7 +93,20 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                 return false;
             });
         }).length;
-        
+        const active = franchises.filter(franchise => {
+            // If franchise status is directly marked as terminated
+            // if (franchise.status === 'terminated') return true;
+            
+            // Check if all contracts are terminated
+            const contracts = franchise.franchise_contracts || [];
+            if (contracts.length === 0) return false;
+            
+            return contracts.every(contract => 
+                contract.terminated === 'no'  || !contract.terminated
+                // contract.terminated === 'yes' || 
+                // contract.terminated === true
+            );
+        }).length;
         // Calculate terminated franchises
         const terminated = franchises.filter(franchise => {
             // If franchise status is directly marked as terminated
@@ -114,6 +127,7 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
             total: franchises.length,
             new: newFranchises,
             expiring: expiringSoon,
+            active: active,
             terminated: terminated
         };
     }, [franchises]);
@@ -331,13 +345,13 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                   </Card>
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="tagline-3">New Franchises</CardTitle>
+                      <CardTitle className="tagline-3">Active contracts</CardTitle>
                       <Sparkle className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="numbers text-2xl font-bold">{stats.new}</div>
+                      <div className="numbers text-2xl font-bold">{stats.active}</div>
                       <p className="legal text-muted-foreground">
-                        From the last 60 days
+                        Franchises with active contracts
                       </p>
                     </CardContent>
                   </Card>
