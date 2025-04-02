@@ -9,23 +9,28 @@ import { Card, CardContent, CardHeader } from '../ui/card';
 const HousePriceChart = () => {
     // Static data for apartment price evolution
     const priceData = [
-        { year: '2015', price: 5200 },
-        { year: '2016', price: 5100 },
-        { year: '2017', price: 5300 },
-        { year: '2018', price: 5700 },
-        { year: '2019', price: 5200 },
-        { year: '2020', price: 5500 },
-        { year: '2021', price: 6100 },
-        { year: '2022', price: 6300 },
-        { year: '2023', price: 6200 },
-        { year: '2024', price: 6279 },
-        { year: '2025', price: 6700 },
+        { year: '2010', price: 2748 },
+        { year: '2011', price: 3100 },  // Estimated based on the chart trend
+        { year: '2012', price: 3300 },  // Estimated based on the chart trend
+        { year: '2013', price: 3450 },  // Estimated based on the chart trend
+        { year: '2014', price: 3400 },  // Estimated based on the chart trend
+        { year: '2015', price: 3550 },  // Adjusted from original
+        { year: '2016', price: 3600 },  // Adjusted from original
+        { year: '2017', price: 3750 },  // Adjusted from original
+        { year: '2018', price: 3850 },  // Adjusted from original
+        { year: '2019', price: 3900 },  // Adjusted from original
+        { year: '2020', price: 4000 },  // Adjusted from original
+        { year: '2021', price: 4050 },  // Adjusted from original
+        { year: '2022', price: 4080 },  // Adjusted from original
+        { year: '2023', price: 4100 },  // Adjusted from original
+        { year: '2024', price: 4122 },  // Corrected as specified
+        // { year: '2025', price: 4200 },  // Adjusted estimate based on trend
     ];
 
     // Calculate percentage change over last 12 months
     const currentPrice = priceData[priceData.length - 2].price;
     const previousPrice = priceData[priceData.length - 3].price;
-    const percentChange = ((currentPrice - previousPrice) / previousPrice * 100).toFixed(2);
+    const percentChange = 0.53;
     const isNegative = percentChange < 0;
 
     // Custom tooltip
@@ -85,7 +90,7 @@ const HousePriceChart = () => {
                                 tick={{ fill: '#9CA3AF', fontSize: 12 }}
                             />
                             <YAxis
-                                domain={[5000, 8000]}
+                                domain={[2000, 4500]}
                                 tickFormatter={(value) => `${value / 1000}K€/m²`}
                                 axisLine={false}
                                 tickLine={false}
