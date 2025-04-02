@@ -153,9 +153,9 @@ export function PerformanceTab({ onHome }) {
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-2">
               <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
-            <DialogTitle className="text-xl font-semibold">Connexion au CRM requise</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">CRM Connection Required</DialogTitle>
             <DialogDescription className="pt-2 text-center">
-              Vous devez connecter le CRM de votre agence pour charger les données ici.
+              You need to connect your agency's CRM to load the data here.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center mt-4">
@@ -163,9 +163,9 @@ export function PerformanceTab({ onHome }) {
               Configurer la connexion CRM
             </Button> */}
           </div>
-          <div className="text-center text-sm text-gray-500 mt-2">
-            Contactez le support technique si vous avez besoin d'aide
-          </div>
+            <div className="text-center text-sm text-gray-500 mt-2">
+            Contact technical support if you need assistance
+            </div>
         </DialogContent>
       </Dialog>
 

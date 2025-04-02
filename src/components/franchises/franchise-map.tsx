@@ -53,9 +53,9 @@ export function FranchiseMap({ franchises, onSelect }: FranchiseMapProps) {
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-2">
               <MapPin className="h-6 w-6 text-red-600" />
             </div>
-            <DialogTitle className="text-xl font-semibold">Coordonnées de géolocalisation introuvables</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">Geolocation Coordinates Not Found</DialogTitle>
             <DialogDescription className="pt-2 text-center">
-              Vous pouvez contacter votre administrateur pour partager les coordonnées de géolocalisation.
+              You can contact your administrator to share the geolocation coordinates.
             </DialogDescription>
           </DialogHeader>
         </DialogContent>

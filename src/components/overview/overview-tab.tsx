@@ -280,7 +280,7 @@ Support Visits
           <CardContent>
             <div className="numbers text-2xl font-bold">{stats?.assistanceVisits}</div>
             <p className="legal text-muted-foreground">
-              Réalisées dans les 30 derniers jours
+              From last 30 days
             </p>
           </CardContent>
         </Card>

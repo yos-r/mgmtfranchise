@@ -21,6 +21,8 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
+  Notebook,
+  Pen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -42,8 +44,10 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { EditEventDialog } from "./edit-event-dialog";
-import { NotesCard } from "./notes-card";
+// import { NotesCard } from "./notes-card";
 import { AttendanceCard } from "./attendance-card";
+import TrainingMaterials from "./training_materials";
+import InternalNotesCard from "./internal_notes";
 
 // Sample images for the bento grid
 const demoImages = [
@@ -158,7 +162,7 @@ const ImageGallery = ({ images, initialIndex = 0, isOpen, onClose }) => {
         <ChevronLeft className="h-6 w-6" />
       </button>
 
-      <button 
+      <button
         className="absolute right-4 p-3 z-50 text-white bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition-colors"
         onClick={goToNext}
       >
@@ -322,7 +326,7 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
       const { error } = await supabase
         .from('training_events')
         .update({
-          internal_notes: internalNotes
+          notes: internalNotes
         })
         .eq('id', currentEvent.id);
 
@@ -561,14 +565,7 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
                 </div>
               </div>
 
-              <Separator />
-
-              <div>
-                <h3 className="text-sm font-medium mb-2">Description</h3>
-                <p className="text-sm text-muted-foreground whitespace-pre-line">
-                  {currentEvent.description || 'No description available'}
-                </p>
-              </div>
+              
             </CardContent>
           </Card>
 
@@ -652,74 +649,14 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
           </Card>
 
           {/* Learning Materials */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Learning Materials</CardTitle>
-              <CardDescription>
-                Course materials and resources
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {learningMaterials.map((material) => (
-                  <div
-                    key={material.id}
-                    className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <FileIcon className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="font-medium text-sm">{material.name}</p>
-                        <p className="text-xs text-muted-foreground">{material.size}</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDownload(material.id)}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <TrainingMaterials eventId={event.id}></TrainingMaterials>
+      
+           <InternalNotesCard 
+            eventId={currentEvent.id} 
+            initialNotes={currentEvent.notes || ""} 
+            noteBy={currentEvent.note_by || ""} 
+          />
 
-          {/* Internal Notes (Admin Only) */}
-          {isAdmin && (
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center">
-                    <Lock className="h-4 w-4 mr-2 text-muted-foreground" />
-                    Internal Notes
-                  </CardTitle>
-                  <Badge variant="outline" className="text-xs">Admin Only</Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Add internal notes about this event..."
-                  className="min-h-[100px]"
-                  value={internalNotes}
-                  onChange={handleInternalNotesChange}
-                />
-              </CardContent>
-              {isNotesUpdated && (
-                <CardFooter className="pt-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="ml-auto"
-                    onClick={saveInternalNotes}
-                  >
-                    Save Notes
-                  </Button>
-                </CardFooter>
-              )}
-            </Card>
-          )}
 
           {/* Attendance Statistics */}
           <Card>
