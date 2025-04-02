@@ -139,7 +139,7 @@ export function SupportTab() {
         franchise: franchises[visit.franchise_id] || 'Unknown Franchise',
         consultant_id: visit.consultant_id,
         consultant: consultants[visit.consultant_id]?.name || 'Unknown Consultant',
-        type: visit.type,
+        type: visit.type.replace('_',' '),
         date: visit.date,
         time: visit.time || '00:00',
         duration: visit.duration,

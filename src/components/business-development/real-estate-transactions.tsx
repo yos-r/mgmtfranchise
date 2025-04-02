@@ -17,8 +17,8 @@ import {
 
 const RealEstateTransactions = () => {
   // Static data for transactions
-  const apartmentTransactions = 2700;
-  const houseTransactions = 2234;
+  const apartmentTransactions = 8086;
+  const houseTransactions = 1110;
   const city = "Vanves";
   const fromYear = 2014;
 

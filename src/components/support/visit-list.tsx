@@ -51,7 +51,7 @@ export function VisitList({ visits, onVisitSelect }: VisitListProps) {
                 </TableCell>
                 <TableCell className="body-1">{visit.consultant}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="label-2">
+                  <Badge variant="outline" className="capitalize label-2">
                     {visit.type}
                   </Badge>
                 </TableCell>

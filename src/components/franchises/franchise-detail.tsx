@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { ContractsHistory } from "./franchise-detail/contracts-history";
 import { Skeleton } from "../ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import VisitActionPlans from "../support/visit-action-plans";
 
 // Skeleton loading components
 const SkeletonHeader = () => (
@@ -143,6 +144,7 @@ export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, o
       <LocationAndAgents franchise={franchise} />
       <TrainingHistory franchise={franchise} />
       <AssistanceHistory franchise={franchise} />
+      <VisitActionPlans franchiseId={franchise.id}/>
     </div>
   );
 }
