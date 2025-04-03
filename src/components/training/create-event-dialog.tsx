@@ -84,7 +84,6 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
 
   const selectedFranchiseIds = form.watch("selectedFranchises") || [];
 
-  // Fetch franchises when dialog opens
   useEffect(() => {
     if (isOpen) {
       fetchFranchises();
@@ -115,8 +114,7 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
 
   const onSubmit = async (values: z.infer<typeof eventSchema>) => {
     try {
-      // Start a transaction to ensure all operations succeed or fail together
-      // First insert the event
+      
       const { data: eventData, error: eventError } = await supabase
         .from('training_events')
         .insert({
@@ -134,12 +132,10 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
 
       if (eventError) throw eventError;
 
-      // Then create attendance records for each selected franchise
       const attendanceRecords = values.selectedFranchises.map(franchiseId => ({
         event_id: eventData.id,
         franchise_id: franchiseId,
-        attended: null,  // Using null here as this is what we saw in the sample data
-        // atenn: 'pending'  // Adding a status field to track attendance state
+        attended: null, 
       }));
 
       const { error: attendanceError } = await supabase
@@ -169,13 +165,11 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
     const currentSelected = form.getValues("selectedFranchises") || [];
     
     if (currentSelected.includes(franchiseId)) {
-      // Remove franchise if already selected
       form.setValue("selectedFranchises", 
         currentSelected.filter(id => id !== franchiseId), 
         { shouldValidate: true }
       );
     } else {
-      // Add franchise if not selected
       form.setValue("selectedFranchises", 
         [...currentSelected, franchiseId], 
         { shouldValidate: true }
