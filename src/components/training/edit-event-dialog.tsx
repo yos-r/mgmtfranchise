@@ -214,7 +214,7 @@ export function EditEventDialog({
               />
             </div>
 
-            <FormField
+            {/* <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
@@ -226,7 +226,7 @@ export function EditEventDialog({
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
 
             <DialogFooter>
               <Button

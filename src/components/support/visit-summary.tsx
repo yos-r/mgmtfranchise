@@ -53,7 +53,7 @@ export default function VisitSummary({
                           <span className="text-sm font-medium">Actions</span>
                           <span className="text-sm">{actions.length}</span>
                         </div> */}
-                        {/* <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center">
                           <span className="text-sm font-medium">Conformité globale</span>
                           <div className="flex items-center">
                             <div className="w-32 bg-gray-200 rounded-full h-2.5">
@@ -64,7 +64,7 @@ export default function VisitSummary({
                             </div>
                             <span className="ml-2 text-sm">85%</span>
                           </div>
-                        </div> */}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

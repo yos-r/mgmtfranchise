@@ -21,7 +21,7 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 
-const AgencesWidget2 = () => {
+const AgencesWidget2 = (area) => {
     // Use the currency formatting hook
     const { formatCurrency } = useCurrency();
 

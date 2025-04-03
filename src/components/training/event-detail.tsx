@@ -432,8 +432,36 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <h1 className="text-2xl font-bold truncate">{currentEvent.title}</h1>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+                {currentEvent.title}
+              </h1>
+            <div className="flex items-center text-sm text-muted-foreground mt-1">
+              <Calendar className="mr-1 h-3.5 w-3.5" />
+              <span>                {format(new Date(currentEvent.date), "MMMM d, yyyy")}
+              </span>
+              <Clock className="ml-3 mr-1 h-3.5 w-3.5" />
+              <span>{currentEvent.time}</span>
+              <span className="mx-2">•</span>
+              <span> {currentEvent.duration}</span>
+            </div>
+          </div>
+          {/* <div className="flex flex-col">
+            <h1 className="text-2xl font-bold truncate">{currentEvent.title}</h1>
+            <CardDescription className="inline-flex items-center space-x-2">
+              <span className="flex items-center">
+                <Calendar className=" w-4 mr-2" />
+                {format(new Date(currentEvent.date), "MMMM d, yyyy")}
+              </span>
+              <span className="flex items-center">
+                <Clock className="w-4 mr-1" />
+                {currentEvent.time} • {currentEvent.duration}
+              </span>
+            </CardDescription>
+          </div> */}
         </div>
+
+
 
         <div className="flex items-center gap-2">
           <Button
@@ -565,7 +593,7 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
                 </div>
               </div>
 
-              
+
             </CardContent>
           </Card>
 
@@ -650,11 +678,11 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
 
           {/* Learning Materials */}
           <TrainingMaterials eventId={event.id}></TrainingMaterials>
-      
-           <InternalNotesCard 
-            eventId={currentEvent.id} 
-            initialNotes={currentEvent.notes || ""} 
-            noteBy={currentEvent.note_by || ""} 
+
+          <InternalNotesCard
+            eventId={currentEvent.id}
+            initialNotes={currentEvent.notes || ""}
+            noteBy={currentEvent.note_by || ""}
           />
 
 

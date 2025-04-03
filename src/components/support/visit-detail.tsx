@@ -366,11 +366,11 @@ export default function VisitDetail({ assistanceId, onBack }) {
         
         <div className="lg:col-span-1 space-y-6">
           <VisitChecklist visitId={assistanceId}  />
-          {/* <VisitSummary 
+          <VisitSummary 
             franchise={franchise} 
             getStatusBadgeClass={getStatusBadgeClass} 
             assistance={visit} 
-          /> */}
+          />
           <VisitDocuments franchise={franchise} visitId={assistanceId} />
         </div>
       </div>

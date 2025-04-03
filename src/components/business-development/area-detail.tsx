@@ -52,7 +52,7 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
         <div className="flex items-center space-x-4">
           <Button variant="ghost" onClick={onBack} className="mr-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            {/* Back */}
           </Button>
           <div>
             <h2 className="tagline-1 text-3xl font-bold">{area.areaName}</h2>
@@ -73,7 +73,7 @@ export function AreaDetail({ area, onBack }: AreaDetailProps) {
 
       </div>
 
-      <AgencesWidget2 />
+    <AgencesWidget2 area={area}/>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <MarketMetrics
