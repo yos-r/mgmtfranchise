@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMe
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { ExitIcon } from "@radix-ui/react-icons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface FranchisesTabsProps {
     viewMode: string;
@@ -22,13 +23,14 @@ interface FranchisesTabsProps {
 // Define filter types
 type FilterOption = "expiringFranchises" | "newFranchises" | "terminatedFranchises";
 
-export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
+export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: FranchisesTabsProps) {
     const [franchises, setFranchises] = useState<any[]>([]);
     const [filteredFranchises, setFilteredFranchises] = useState<any[]>([]);
     const [isAddingFranchise, setIsAddingFranchise] = useState(false);
     const [selectedFranchise, setSelectedFranchise] = useState<any | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [statsLoading, setStatsLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState<FilterOption[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -195,6 +197,7 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
 
     const loadFranchises = async () => {
         setIsLoading(true);
+        setStatsLoading(true);
         try {
             const { data, error } = await supabase
                 .from('franchises')
@@ -210,7 +213,9 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
         } catch (err) {
             console.error("Exception loading franchises:", err);
         } finally {
-            setIsLoading(false);
+            // Add small delay to make animation feel more natural
+            setTimeout(() => setStatsLoading(false), 60);
+            setTimeout(() => setIsLoading(false), 60);
         }
     };
 
@@ -270,6 +275,7 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
     if (selectedFranchise) {
         return (
             <FranchiseDetail
+                onVisitSelect={onVisitSelect}
                 loadFranchises={loadFranchises}
                 franchise={selectedFranchise}
                 onDelete={() => setSelectedFranchise(null)}
@@ -277,6 +283,54 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
             />
         );
     }
+
+    // Card skeleton component
+    const CardSkeleton = () => (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-6 w-36" />
+                <Skeleton className="h-4 w-4 rounded-full" />
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-4 w-32" />
+            </CardContent>
+        </Card>
+    );
+
+    // Table row skeleton
+    const TableRowSkeleton = () => (
+        <div className="animate-pulse flex items-center p-4 border-b">
+            <div className="flex-1">
+                <Skeleton className="h-6 w-48 mb-2" />
+                <Skeleton className="h-4 w-32" />
+            </div>
+            <div className="flex gap-2">
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-20" />
+            </div>
+        </div>
+    );
+
+    // Grid card skeleton
+    const GridCardSkeleton = () => (
+        <Card className="animate-pulse">
+            <CardHeader className="pb-2">
+                <Skeleton className="h-6 w-40 mb-2" />
+                <Skeleton className="h-4 w-28" />
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <div className="flex justify-between mt-4">
+                        <Skeleton className="h-6 w-24" />
+                        <Skeleton className="h-6 w-16" />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
 
     // Empty state component
     const EmptyState = () => (
@@ -320,6 +374,38 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
         </div>
     );
 
+    // Table skeleton (for list view)
+    const TableSkeleton = () => (
+        <div className="overflow-hidden rounded-md border">
+            <div className="p-4 bg-muted/50 flex justify-between">
+                <Skeleton className="h-6 w-32" />
+                <div className="flex gap-2">
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-6 w-16" />
+                </div>
+            </div>
+            {[1, 2, 3, 4, 5].map((i) => (
+                <TableRowSkeleton key={i} />
+            ))}
+        </div>
+    );
+
+    // Grid skeleton (for grid view)
+    const GridSkeleton = () => (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+                <GridCardSkeleton key={i} />
+            ))}
+        </div>
+    );
+
+    // Map skeleton (for map view)
+    const MapSkeleton = () => (
+        <div className="rounded-md border overflow-hidden">
+            <Skeleton className="h-[400px] w-full" />
+        </div>
+    );
+
     return (
         <div>
             <div className="mb-6">
@@ -329,57 +415,68 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                 </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="tagline-3">Total Franchises</CardTitle>
-                      <Network className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="numbers text-2xl font-bold">
-                        {stats.total}
-                      </div>
-                      <p className="legal text-muted-foreground">
-                        Network franchises 
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="tagline-3">Active contracts</CardTitle>
-                      <Sparkle className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="numbers text-2xl font-bold">{stats.active}</div>
-                      <p className="legal text-muted-foreground">
-                        Franchises with active contracts
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="tagline-3">Expiring Soon</CardTitle>
-                      <Hourglass className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="numbers text-2xl font-bold">{stats.expiring}</div>
-                      <p className="legal text-muted-foreground">
-                        Expiring in 6 months
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="tagline-3">Terminated Franchises</CardTitle>
-                      <ExitIcon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="numbers text-2xl font-bold">{stats.terminated}</div>
-                      <p className="legal text-muted-foreground">
-                        Franchises with terminated contracts
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
+                {statsLoading ? (
+                    <>
+                        <CardSkeleton />
+                        <CardSkeleton />
+                        <CardSkeleton />
+                        <CardSkeleton />
+                    </>
+                ) : (
+                    <>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="tagline-3">Total Franchises</CardTitle>
+                                <Network className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="numbers text-2xl font-bold">
+                                    {stats.total}
+                                </div>
+                                <p className="legal text-muted-foreground">
+                                    Network franchises 
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="tagline-3">Active contracts</CardTitle>
+                                <Sparkle className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="numbers text-2xl font-bold">{stats.active}</div>
+                                <p className="legal text-muted-foreground">
+                                    Franchises with active contracts
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="tagline-3">Expiring Soon</CardTitle>
+                                <Hourglass className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="numbers text-2xl font-bold">{stats.expiring}</div>
+                                <p className="legal text-muted-foreground">
+                                    Expiring in 6 months
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="tagline-3">Terminated Franchises</CardTitle>
+                                <ExitIcon className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="numbers text-2xl font-bold">{stats.terminated}</div>
+                                <p className="legal text-muted-foreground">
+                                    Franchises with terminated contracts
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </>
+                )}
+            </div>
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
@@ -516,7 +613,13 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
-                        <LoadingState />
+                        viewMode === 'map' ? (
+                            <MapSkeleton />
+                        ) : viewMode === 'grid' ? (
+                            <GridSkeleton />
+                        ) : (
+                            <TableSkeleton />
+                        )
                     ) : filteredFranchises.length === 0 ? (
                         <EmptyState />
                     ) : viewMode === 'map' ? (
@@ -532,7 +635,7 @@ export function FranchisesTab({ viewMode, setViewMode }: FranchisesTabsProps) {
                             ))}
                         </div>
                     ) : (
-                        <FranchiseTable franchises={filteredFranchises} onFranchiseSelect={setSelectedFranchise} />
+                        <FranchiseTable franchises={filteredFranchises} onFranchiseSelect={setSelectedFranchise} onVisitSelect={onVisitSelect} />
                     )}
                 </CardContent>
             </Card>

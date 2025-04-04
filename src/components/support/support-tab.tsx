@@ -5,15 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { PlanVisitDialog } from "./plan-visit-dialog";
-// import { VisitDetail } from "./visit-detail";
 import { VisitList } from "./visit-list";
 import VisitDetail from "./visit-detail";
-export function SupportTab() {
+import { Skeleton } from "@/components/ui/skeleton";
+
+export function SupportTab({selectedVisit, onSelect, onBack}) {
   const [visits, setVisits] = useState([]);
   const [consultants, setConsultants] = useState({});
   const [franchises, setFranchises] = useState({});
-  const [selectedVisit, setSelectedVisit] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [stats, setStats] = useState({
     plannedVisits: 0,
     completedVisits: 0,
@@ -77,6 +78,7 @@ export function SupportTab() {
 
   // Set up realtime subscription
   useEffect(() => {
+    // onBack();
     // Only set up subscription when consultant and franchise data is loaded
     if (Object.keys(consultants).length === 0 || Object.keys(franchises).length === 0) {
       return;
@@ -111,6 +113,7 @@ export function SupportTab() {
   // Function to fetch visits data that can be reused
   const fetchVisitsData = async () => {
     setLoading(true);
+    setStatsLoading(true);
     try {
       // Fetch visits data
       const { data, error } = await supabase
@@ -158,6 +161,7 @@ export function SupportTab() {
       });
     } finally {
       setLoading(false);
+      setTimeout(() => setStatsLoading(false), 100); // Slightly delay stats loading to create staggered effect
     }
   };
 
@@ -220,16 +224,6 @@ export function SupportTab() {
     });
   };
 
-  // Handle visit selection
-  const handleVisitSelect = (visit) => {
-    setSelectedVisit(visit);
-  };
-
-  // Go back to visit list
-  const handleBack = () => {
-    setSelectedVisit(null);
-  };
-
   // Manually refresh data (can be used for "refresh" buttons or after operations)
   const refreshData = () => {
     fetchVisitsData();
@@ -238,12 +232,55 @@ export function SupportTab() {
   if (selectedVisit) {
     return <VisitDetail 
       assistanceId={selectedVisit.id} 
-      onBack={handleBack} 
-      // consultants={consultants}
-      // franchises={franchises}
+      onBack={onBack} 
       onVisitUpdated={refreshData}
     />;
   }
+
+  // Card skeleton component
+  const CardSkeleton = () => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-4 w-4 rounded-full" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-8 w-12 mb-2" />
+        <Skeleton className="h-4 w-24" />
+      </CardContent>
+    </Card>
+  );
+
+  // Visit list skeleton component
+  const VisitListSkeleton = () => (
+    <Card>
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-24" />
+          </div>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="border rounded-md p-4">
+              <div className="flex flex-col md:flex-row md:justify-between">
+                <div className="space-y-2 mb-4 md:mb-0">
+                  <Skeleton className="h-6 w-44" />
+                  <div className="flex flex-row gap-x-4">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-24" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
@@ -258,64 +295,71 @@ export function SupportTab() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Planned Visits</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{stats.plannedVisits}</div>
-            <p className="legal text-muted-foreground">
-              Next 30 days
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Completed Visits</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{stats.completedVisits}</div>
-            <p className="legal text-muted-foreground">
-              This quarter
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Active Action Plans</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{stats.activeActionPlans}</div>
-            <p className="legal text-muted-foreground">
-              In progress
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">Support Hours</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{stats.supportHours}h</div>
-            <p className="legal text-muted-foreground">
-              This month
-            </p>
-          </CardContent>
-        </Card>
+        {statsLoading ? (
+          <>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </>
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="tagline-3">Planned Visits</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="numbers text-2xl font-bold">{stats.plannedVisits}</div>
+                <p className="legal text-muted-foreground">
+                  Next 30 days
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="tagline-3">Completed Visits</CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="numbers text-2xl font-bold">{stats.completedVisits}</div>
+                <p className="legal text-muted-foreground">
+                  This quarter
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="tagline-3">Active Action Plans</CardTitle>
+                <ClipboardList className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="numbers text-2xl font-bold">{stats.activeActionPlans}</div>
+                <p className="legal text-muted-foreground">
+                  In progress
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="tagline-3">Support Hours</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="numbers text-2xl font-bold">{stats.supportHours}h</div>
+                <p className="legal text-muted-foreground">
+                  This month
+                </p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       {loading ? (
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            Loading visits data...
-          </CardContent>
-        </Card>
+        <VisitListSkeleton />
       ) : (
-        <VisitList visits={visits} onVisitSelect={handleVisitSelect} />
+        <VisitList visits={visits} onVisitSelect={onSelect} />
       )}
     </div>
   );

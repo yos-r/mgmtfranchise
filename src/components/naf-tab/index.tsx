@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MarketingActionDetail } from "./marketing-action-detail";
 import { CreateActionDialog } from "./create-action-dialog";
 import { supabase } from "@/lib/supabase";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MarketingAction {
   id: string;
@@ -63,6 +64,8 @@ interface BudgetData {
 
 export function NAFTab() {
   const [isLoading, setIsLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [actionsLoading, setActionsLoading] = useState(true);
   const [selectedAction, setSelectedAction] = useState<MarketingAction | null>(null);
   const [marketingActions, setMarketingActions] = useState<MarketingAction[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -154,6 +157,7 @@ export function NAFTab() {
 
   // Load budget data
   const loadBudgetData = async () => {
+    setStatsLoading(true);
     try {
       // Pass the selected year to the calculateMarketingBudget function
       const data = await calculateMarketingBudget(null, selectedYear);
@@ -165,12 +169,15 @@ export function NAFTab() {
         description: "Failed to load marketing budget information",
         variant: "destructive",
       });
+    } finally {
+      // Minimal timeout for skeleton
+      setTimeout(() => setStatsLoading(false), 100);
     }
   };
 
   const loadMarketingActions = async () => {
     try {
-      setIsLoading(true);
+      setActionsLoading(true);
       const startOfYear = new Date(parseInt(selectedYear), 0, 1).toISOString();
       const endOfYear = new Date(parseInt(selectedYear), 11, 31).toISOString();
 
@@ -220,12 +227,17 @@ export function NAFTab() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      // Minimal timeout for skeleton
+      setTimeout(() => {
+        setActionsLoading(false);
+        setIsLoading(false);
+      }, 150);
     }
   };
 
   // Load data when component mounts or year changes
   useEffect(() => {
+    setIsLoading(true);
     loadMarketingActions();
     loadBudgetData();
   }, [selectedYear]);
@@ -278,6 +290,31 @@ export function NAFTab() {
     );
   }
 
+  // Card skeleton component
+  const CardSkeleton = () => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-4 w-4 rounded-full" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-8 w-24 mb-2" />
+        <Skeleton className="h-4 w-36" />
+      </CardContent>
+    </Card>
+  );
+
+  // Table row skeleton
+  const TableRowSkeleton = ({ columns = 7 }) => (
+    <TableRow>
+      {Array(columns).fill(0).map((_, i) => (
+        <TableCell key={i}>
+          <Skeleton className={`h-5 ${i === 0 ? 'w-40' : i === columns - 1 ? 'w-28 ml-auto' : 'w-20'}`} />
+        </TableCell>
+      ))}
+    </TableRow>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -312,128 +349,140 @@ export function NAFTab() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3 flex gap-x-2">Annual Budget
-            <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>This value represents the total marketing royalties (€{budgetData.totalBudget.toLocaleString()}) for the year {selectedYear} .</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-            </CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">€{budgetData.totalBudget.toLocaleString()}</div>
-            <p className="legal text-muted-foreground">
-              Budget for {selectedYear}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3 flex gap-x-2">Collected Budget
-            <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>This value represents the total paid marketing royalties (€{budgetData.totalCollected.toLocaleString()}) for the year {selectedYear} .</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-            </CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">€{budgetData.totalCollected.toLocaleString()}</div>
-            <p className="legal text-muted-foreground">
-              Paid marketing royalties in {selectedYear} 
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">
-              <div className="flex items-center gap-2">
-                YTD Spent
+        {statsLoading ? (
+          <>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </>
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="tagline-3 flex gap-x-2">Annual Budget
                 <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>This percentage represents the ratio of funds spent on marketing actions (€{totalSpent.toLocaleString()}) to the total annual budget (€{budgetData.totalBudget.toLocaleString()}).</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{ytdSpentPercentage}%</div>
-            <p className="legal text-muted-foreground">
-              Of annual marketing budget
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3 flex gap-x-2"> Campaigns
-            <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>This value represents the campaigns organized for the year {selectedYear} .</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{activeActions}</div>
-            <p className="legal text-muted-foreground">
-              In {selectedYear}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3 flex gap-x-2">
-              Available Balance <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>This value represents the difference between the collected marketing royalties (€{budgetData.totalCollected.toLocaleString()}) and the funds spent on marketing actions (€{totalSpent.toLocaleString()}) .</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider></CardTitle>
-            
-            <PiggyBank className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div 
-              className={`numbers text-2xl font-bold ${budgetData.totalCollected - totalSpent < 0 ? 'text-red-500' : ''}`}
-            >
-              €{(budgetData.totalCollected - totalSpent).toLocaleString()}
-            </div>
-            <p className="legal text-muted-foreground">
-              Remaining marketing funds
-            </p>
-          </CardContent>
-        </Card>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>This value represents the total marketing royalties (€{budgetData.totalBudget.toLocaleString()}) for the year {selectedYear} .</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                </CardTitle>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="numbers text-2xl font-bold">€{budgetData.totalBudget.toLocaleString()}</div>
+                <p className="legal text-muted-foreground">
+                  Budget for {selectedYear}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="tagline-3 flex gap-x-2">Collected Budget
+                <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>This value represents the total paid marketing royalties (€{budgetData.totalCollected.toLocaleString()}) for the year {selectedYear} .</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                </CardTitle>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="numbers text-2xl font-bold">€{budgetData.totalCollected.toLocaleString()}</div>
+                <p className="legal text-muted-foreground">
+                  Paid marketing royalties in {selectedYear} 
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="tagline-3">
+                  <div className="flex items-center gap-2">
+                    YTD Spent
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>This percentage represents the ratio of funds spent on marketing actions (€{totalSpent.toLocaleString()}) to the total annual budget (€{budgetData.totalBudget.toLocaleString()}).</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </CardTitle>
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="numbers text-2xl font-bold">{ytdSpentPercentage}%</div>
+                <p className="legal text-muted-foreground">
+                  Of annual marketing budget
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="tagline-3 flex gap-x-2"> Campaigns
+                <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>This value represents the campaigns organized for the year {selectedYear} .</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="numbers text-2xl font-bold">{activeActions}</div>
+                <p className="legal text-muted-foreground">
+                  In {selectedYear}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="tagline-3 flex gap-x-2">
+                  Available Balance <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>This value represents the difference between the collected marketing royalties (€{budgetData.totalCollected.toLocaleString()}) and the funds spent on marketing actions (€{totalSpent.toLocaleString()}) .</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider></CardTitle>
+                
+                <PiggyBank className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div 
+                  className={`numbers text-2xl font-bold ${budgetData.totalCollected - totalSpent < 0 ? 'text-red-500' : ''}`}
+                >
+                  €{(budgetData.totalCollected - totalSpent).toLocaleString()}
+                </div>
+                <p className="legal text-muted-foreground">
+                  Remaining marketing funds
+                </p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       <Card>
@@ -441,8 +490,27 @@ export function NAFTab() {
           <CardTitle>Marketing Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading marketing actions...</div>
+          {actionsLoading ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="label-1"><Skeleton className="h-5 w-16" /></TableHead>
+                  <TableHead className="label-1"><Skeleton className="h-5 w-12" /></TableHead>
+                  <TableHead className="label-1"><Skeleton className="h-5 w-16" /></TableHead>
+                  <TableHead className="label-1"><Skeleton className="h-5 w-20" /></TableHead>
+                  <TableHead className="label-1"><Skeleton className="h-5 w-20" /></TableHead>
+                  <TableHead className="label-1"><Skeleton className="h-5 w-16" /></TableHead>
+                  <TableHead className="label-1 text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRowSkeleton />
+                <TableRowSkeleton />
+                <TableRowSkeleton />
+                <TableRowSkeleton />
+                <TableRowSkeleton />
+              </TableBody>
+            </Table>
           ) : (
             <Table>
               <TableHeader>

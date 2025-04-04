@@ -42,7 +42,7 @@ interface FranchiseTableProps {
   isLoading?: boolean;
 }
 
-export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = false }: FranchiseTableProps) {
+export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = false,onVisitSelect }: FranchiseTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [conformityData, setConformityData] = useState({});
   

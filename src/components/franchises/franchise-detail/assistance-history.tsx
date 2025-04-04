@@ -8,7 +8,7 @@ import { Eye, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/auth";
 import { VisitDetailsDialog } from "./visit-details-dialog";
 
-export function AssistanceHistory({ franchise }) {
+export function AssistanceHistory({ franchise,onVisitSelect }) {
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedVisit, setSelectedVisit] = useState(null);
@@ -202,7 +202,7 @@ export function AssistanceHistory({ franchise }) {
                           variant="ghost" 
                           size="sm" 
                           className="button-2"
-                          onClick={() => handleViewReport(visit)}
+                          onClick={() => onVisitSelect(visit)}
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           View 

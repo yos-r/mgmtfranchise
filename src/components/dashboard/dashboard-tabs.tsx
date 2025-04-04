@@ -26,6 +26,15 @@ interface DashboardTabsProps {
 
 export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: DashboardTabsProps) {
   const [activeTab, setActiveTab] = useState("overview");
+  
+  const [selectedVisit,setSelectedVisit] = useState(null);
+  const handleVisitSelect = (visit) => {
+    setActiveTab("support");
+    setSelectedVisit(visit);
+  };
+  const handleBack = () => {
+    setSelectedVisit(null);
+  };
 
   // Define tab data for easier management
   const primaryTabs = [
@@ -118,12 +127,11 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
         </div>
       </div>
 
-      {/* Tab content - remains the same for all screen sizes */}
       <TabsContent value="overview" className="space-y-4">
         <OverviewTab />
       </TabsContent>
       <TabsContent value="franchises" className="space-y-4">
-        <FranchisesTab viewMode={viewMode} setViewMode={setViewMode} />
+        <FranchisesTab viewMode={viewMode} setViewMode={setViewMode} onVisitSelect={handleVisitSelect}  />
       </TabsContent>
       <TabsContent value="royalties">
         <RoyaltiesTab />
@@ -135,7 +143,7 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
         <TrainingTab />
       </TabsContent>
       <TabsContent value="support">
-        <SupportTab />
+        <SupportTab  onSelect={handleVisitSelect} onBack={handleBack} selectedVisit={selectedVisit}/>
       </TabsContent>
       <TabsContent value="helpdesk">
         <HelpDeskTab />
@@ -147,7 +155,6 @@ export function DashboardTabs({ viewMode, setViewMode, setSelectedFranchise }: D
         <NAFTab />
       </TabsContent>
 
-      {/*  */}
     </Tabs>
   );
 }

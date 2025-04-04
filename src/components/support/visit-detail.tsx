@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Import separated components
 import VisitActionPlans from "./visit-action-plans";
@@ -26,7 +27,133 @@ import VisitDocuments from "./visit-documents";
 import VisitSummary from "./visit-summary";
 import VisitChecklist from "./visit-checklist";
 import FranchiseInfoCard from "./franchise-info-card";
-import VisitInternalNotes from "./visit-internal-notes"; // Import the new internal notes component
+import VisitInternalNotes from "./visit-internal-notes";
+
+// Skeleton components for loading states
+const HeaderSkeleton = () => (
+  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+    <div className="flex items-center space-x-4">
+      <Skeleton className="h-9 w-9 rounded-full" />
+      <div>
+        <Skeleton className="h-8 w-64 mb-2" />
+        <Skeleton className="h-4 w-48" />
+      </div>
+    </div>
+    <div className="flex items-center space-x-2">
+      <Skeleton className="h-6 w-24 rounded-full" />
+      <Skeleton className="h-6 w-32 rounded-full" />
+    </div>
+  </div>
+);
+
+const InfoCardSkeleton = () => (
+  <Card>
+    <CardHeader>
+      <Skeleton className="h-6 w-48 mb-2" />
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div className="flex items-center space-x-3">
+        <Skeleton className="h-10 w-10 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+        <Skeleton className="h-4 w-4/6" />
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const ActionPlansSkeleton = () => (
+  <Card>
+    <CardHeader>
+      <Skeleton className="h-6 w-40 mb-2" />
+    </CardHeader>
+    <CardContent className="space-y-3">
+      {[1, 2].map((i) => (
+        <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-muted">
+          <div className="space-y-1">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <Skeleton className="h-8 w-24 rounded-md" />
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
+
+const VisitHistorySkeleton = () => (
+  <Card>
+    <CardHeader>
+      <Skeleton className="h-6 w-32 mb-2" />
+    </CardHeader>
+    <CardContent className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="p-3 rounded-lg bg-muted">
+          <div className="flex justify-between mb-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-5 w-24" />
+          </div>
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
+
+const ChecklistSkeleton = () => (
+  <Card>
+    <CardHeader>
+      <Skeleton className="h-6 w-36 mb-2" />
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="space-y-2">
+          <Skeleton className="h-5 w-40" />
+          <div className="space-y-2 pl-4">
+            <div className="flex items-center">
+              <Skeleton className="h-4 w-4 mr-2 rounded" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <div className="flex items-center">
+              <Skeleton className="h-4 w-4 mr-2 rounded" />
+              <Skeleton className="h-4 w-56" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
+
+const SummarySkeleton = () => (
+  <Card>
+    <CardHeader>
+      <Skeleton className="h-6 w-32 mb-2" />
+    </CardHeader>
+    <CardContent className="space-y-3">
+      <div className="flex justify-between">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-12" />
+      </div>
+      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+        <Skeleton className="h-full w-3/4" />
+      </div>
+      <div className="flex justify-between">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+        <Skeleton className="h-full w-2/3" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default function VisitDetail({ assistanceId, onBack }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -38,16 +165,27 @@ export default function VisitDetail({ assistanceId, onBack }) {
   // Mock agents data (static as requested)
   const [agents] = useState(["Jean Martin", "Sophie Bernard", "Thomas Klein"]);
   
-  // Edit observations state - we'll keep this for compatibility but it will be replaced by the internal notes component
+  // Edit observations state - we'll keep this for compatibility
   const [isEditingObservations, setIsEditingObservations] = useState(false);
   const [observations, setObservations] = useState("");
   
   const { toast } = useToast();
+  const isMounted = useRef(true);
 
   useEffect(() => {
+    // Set up the mount status
+    isMounted.current = true;
+    
     if (assistanceId) {
       fetchVisitData();
     }
+    
+    // Cleanup function that runs when component unmounts
+    return () => {
+      isMounted.current = false;
+      // If you need to call onBack when unmounting, uncomment the next line
+      // onBack();
+    };
   }, [assistanceId]);
 
   const fetchVisitData = async () => {
@@ -61,16 +199,20 @@ export default function VisitDetail({ assistanceId, onBack }) {
         .single();
       
       if (visitError) throw visitError;
-      setVisit(visitData);
-      setObservations(visitData.observations || "");
       
-      // Initialize conformity from the visit data
-      if (visitData.conformity !== null && visitData.conformity !== undefined) {
-        setConformity(visitData.conformity);
-      } else if (visitData.checklist?.overallScore !== undefined) {
-        setConformity(visitData.checklist.overallScore);
-      } else {
-        setConformity(0);
+      // Only update state if component is still mounted
+      if (isMounted.current) {
+        setVisit(visitData);
+        setObservations(visitData.observations || "");
+        
+        // Initialize conformity from the visit data
+        if (visitData.conformity !== null && visitData.conformity !== undefined) {
+          setConformity(visitData.conformity);
+        } else if (visitData.checklist?.overallScore !== undefined) {
+          setConformity(visitData.checklist.overallScore);
+        } else {
+          setConformity(0);
+        }
       }
 
       // Fetch franchise data
@@ -82,7 +224,11 @@ export default function VisitDetail({ assistanceId, onBack }) {
           .single();
         
         if (franchiseError) throw franchiseError;
-        setFranchise(franchiseData);
+        
+        // Only update state if component is still mounted
+        if (isMounted.current) {
+          setFranchise(franchiseData);
+        }
       }
 
       // Fetch consultant data
@@ -94,21 +240,28 @@ export default function VisitDetail({ assistanceId, onBack }) {
           .single();
         
         if (consultantError) throw consultantError;
-        setConsultant(consultantData);
+        
+        // Only update state if component is still mounted
+        if (isMounted.current) {
+          setConsultant(consultantData);
+        }
       }
     } catch (error) {
       console.error("Error fetching visit data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load visit details. Please try again.",
-        variant: "destructive",
-      });
+      if (isMounted.current) {
+        toast({
+          title: "Error",
+          description: "Failed to load visit details. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
   };
 
-  // This function is kept for backward compatibility but no longer used directly
   const updateVisitObservations = async () => {
     try {
       const { error } = await supabase
@@ -167,8 +320,33 @@ export default function VisitDetail({ assistanceId, onBack }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p>Loading visit details...</p>
+      <div className="container mx-auto py-6 space-y-6">
+        <HeaderSkeleton />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left side skeletons (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
+            <InfoCardSkeleton />
+            <ActionPlansSkeleton />
+            <VisitHistorySkeleton />
+          </div>
+          
+          {/* Right side skeletons (1/3) */}
+          <div className="lg:col-span-1 space-y-6">
+            <ChecklistSkeleton />
+            <SummarySkeleton />
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-36 mb-2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-5/6 mb-2" />
+                <Skeleton className="h-4 w-4/6" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -187,7 +365,7 @@ export default function VisitDetail({ assistanceId, onBack }) {
     ...visit,
     conformity: conformity
   };
-
+  
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
@@ -228,6 +406,7 @@ export default function VisitDetail({ assistanceId, onBack }) {
         {/* Agency info and visit history (2/3) */}
         <div className="lg:col-span-2 space-y-6">
           <FranchiseInfoCard 
+             visit={visit}
             franchise={franchise}
             consultant={consultant}
             agents={agents}
@@ -247,11 +426,6 @@ export default function VisitDetail({ assistanceId, onBack }) {
               getStatusBadgeClass={getStatusBadgeClass} 
             />
           )}
-          
-          {/* Replace the old observations card with the new internal notes component */}
-         
-          
-          {/* Action Plans Component is already included above */}
         </div>
         
         <div className="lg:col-span-1 space-y-6">
@@ -268,7 +442,7 @@ export default function VisitDetail({ assistanceId, onBack }) {
             visitId={assistanceId} 
             isAdmin={true}
           />
-           <VisitInternalNotes 
+          <VisitInternalNotes 
             visitId={assistanceId}
             initialNotes={visit.observations || ""}
             notesBy={visit.observations_by || ""}

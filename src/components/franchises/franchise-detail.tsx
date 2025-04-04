@@ -50,7 +50,7 @@ const SkeletonSection = ({ title }: { title: string }) => (
   </Card>
 );
 
-export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, onDelete, onUpdate }: any) {
+export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, onDelete, onUpdate,onVisitSelect }: any) {
   // Keep local state of franchise data to allow immediate updates
   const [franchise, setFranchise] = useState(initialFranchise);
   const [contracts, setContracts] = useState<any[]>([]);
@@ -143,7 +143,7 @@ export function FranchiseDetail({ franchise: initialFranchise, loadFranchises, o
       <ContractsHistory contracts={contracts} franchise_id={franchise.id} />
       <LocationAndAgents franchise={franchise} />
       <TrainingHistory franchise={franchise} />
-      <AssistanceHistory franchise={franchise} />
+      <AssistanceHistory franchise={franchise} onVisitSelect={onVisitSelect}/>
       <VisitActionPlans franchiseId={franchise.id}/>
     </div>
   );
