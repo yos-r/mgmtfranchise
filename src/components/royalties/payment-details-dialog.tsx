@@ -8,7 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mail } from "lucide-react";
-
+import { useCurrency } from "@/hooks/useCurrency";
 interface PaymentDetailsDialogProps {
   payment: any;
   open: boolean;
@@ -16,6 +16,7 @@ interface PaymentDetailsDialogProps {
 }
 
 export function PaymentDetailsDialog({ payment, open, onOpenChange }: PaymentDetailsDialogProps) {
+  const {formatCurrency}=useCurrency();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -37,7 +38,7 @@ export function PaymentDetailsDialog({ payment, open, onOpenChange }: PaymentDet
           <div className="grid grid-cols-3 gap-4">
             <div>
               <p className="label-1">Amount</p>
-              <p className="numbers text-xl">€{payment.amount.toLocaleString()}</p>
+              <p className="numbers text-xl">{formatCurrency(payment.amount)}</p>
             </div>
             <div>
               <p className="label-1">Due Date</p>

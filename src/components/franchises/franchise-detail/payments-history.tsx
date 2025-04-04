@@ -473,10 +473,10 @@ export function PaymentsHistory({ franchise }: any) {
                         <span>{formatCurrency(payment.marketing_amount)}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{format(new Date(payment.due_date), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>{format(new Date(payment.due_date), 'dd/MM/yyyy')}</TableCell>
                     <TableCell>
                       {payment.payment_date
-                        ? format(new Date(payment.payment_date), 'MMM d, yyyy')
+                        ? format(new Date(payment.payment_date), 'dd/MM/yyyy')
                         : '-'}
                     </TableCell>
                     <TableCell>{payment.payment_method || '-'}</TableCell>
@@ -662,7 +662,7 @@ export function PaymentsHistory({ franchise }: any) {
                 <div>
                   <Label className="text-muted-foreground">Amount</Label>
                   <p className="text-lg font-medium">
-                    €{(selectedPayment?.amount || selectedPayment?.total_amount || 0).toLocaleString()}
+                    {formatCurrency(selectedPayment?.amount || 0)}
                   </p>
                 </div>
                 <div>

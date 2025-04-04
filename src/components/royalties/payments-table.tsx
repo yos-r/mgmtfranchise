@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ArrowUpDown, ChevronsUpDown, Filter, Calendar, Eye, Edit, Receipt, MoreHorizontal, History } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
   Table,
   TableBody,
@@ -91,7 +92,7 @@ export function PaymentsTable({
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-
+  const {formatCurrency} = useCurrency();
   // Get available years and months from payments data
   const getAvailableYears = () => {
     if (!payments || payments.length === 0) return [];
@@ -467,7 +468,7 @@ export function PaymentsTable({
                     </div>
                   </TableCell>
                   <TableCell className="numbers">
-                    €{payment.amount ? payment.amount.toLocaleString() : "0"}
+                    {payment.amount ? formatCurrency(payment.amount)  : "0"}
                   </TableCell>
                   <TableCell className="body-1">
                     {payment.due_date ? (

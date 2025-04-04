@@ -108,9 +108,9 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
 
   const getEndDate = (contract: Contract) => {
     if (contract.terminated && contract.termination_date) {
-      return format(new Date(contract.termination_date), 'MMM d, yyyy');
+      return format(new Date(contract.termination_date), 'dd/MM/yyyy');
     } else {
-      return format(addYears(new Date(contract.start_date), contract.duration_years), 'MMM d, yyyy');
+      return format(addYears(new Date(contract.start_date), contract.duration_years), 'dd/MM/yyyy');
     }
   };
 
@@ -142,7 +142,7 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
               {processedContracts.map((contract) => (
                 <TableRow key={contract.id}>
                   <TableCell>{getTypeBadge(contract.type)}</TableCell>
-                  <TableCell>{format(new Date(contract.start_date), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>{format(new Date(contract.start_date), 'dd/MM/yyyy')}</TableCell>
                   <TableCell>{getEndDate(contract)}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
@@ -223,7 +223,7 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Start Date</Label>
-                  <p>{selectedContract?.start_date && format(new Date(selectedContract.start_date), 'MMM d, yyyy')}</p>
+                  <p>{selectedContract?.start_date && format(new Date(selectedContract.start_date), 'dd/MM/yyyy')}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">End Date</Label>
@@ -252,11 +252,11 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
                 <div className="grid grid-cols-2 gap-4 mt-2">
                   {selectedContract?.initial_fee > 0 && <div>
                     <span className="text-sm text-muted-foreground">Initial Fee</span>
-                    <p className="text-lg font-medium">€{selectedContract?.initial_fee.toLocaleString()}</p>
+                    <p className="text-lg font-medium">{selectedContract?.initial_fee? formatCurrency(selectedContract?.initial_fee): 0}</p>
                   </div>}
                   {selectedContract?.renewal_fee > 0 && <div>
                     <span className="text-sm text-muted-foreground">Renewal Fee</span>
-                    <p className="text-lg font-medium">€{selectedContract?.renewal_fee.toLocaleString()}</p>
+                    <p className="text-lg font-medium">{selectedContract?.renewal_fee? formatCurrency(selectedContract?.renewal_fee):0}</p>
                   </div>}
                   <div>
                     <span className="text-sm text-muted-foreground">Annual Increase</span>
@@ -264,11 +264,11 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
                   </div>
                   <div>
                     <span className="text-sm text-muted-foreground">Monthly Royalty</span>
-                    <p className="text-lg font-medium">€{selectedContract?.royalty_amount.toLocaleString()}</p>
+                    <p className="text-lg font-medium">{selectedContract?.royalty_amount? formatCurrency(selectedContract?.royalty_amount) : 0 }</p>
                   </div>
                   <div>
                     <span className="text-sm text-muted-foreground">Marketing Fee</span>
-                    <p className="text-lg font-medium">€{selectedContract?.marketing_amount.toLocaleString()}</p>
+                    <p className="text-lg font-medium">{selectedContract?.marketing_amount? formatCurrency(selectedContract?.marketing_amount): 0}</p>
                   </div>
                 </div>
               </div>

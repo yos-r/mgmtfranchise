@@ -1,6 +1,6 @@
 import { Euro, Calendar, AlertTriangle, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { useCurrency } from "@/hooks/useCurrency";
 interface StatsCardsProps {
   stats: {
     totalDue: number;
@@ -11,6 +11,7 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ stats }: StatsCardsProps) {
+  const {formatCurrency}=useCurrency();
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
@@ -20,7 +21,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="numbers text-2xl font-bold">
-            €{stats.totalDue.toLocaleString()}
+            {formatCurrency(stats.totalDue)}
           </div>
           <p className="legal text-muted-foreground">
             For current period
