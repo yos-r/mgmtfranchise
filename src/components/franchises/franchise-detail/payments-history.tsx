@@ -251,7 +251,7 @@ export function PaymentsHistory({ franchise }: any) {
       case 'late':
         return <Badge variant="destructive">Late</Badge>;
       case 'grace':
-        return <Badge className="bg-blue-100 text-blue-800">Grace Period</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800">Grace</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -514,6 +514,13 @@ export function PaymentsHistory({ franchise }: any) {
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>}
+                      {payment.status == 'grace' && (
+                      
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0">
+                                              <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                      
+                                          )}
                       
                     </TableCell>
                   </TableRow>

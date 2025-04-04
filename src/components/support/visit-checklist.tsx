@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
-export default function VisitChecklist({ visitId }) {
+export default function VisitChecklist({ visitId, onConformityChange }) {
   const [checklist, setChecklist] = useState(null);
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,11 +20,20 @@ export default function VisitChecklist({ visitId }) {
     }
   }, [visitId]);
 
+  // Function to determine the color based on score
+  const getConformityColor = (score) => {
+    if (score >= 80) return "bg-green-700"; // Green for high scores
+    if (score >= 65) return "bg-emerald-600"; // Light green for good scores
+    if (score >= 50) return "bg-yellow-500"; // Yellow for medium scores
+    if (score >= 30) return "bg-orange-700"; // Orange for low scores
+    return "bg-red-600"; // Red for very low scores
+  };
+
   const fetchChecklist = async () => {
     try {
       const { data, error } = await supabase
         .from('support_visits')
-        .select('checklist')
+        .select('checklist, conformity')
         .eq('id', visitId)
         .single();
 
@@ -33,6 +42,15 @@ export default function VisitChecklist({ visitId }) {
       }
 
       setChecklist(data.checklist);
+      
+      // Notify parent about conformity value if it exists
+      if (data.conformity !== null) {
+        onConformityChange?.(data.conformity);
+      } else if (data.checklist?.overallScore !== undefined) {
+        // Use overallScore from checklist if conformity is not set
+        onConformityChange?.(data.checklist.overallScore);
+      }
+      
       setActiveCategoryIndex(0);
     } catch (error) {
       console.error("Error fetching checklist:", error);
@@ -80,7 +98,11 @@ export default function VisitChecklist({ visitId }) {
       });
     });
     
-    updatedChecklist.overallScore = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
+    const newScore = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
+    updatedChecklist.overallScore = newScore;
+    
+    // Notify parent about conformity change
+    onConformityChange?.(newScore);
     
     setChecklist(updatedChecklist);
     setIsUpdated(true);
@@ -92,6 +114,7 @@ export default function VisitChecklist({ visitId }) {
         .from('support_visits')
         .update({ 
           checklist,
+          conformity: checklist.overallScore, // Save the score to the conformity field
           updated_at: new Date()
         })
         .eq('id', visitId);
@@ -123,6 +146,12 @@ export default function VisitChecklist({ visitId }) {
     
     const checkedCount = category.items.filter(item => item.checked).length;
     return Math.round((checkedCount / category.items.length) * 100);
+  };
+
+  // Get category color based on completion percentage
+  const getCategoryColor = (categoryId) => {
+    const completion = getCategoryCompletion(categoryId);
+    return getConformityColor(completion);
   };
 
   const navigateCategory = (direction) => {
@@ -160,6 +189,7 @@ export default function VisitChecklist({ visitId }) {
   }
 
   const activeCategory = checklist.categories[activeCategoryIndex];
+  const conformityColor = getConformityColor(checklist.overallScore);
 
   return (
     <Card>
@@ -178,13 +208,18 @@ export default function VisitChecklist({ visitId }) {
         </div>
       </CardHeader>
       <CardContent>
-        {/* Simple Minimal Progress Bar */}
+        {/* Color-coded Progress Bar */}
         <div className="mb-4">
           <div className="flex justify-between items-center mb-1 text-sm">
             <span className="text-muted-foreground">Conformity</span>
             <span className="font-medium">{checklist.overallScore}%</span>
           </div>
-          <Progress value={checklist.overallScore} className="h-2" />
+          <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+            <div 
+              className={`${conformityColor} h-2.5 rounded-full transition-all duration-300 ease-in-out`} 
+              style={{ width: `${checklist.overallScore}%` }}
+            />
+          </div>
         </div>
 
         <div className="flex flex-col space-y-3">
@@ -201,7 +236,7 @@ export default function VisitChecklist({ visitId }) {
             
             <div className="flex items-center space-x-2">
               <h3 className="text-sm font-medium">{activeCategory.name}</h3>
-              <div className="px-1.5 py-0.5 text-xs rounded-full bg-muted">
+              <div className={`px-1.5 py-0.5 text-xs rounded-full text-white ${getCategoryColor(activeCategory.id)}`}>
                 {getCategoryCompletion(activeCategory.id)}%
               </div>
             </div>
@@ -224,7 +259,7 @@ export default function VisitChecklist({ visitId }) {
                 onClick={() => setActiveCategoryIndex(index)}
                 className={`w-2 h-2 rounded-full ${
                   index === activeCategoryIndex 
-                    ? "bg-primary" 
+                    ? getCategoryColor(category.id)
                     : "bg-muted-foreground/30"
                 }`}
                 aria-label={`Go to ${category.name}`}

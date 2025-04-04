@@ -72,15 +72,15 @@ export function PaymentsTable({
   onViewLogs,
   getStatusColor,
   franchises = [],
-  onFilterChange = () => {},
+  onFilterChange = () => { },
   onFranchiseSelect,
-  onYearChange = () => {},
-  onMonthChange = () => {},
+  onYearChange = () => { },
+  onMonthChange = () => { },
   currentFilter = "all",
   selectedFranchise = null,
   selectedYear = null,
   selectedMonth = null,
-  onBatchUpdate = () => {},
+  onBatchUpdate = () => { },
   showFranchiseColumn = true
 }: PaymentsTableProps) {
   // Pagination state
@@ -91,14 +91,14 @@ export function PaymentsTable({
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  
+
   // Get available years and months from payments data
   const getAvailableYears = () => {
     if (!payments || payments.length === 0) return [];
-    
+
     try {
       const years = new Set<string>();
-      
+
       payments.forEach(payment => {
         if (payment.due_date) {
           try {
@@ -113,14 +113,14 @@ export function PaymentsTable({
           }
         }
       });
-      
+
       return Array.from(years).sort((a, b) => b.localeCompare(a)); // Sort descending
     } catch (error) {
       console.error("Error getting available years:", error);
       return [];
     }
   };
-  
+
   const months = [
     { value: "01", label: "January" },
     { value: "02", label: "February" },
@@ -139,15 +139,15 @@ export function PaymentsTable({
   // Update pagination when payments change
   useEffect(() => {
     if (!payments) return;
-    
+
     try {
       setTotalPages(Math.ceil(payments.length / itemsPerPage) || 1); // Ensure at least 1 page
-      
+
       // Reset to first page when filters change total count
       if (currentPage > Math.ceil(payments.length / itemsPerPage)) {
         setCurrentPage(1);
       }
-      
+
       const startIndex = (currentPage - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
       setPaginatedPayments(payments.slice(startIndex, endIndex));
@@ -180,7 +180,7 @@ export function PaymentsTable({
 
   const handleSelect = (id: string) => {
     if (!id) return;
-    
+
     const newSelected = new Set(selectedPayments);
     if (newSelected.has(id)) {
       newSelected.delete(id);
@@ -201,12 +201,12 @@ export function PaymentsTable({
     }
     setPopoverOpen(false);
   };
-  
+
   const handleYearChange = (year: string | null) => {
     if (onYearChange) {
       onYearChange(year);
     }
-    
+
     // Reset month when year changes
     if (selectedMonth && year !== selectedYear) {
       if (onMonthChange) {
@@ -244,8 +244,8 @@ export function PaymentsTable({
               </PopoverTrigger>
               <PopoverContent className="w-[220px] p-0">
                 <Command>
-                  <CommandInput 
-                    placeholder="Search franchises..." 
+                  <CommandInput
+                    placeholder="Search franchises..."
                     value={searchValue}
                     onValueChange={setSearchValue}
                   />
@@ -264,7 +264,7 @@ export function PaymentsTable({
                         All Franchises
                       </CommandItem>
                       {franchises
-                        .filter(franchise => 
+                        .filter(franchise =>
                           franchise.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
                           (franchise.address && franchise.address.toLowerCase().includes(searchValue.toLowerCase()))
                         )
@@ -292,7 +292,7 @@ export function PaymentsTable({
           )}
 
           {/* Status Filter */}
-          <Select 
+          <Select
             value={currentFilter}
             onValueChange={(value) => onFilterChange(value)}
           >
@@ -315,7 +315,7 @@ export function PaymentsTable({
         <div className="flex items-center space-x-2">
           {/* Year Filter */}
           <div className="flex items-center space-x-2">
-            <Select 
+            <Select
               value={selectedYear || "all_years"}
               onValueChange={(value) => handleYearChange(value === "all_years" ? null : value)}
             >
@@ -336,7 +336,7 @@ export function PaymentsTable({
             </Select>
 
             {/* Month Filter - Only enable if year is selected */}
-            <Select 
+            <Select
               value={selectedMonth || "all_months"}
               onValueChange={(value) => onMonthChange(value === "all_months" ? null : value)}
               disabled={!selectedYear}
@@ -352,11 +352,11 @@ export function PaymentsTable({
               </SelectContent>
             </Select>
           </div>
-          
+
           {/* Clear Filters Button - Show only when filters are active */}
           {(selectedYear || selectedMonth || selectedFranchise || currentFilter !== "all") && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => {
                 onYearChange(null);
@@ -452,9 +452,9 @@ export function PaymentsTable({
                     <div className="flex items-center">
                       {payment.period || (payment.due_date && format(new Date(payment.due_date), 'MMM yyyy'))}
                       {hasLogs(payment.id) && onViewLogs && (
-                        <Badge 
-                          variant="outline" 
-                          className="ml-2 cursor-pointer" 
+                        <Badge
+                          variant="outline"
+                          className="ml-2 cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             onViewLogs(payment);
@@ -474,8 +474,8 @@ export function PaymentsTable({
                       (() => {
                         try {
                           const date = new Date(payment.due_date);
-                          return !isNaN(date.getTime()) 
-                            ? format(date, 'MMM d, yyyy') 
+                          return !isNaN(date.getTime())
+                            ? format(date, 'MMM d, yyyy')
                             : "-";
                         } catch (e) {
                           console.error("Error formatting date:", payment.due_date);
@@ -489,8 +489,8 @@ export function PaymentsTable({
                       (() => {
                         try {
                           const date = new Date(payment.payment_date);
-                          return !isNaN(date.getTime()) 
-                            ? format(date, 'MMM d, yyyy') 
+                          return !isNaN(date.getTime())
+                            ? format(date, 'MMM d, yyyy')
                             : "-";
                         } catch (e) {
                           return "-";
@@ -503,7 +503,7 @@ export function PaymentsTable({
                       {payment.status || 'unknown'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="text-right py-" onClick={(e) => e.stopPropagation()}>
                     {payment.status !== 'grace' && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -539,6 +539,14 @@ export function PaymentsTable({
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
+                    {payment.status == 'grace' && (
+
+                      <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+
+                    )}
+
                   </TableCell>
                 </TableRow>
               ))
@@ -555,99 +563,99 @@ export function PaymentsTable({
 
       {/* Pagination Controls */}
       {/* Pagination Controls */}
-{totalPages > 1 && (
-  <div className="flex justify-center space-x-2 mt-4">
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-      disabled={currentPage === 1}
-    >
-      Previous
-    </Button>
-    
-    {(() => {
-      // Calculate which page numbers to display (max 6)
-      const getPageNumbers = () => {
-        // For 6 or fewer pages, show all page numbers
-        if (totalPages <= 6) {
-          return Array.from({ length: totalPages }, (_, i) => i + 1);
-        }
-        
-        // For more than 6 pages, show a window of pages around the current page
-        let startPage = Math.max(currentPage - 2, 1);
-        let endPage = Math.min(startPage + 4, totalPages);
-        
-        // Adjust start if we're near the end
-        if (endPage === totalPages) {
-          startPage = Math.max(endPage - 4, 1);
-        }
-        
-        const pages = [];
-        
-        // Always show first page
-        if (startPage > 1) {
-          pages.push(1);
-          // Add ellipsis if there's a gap
-          if (startPage > 2) {
-            pages.push('ellipsis-start');
-          }
-        }
-        
-        // Add pages in the calculated range
-        for (let i = startPage; i <= endPage; i++) {
-          pages.push(i);
-        }
-        
-        // Always show last page
-        if (endPage < totalPages) {
-          // Add ellipsis if there's a gap
-          if (endPage < totalPages - 1) {
-            pages.push('ellipsis-end');
-          }
-          pages.push(totalPages);
-        }
-        
-        return pages;
-      };
-      
-      const pageNumbers = getPageNumbers();
-      
-      return pageNumbers.map((page, index) => {
-        if (page === 'ellipsis-start' || page === 'ellipsis-end') {
-          return (
-            <div 
-              key={`ellipsis-${index}`} 
-              className="flex items-center justify-center h-8 w-8"
-            >
-              <span className="text-gray-400">...</span>
-            </div>
-          );
-        }
-        
-        return (
+      {totalPages > 1 && (
+        <div className="flex justify-center space-x-2 mt-4">
           <Button
-            key={`page-${page}`}
-            variant={currentPage === page ? "default" : "outline"}
+            variant="outline"
             size="sm"
-            onClick={() => handlePageChange(page)}
+            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
           >
-            {page}
+            Previous
           </Button>
-        );
-      });
-    })()}
-    
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-      disabled={currentPage === totalPages}
-    >
-      Next
-    </Button>
-  </div>
-)}
+
+          {(() => {
+            // Calculate which page numbers to display (max 6)
+            const getPageNumbers = () => {
+              // For 6 or fewer pages, show all page numbers
+              if (totalPages <= 6) {
+                return Array.from({ length: totalPages }, (_, i) => i + 1);
+              }
+
+              // For more than 6 pages, show a window of pages around the current page
+              let startPage = Math.max(currentPage - 2, 1);
+              let endPage = Math.min(startPage + 4, totalPages);
+
+              // Adjust start if we're near the end
+              if (endPage === totalPages) {
+                startPage = Math.max(endPage - 4, 1);
+              }
+
+              const pages = [];
+
+              // Always show first page
+              if (startPage > 1) {
+                pages.push(1);
+                // Add ellipsis if there's a gap
+                if (startPage > 2) {
+                  pages.push('ellipsis-start');
+                }
+              }
+
+              // Add pages in the calculated range
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(i);
+              }
+
+              // Always show last page
+              if (endPage < totalPages) {
+                // Add ellipsis if there's a gap
+                if (endPage < totalPages - 1) {
+                  pages.push('ellipsis-end');
+                }
+                pages.push(totalPages);
+              }
+
+              return pages;
+            };
+
+            const pageNumbers = getPageNumbers();
+
+            return pageNumbers.map((page, index) => {
+              if (page === 'ellipsis-start' || page === 'ellipsis-end') {
+                return (
+                  <div
+                    key={`ellipsis-${index}`}
+                    className="flex items-center justify-center h-8 w-8"
+                  >
+                    <span className="text-gray-400">...</span>
+                  </div>
+                );
+              }
+
+              return (
+                <Button
+                  key={`page-${page}`}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </Button>
+              );
+            });
+          })()}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

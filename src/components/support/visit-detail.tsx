@@ -32,6 +32,7 @@ export default function VisitDetail({ assistanceId, onBack }) {
   const [visit, setVisit] = useState(null);
   const [franchise, setFranchise] = useState(null);
   const [consultant, setConsultant] = useState(null);
+  const [conformity, setConformity] = useState(0);
   
   // Mock agents data (static as requested)
   const [agents] = useState(["Jean Martin", "Sophie Bernard", "Thomas Klein"]);
@@ -61,6 +62,15 @@ export default function VisitDetail({ assistanceId, onBack }) {
       if (visitError) throw visitError;
       setVisit(visitData);
       setObservations(visitData.observations || "");
+      
+      // Initialize conformity from the visit data
+      if (visitData.conformity !== null && visitData.conformity !== undefined) {
+        setConformity(visitData.conformity);
+      } else if (visitData.checklist?.overallScore !== undefined) {
+        setConformity(visitData.checklist.overallScore);
+      } else {
+        setConformity(0);
+      }
 
       // Fetch franchise data
       if (visitData.franchise_id) {
@@ -148,6 +158,11 @@ export default function VisitDetail({ assistanceId, onBack }) {
     fetchVisitData();
   };
 
+  // This function will be passed to VisitChecklist and called when the conformity changes
+  const handleConformityChange = (newConformity) => {
+    setConformity(newConformity);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -164,6 +179,12 @@ export default function VisitDetail({ assistanceId, onBack }) {
       </div>
     );
   }
+
+  // Create an updated assistance object with the current conformity value for VisitSummary
+  const assistanceWithConformity = {
+    ...visit,
+    conformity: conformity
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -204,95 +225,11 @@ export default function VisitDetail({ assistanceId, onBack }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Agency info and visit history (2/3) */}
         <div className="lg:col-span-2 space-y-6">
-        <FranchiseInfoCard 
+          <FranchiseInfoCard 
             franchise={franchise}
             consultant={consultant}
             agents={agents}
           />
-          {/* <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Agency Information</CardTitle>
-            </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-6">
-              <div>
-                {franchise.logo ? (
-                  <div className="aspect-video w-full overflow-hidden rounded-md bg-muted mb-4">
-                    <img 
-                      src={franchise.logo} 
-                      alt={franchise.name} 
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-video w-full rounded-md bg-muted mb-4 flex items-center justify-center">
-                    <Building className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <Building className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="font-medium">{franchise.name}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{franchise.address}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>Owner: {franchise.owner_name}</span>
-                  </div>
-                  {franchise.phone && (
-                    <div className="flex items-center">
-                      <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>{franchise.phone}</span>
-                    </div>
-                  )}
-                  {franchise.owner_email && (
-                    <div className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>{franchise.owner_email}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium flex items-center">
-                      <Users className="h-4 w-4 mr-2" />
-                      Present Agents
-                    </h3>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {agents.map((agent, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-sm">{agent}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {consultant && (
-                  <div>
-                    <h3 className="font-medium flex items-center mb-2">
-                      <User className="h-4 w-4 mr-2" />
-                      Consultant
-                    </h3>
-                    <div className="text-sm">
-                      {consultant.first_name} {consultant.last_name} - {consultant.role}
-                      {consultant.email && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {consultant.email}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card> */}
           
           {/* Visit History Component */}
           {franchise && (
@@ -364,13 +301,19 @@ export default function VisitDetail({ assistanceId, onBack }) {
         </div>
         
         <div className="lg:col-span-1 space-y-6">
-          <VisitChecklist visitId={assistanceId}  />
+          <VisitChecklist 
+            visitId={assistanceId} 
+            onConformityChange={handleConformityChange} 
+          />
           <VisitSummary 
             franchise={franchise} 
             getStatusBadgeClass={getStatusBadgeClass} 
-            assistance={visit} 
+            assistance={assistanceWithConformity} 
           />
-          <VisitDocuments franchise={franchise} visitId={assistanceId} />
+          <VisitDocuments 
+            visitId={assistanceId} 
+            isAdmin={true}
+          />
         </div>
       </div>
     </div>
