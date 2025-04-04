@@ -17,6 +17,7 @@ import {
     Banknote,
     Loader2
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +84,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
     const [isDeleting, setIsDeleting] = useState(false);
     const [currentAction, setCurrentAction] = useState<MarketingAction>(action);
     const { toast } = useToast();
-
+    const {formatCurrency}=useCurrency();
     // Use the hook to fetch media for this action
     const { media, youtubeUrl, loading: mediaLoading, error: mediaError } = useMarketingMedia(currentAction.id);
 
@@ -426,7 +427,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                 <Banknote className="h-5 w-5 text-[#252526]" />
                             </div>
                             <div className="flex flex-col items-center justify-center flex-grow">
-                                <p className="text-5xl font-bold text-obsessedgrey tracking-tight">€{currentAction.spent.toLocaleString('fr-FR')}</p>
+                                <p className="text-5xl font-bold text-obsessedgrey tracking-tight">{formatCurrency(currentAction.spent) }</p>
                                 <p className="text-sm text-gray-500 mt-2">Total Budget Spent</p>
                             </div>
                         </div>

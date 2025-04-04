@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
   Wallet,
   TrendingUp,
@@ -10,6 +11,7 @@ import {
   Euro,
   Calendar,
   Info,
+  Banknote,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,6 +65,7 @@ interface BudgetData {
 }
 
 export function NAFTab() {
+  const {formatCurrency}=useCurrency();
   const [isLoading, setIsLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [actionsLoading, setActionsLoading] = useState(true);
@@ -368,7 +371,7 @@ export function NAFTab() {
                           <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
-                          <p>This value represents the total marketing royalties (€{budgetData.totalBudget.toLocaleString()}) for the year {selectedYear} .</p>
+                          <p>This value represents the total marketing royalties ({formatCurrency(budgetData.totalBudget)}) for the year {selectedYear} .</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -376,7 +379,7 @@ export function NAFTab() {
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="numbers text-2xl font-bold">€{budgetData.totalBudget.toLocaleString()}</div>
+                <div className="numbers text-2xl font-bold">{formatCurrency(budgetData.totalBudget)}</div>
                 <p className="legal text-muted-foreground">
                   Budget for {selectedYear}
                 </p>
@@ -391,7 +394,7 @@ export function NAFTab() {
                           <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
-                          <p>This value represents the total paid marketing royalties (€{budgetData.totalCollected.toLocaleString()}) for the year {selectedYear} .</p>
+                          <p>This value represents the total paid marketing royalties ({formatCurrency(budgetData.totalCollected)}) for the year {selectedYear} .</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -399,7 +402,7 @@ export function NAFTab() {
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="numbers text-2xl font-bold">€{budgetData.totalCollected.toLocaleString()}</div>
+                <div className="numbers text-2xl font-bold">{formatCurrency(budgetData.totalCollected)}</div>
                 <p className="legal text-muted-foreground">
                   Paid marketing royalties in {selectedYear} 
                 </p>
@@ -416,7 +419,7 @@ export function NAFTab() {
                           <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
-                          <p>This percentage represents the ratio of funds spent on marketing actions (€{totalSpent.toLocaleString()}) to the total annual budget (€{budgetData.totalBudget.toLocaleString()}).</p>
+                          <p>This percentage represents the ratio of funds spent on marketing actions ({formatCurrency(totalSpent) }) to the total annual budget ({formatCurrency(budgetData.totalBudget)}).</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -463,7 +466,7 @@ export function NAFTab() {
                           <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
-                          <p>This value represents the difference between the collected marketing royalties (€{budgetData.totalCollected.toLocaleString()}) and the funds spent on marketing actions (€{totalSpent.toLocaleString()}) .</p>
+                          <p>This value represents the difference between the collected marketing royalties ({formatCurrency(budgetData.totalCollected)}) and the funds spent on marketing actions ({formatCurrency(totalSpent)}) .</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider></CardTitle>
@@ -474,7 +477,7 @@ export function NAFTab() {
                 <div 
                   className={`numbers text-2xl font-bold ${budgetData.totalCollected - totalSpent < 0 ? 'text-red-500' : ''}`}
                 >
-                  €{(budgetData.totalCollected - totalSpent).toLocaleString()}
+                  {formatCurrency(budgetData.totalCollected - totalSpent)}
                 </div>
                 <p className="legal text-muted-foreground">
                   Remaining marketing funds
@@ -533,8 +536,8 @@ export function NAFTab() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
-                        <Euro className="h-3 w-3 text-muted-foreground" />
-                        <span>{action.spent.toLocaleString()}</span>
+                        <Banknote className="h-3 w-3 text-muted-foreground" />
+                        <span>{formatCurrency(action.spent)}</span>
                       </div>
                     </TableCell>
                     <TableCell>{format(new Date(action.start_date), 'MMM d, yyyy')}</TableCell>
