@@ -21,7 +21,7 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 
-const AgencesWidget2 = (area) => {
+const AgencesWidget2 = ({area }:any) => {
     // Use the currency formatting hook
     const { formatCurrency } = useCurrency();
 
@@ -175,7 +175,7 @@ const AgencesWidget2 = (area) => {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800">Les agences immobilières et le marché</h2>
-                        <p className="text-gray-500"><b>92 </b>agences immobilières pour <b>564</b> biens en vente et <b>336</b> biens en location</p>
+                        <p className="text-gray-500"><b>{area.totalAgencies} </b>agences immobilières pour <b>{area.listingsForSale}</b> biens en vente et <b>{area.listingsForRent}</b> biens en location</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="text-blue-800 text-sm font-medium -mx-3 mt-1 -p rounded-lg flex gap-x-1 items-center">

@@ -95,8 +95,8 @@ export function OverviewTab() {
         .from('support_visits')
         .select('date')
         .gte('date', lastMonth.toISOString());
-        // .lt('date',startOfMonth.toISOString());
-      const assistanceVisits=assistance?.length || 0;
+      // .lt('date',startOfMonth.toISOString());
+      const assistanceVisits = assistance?.length || 0;
       const { data: lastMonthPayments } = await supabase
         .from('royalty_payments')
         .select('amount')
@@ -251,7 +251,7 @@ export function OverviewTab() {
           <CardContent>
             <div className="numbers text-2xl font-bold">{stats?.totalFranchises}</div>
             <p className="legal text-muted-foreground">
-              +{stats?.newFranchises}   depuis les 30 derniers jours
+              +{stats?.newFranchises}   from last 30 days
             </p>
           </CardContent>
         </Card>
@@ -270,10 +270,10 @@ export function OverviewTab() {
             </p>
           </CardContent>
         </Card>
-      <Card>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="tagline-3">
-Support Visits
+              Support Visits
             </CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
