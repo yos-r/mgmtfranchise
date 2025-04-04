@@ -45,6 +45,7 @@ import CampaignStatusCard from "./campaign-status-card";
 
 // Import the useMarketingMedia hook
 import { useMarketingMedia } from "./marketing-media-loader";
+import MarketingAttachments from "./marketing-attachments";
 
 interface MarketingAction {
     id: string;
@@ -447,6 +448,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                             initialMetrics={currentAction.performance_metrics || defaultMetrics}
                             onUpdate={handlePerformanceMetricsUpdate}
                         />
+                        <MarketingAttachments actionId={currentAction.id}/>
                     </div>
                 </div>
             </div>
