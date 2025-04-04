@@ -424,13 +424,12 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="container  py-6 space-y-6">
       {/* Header with Back Button and Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <div className="flex items-center">
-          <Button variant="ghost" onClick={onBack} className="mr-2">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+        <div className="flex items-center space-x-3">
+          <Button variant="ghost" onClick={onBack} className="mr-2 p-0 h-9 w-9">
+          <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">

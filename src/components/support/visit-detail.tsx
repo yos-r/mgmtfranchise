@@ -172,7 +172,6 @@ export default function VisitDetail({ assistanceId, onBack }) {
         <div className="flex items-center space-x-4">
           <Button variant="ghost" onClick={onBack} className="h-9 w-9 p-0">
             <ArrowLeft className="h-5 w-5" />
-            <span className="sr-only">Back</span>
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
