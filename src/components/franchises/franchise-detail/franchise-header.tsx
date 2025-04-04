@@ -604,7 +604,7 @@ export function FranchiseHeader({ franchise, contract, loadFranchises, onDelete,
                 {/* Contract Details - Responsive Grid */}
                 <div className="space-y-2">
                   <h3 className="font-semibold">Contract Details</h3>
-                  <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {contract.initial_fee > 0 && <div>
                       <div className="flex items-center space-x-2">
                         <Banknote className="h-4 w-4 text-muted-foreground" />

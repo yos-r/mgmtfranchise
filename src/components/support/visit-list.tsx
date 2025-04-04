@@ -56,7 +56,7 @@ export function VisitList({ visits, onVisitSelect }: VisitListProps) {
                   </Badge>
                 </TableCell>
                 <TableCell className="body-1">
-                  {format(new Date(visit.date), "MMM d, yyyy")} at {visit.time}
+                  {format(new Date(visit.date), "dd/MM/yyyy")} at {visit.time}
                 </TableCell>
                 <TableCell className="body-1">{visit.duration}</TableCell>
                 <TableCell>

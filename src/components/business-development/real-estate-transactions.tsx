@@ -61,7 +61,7 @@ const RealEstateTransactions = () => {
 
   const goToNextPage = () => {
     // Show export dialog when paginating to next page
-    setShowExportDialog(true);
+    // setShowExportDialog(true);
     
     // Optionally, still change the page
     setCurrentPage(prevPage => Math.min(pageCount - 1, prevPage + 1));
@@ -138,10 +138,10 @@ const RealEstateTransactions = () => {
               Historique des transactions
             </div>
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm" 
               className="h-7 px-3 text-xs flex items-center gap-1 text-gray-600 border-gray-300"
-              onClick={() => setShowExportDialog(true)}
+              
             >
               <Download className="h-3.5 w-3.5 mr-1" />
               Exporter CSV
@@ -183,7 +183,7 @@ const RealEstateTransactions = () => {
                   size="sm"
                   className="h-7 w-7 p-0 rounded-full"
                   onClick={goToPreviousPage}
-                  disabled={currentPage === 0}
+                  disabled={currentPage === 0 || currentPage>0}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -192,7 +192,7 @@ const RealEstateTransactions = () => {
                   size="sm"
                   className="h-7 w-7 p-0 rounded-full"
                   onClick={goToNextPage}
-                  disabled={currentPage === pageCount - 1}
+                  disabled={currentPage === pageCount - 1 || currentPage>0}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>

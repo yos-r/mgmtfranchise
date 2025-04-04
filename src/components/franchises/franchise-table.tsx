@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { MapPin, MoreHorizontal, Mail, Phone, FileText, TrendingUp, Search, Calendar } from "lucide-react";
 import {
@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -21,6 +20,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getStatusColor, getPerformanceBadge } from "./franchise-card";
+import { supabase } from "@/lib/auth";
+
+// Function to determine the conformity indicator color
+const getConformityColor = (conformity) => {
+  if (conformity >= 80) return "bg-green-500";
+  if (conformity >= 60) return "bg-yellow-500";
+  return "bg-red-500";
+};
+
+// Function to determine the conformity text color
+const getConformityTextColor = (conformity) => {
+  if (conformity >= 80) return "text-green-600";
+  if (conformity >= 60) return "text-yellow-600";
+  return "text-red-600";
+};
 
 interface FranchiseTableProps {
   franchises: any[];
@@ -30,6 +44,54 @@ interface FranchiseTableProps {
 
 export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = false }: FranchiseTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [conformityData, setConformityData] = useState({});
+  
+  // Fetch support visits data to calculate conformity averages
+  useEffect(() => {
+    const fetchSupportVisits = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('support_visits')
+          .select('*')
+          .order('date', { ascending: false });
+        
+        if (error) {
+          console.error("Error fetching support visits:", error);
+          return;
+        }
+        
+        // Calculate average conformity by franchise
+        const conformityByFranchise = {};
+        
+        data.forEach(visit => {
+          if (visit.franchise_id && (visit.conformity !== null && visit.conformity !== undefined)) {
+            if (!conformityByFranchise[visit.franchise_id]) {
+              conformityByFranchise[visit.franchise_id] = {
+                total: 0,
+                count: 0
+              };
+            }
+            
+            conformityByFranchise[visit.franchise_id].total += visit.conformity;
+            conformityByFranchise[visit.franchise_id].count += 1;
+          }
+        });
+        
+        // Calculate averages
+        const averageConformity = {};
+        Object.keys(conformityByFranchise).forEach(franchiseId => {
+          const { total, count } = conformityByFranchise[franchiseId];
+          averageConformity[franchiseId] = Math.round(total / count);
+        });
+        
+        setConformityData(averageConformity);
+      } catch (err) {
+        console.error("Exception fetching support visits:", err);
+      }
+    };
+    
+    fetchSupportVisits();
+  }, []);
 
   // Function to format dates
   const formatDate = (dateString: string) => {
@@ -100,29 +162,17 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
 
   return (
     <div className="space-y-4">
-      {/* <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search franchises..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      </div> */}
-
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-
               <TableHead className="w-[250px]">Franchise</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Start Date</TableHead>
               <TableHead>Expiration Date</TableHead>
               <TableHead>Agents</TableHead>
+              <TableHead>Conformity</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -132,6 +182,7 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
               const terminationDate = getTerminationDate(franchise);
               const startDate = getStartDate(franchise);
               const expirationDate = getExpirationDate(franchise);
+              const conformity = conformityData[franchise.id];
 
               return (
                 <TableRow
@@ -140,26 +191,26 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
                   onClick={() => onFranchiseSelect(franchise)}
                 >
                   <TableCell className="flex items-center gap-3">
-    {/* Logo */}
-    <div className="flex-shrink-0">
-      {franchise.logo && <img src={franchise.logo} alt="" className="w-12 rounded-sm" />}
-      {!franchise.logo && <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Century_21_seal_2018.svg" className="w-10 h-10 rounded-sm" />}
-    </div>
-    
-    {/* Franchise name and owner */}
-    <div>
-      <div className="font-medium">{franchise.name}</div>
-      <div className="text-sm text-muted-foreground">
-        {franchise.owner_name}
-      </div>
-    </div>
-  </TableCell>
-  <TableCell>
-    <div className="flex items-center">
-      <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-      <span>{franchise.address}</span>
-    </div>
-  </TableCell>
+                    {/* Logo */}
+                    <div className="flex-shrink-0">
+                      {franchise.logo && <img src={franchise.logo} alt="" className="w-12 rounded-sm" />}
+                      {!franchise.logo && <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Century_21_seal_2018.svg" className="w-10 h-10 rounded-sm" />}
+                    </div>
+                    
+                    {/* Franchise name and owner */}
+                    <div>
+                      <div className="font-medium">{franchise.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {franchise.owner_name}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <span>{franchise.address}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(franchise.status)}>
                       {franchise.status}
@@ -181,6 +232,26 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
                     </div>
                   </TableCell>
                   <TableCell>{franchise.agents}</TableCell>
+                  
+                  {/* Conformity indicator cell */}
+                  <TableCell>
+                    {conformity !== null && conformity !== undefined ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`${getConformityColor(conformity)} h-1.5 rounded-full`}
+                            style={{ width: `${conformity}%` }}
+                          />
+                        </div>
+                        <span className={`text-xs font-medium ${getConformityTextColor(conformity)}`}>
+                          {conformity}%
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Not available</span>
+                    )}
+                  </TableCell>
+                  
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

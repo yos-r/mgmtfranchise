@@ -251,7 +251,7 @@ const overallAttendanceRate = totalAttendanceRate.total > 0
                     {event.trainer || '-'}
                   </TableCell>
                   <TableCell className="body-1">
-                    {format(new Date(event.date), "MMM d, yyyy")} at {event.time}
+                    {format(new Date(event.date), "dd/MM/yyyy")} at {event.time}
                   </TableCell>
                   <TableCell className="body-1">{event.duration}</TableCell>
                   <TableCell>

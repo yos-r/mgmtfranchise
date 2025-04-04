@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Euro, Eye, FileText, Pencil } from "lucide-react";
+import { Banknote, Euro, Eye, FileText, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { EditContractDialog } from "./edit-contract-dialog";
-
+import { useCurrency } from '@/hooks/useCurrency';
 interface Contract {
   id: string;
   start_date: string;
@@ -47,7 +47,7 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
   const [isViewingDetails, setIsViewingDetails] = useState(false);
   const [isEditingContract, setIsEditingContract] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-
+  const {formatCurrency}=useCurrency();
   // Determine contract type and status
   const processedContracts = contracts.map((contract, index) => {
     // Determine contract type (first one is initial, rest are renewals)
@@ -146,21 +146,21 @@ export function ContractsHistory({ contracts, franchise_id }: ContractsHistoryPr
                   <TableCell>{getEndDate(contract)}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
-                      <Euro className="h-3 w-3 text-muted-foreground" />
-                      <span>{contract.initial_fee.toLocaleString()}</span>
+                      <Banknote className="h-3 w-3 text-muted-foreground" />
+                      <span>{formatCurrency(contract.initial_fee)}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <div className="flex items-center space-x-1">
                         <span className="text-sm text-muted-foreground">Royalty:</span>
-                        <Euro className="h-3 w-3 text-muted-foreground" />
-                        <span>{contract.royalty_amount.toLocaleString()}</span>
+                        <Banknote className="h-3 w-3 text-muted-foreground" />
+                        <span>{formatCurrency(contract.royalty_amount)}</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <span className="text-sm text-muted-foreground">Marketing:</span>
-                        <Euro className="h-3 w-3 text-muted-foreground" />
-                        <span>{contract.marketing_amount.toLocaleString()}</span>
+                        <Banknote className="h-3 w-3 text-muted-foreground" />
+                        <span>{formatCurrency(contract.marketing_amount)}</span>
                       </div>
                     </div>
                   </TableCell>

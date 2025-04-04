@@ -41,6 +41,7 @@ import { EditActionDialog } from "./edit-action-dialog";
 import ImageGallery from "./image-gallery";
 import ActivityTabs from "./activity-tabs";
 import ChannelDistributionCard from "./channel-distribution-card";
+import CampaignStatusCard from "./campaign-status-card";
 
 // Import the useMarketingMedia hook
 import { useMarketingMedia } from "./marketing-media-loader";
@@ -59,6 +60,14 @@ interface MarketingAction {
     video_url?: string;
     attachments?: { name: string; url: string; type: string; size: string }[];
     channel_distribution?: Record<string, number>;
+    performance_metrics?: {
+        impressions: number;
+        clicks: number;
+        conversions: number;
+        ctr: number;
+        cost_per_lead: number;
+        roi: number;
+    };
 }
 
 interface ActionDetailProps {
@@ -73,10 +82,10 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
     const [isDeleting, setIsDeleting] = useState(false);
     const [currentAction, setCurrentAction] = useState<MarketingAction>(action);
     const { toast } = useToast();
-    
+
     // Use the hook to fetch media for this action
     const { media, youtubeUrl, loading: mediaLoading, error: mediaError } = useMarketingMedia(currentAction.id);
-    
+
     // State for gallery
     const [galleryOpen, setGalleryOpen] = useState(false);
     const [initialImageIndex, setInitialImageIndex] = useState(0);
@@ -140,6 +149,14 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
         }));
     };
 
+    const handlePerformanceMetricsUpdate = (updatedMetrics) => {
+        // Update local state with new metrics
+        setCurrentAction(prev => ({
+            ...prev,
+            performance_metrics: updatedMetrics
+        }));
+    };
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'completed':
@@ -167,16 +184,18 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
     };
 
     const percentUsed = Math.round((currentAction.spent / currentAction.budget) * 100);
-    const daysRemaining = Math.max(0, Math.ceil((new Date(currentAction.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
-    
-    // Placeholder data for timeline activities
-    const timelineActivities = [
-        { date: "April 2, 2025 - 10:23 AM", content: "Sarah Johnson updated the campaign status to \"Active\"" },
-        { date: "April 1, 2025 - 3:45 PM", content: "Michael Lee added a new creative asset" },
-        { date: "March 28, 2025 - 11:12 AM", content: "Budget increased from €75,000 to €85,000" },
-        { date: "March 25, 2025 - 9:30 AM", content: "LinkedIn ads campaign launched" },
-        { date: "March 20, 2025 - 2:15 PM", content: "Email sequence approved" }
-    ];
+
+    // Default performance metrics if none exist
+    const defaultMetrics = {
+        impressions: 0,
+        clicks: 0,
+        conversions: 0,
+        ctr: 0,
+        cost_per_lead: 0,
+        roi: 0
+    };
+
+
 
     return (
         <div className="">
@@ -196,6 +215,14 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                 <ArrowRight className="w-3 mx-2"></ArrowRight>
                                 <Calendar className="mr-1 h-3.5 w-3.5" />
                                 <span>{format(new Date(currentAction.end_date), "MMMM d, yyyy")}</span>
+                                {(() => {
+                                    const dayCount = Math.ceil((new Date(currentAction.end_date).getTime() - new Date(currentAction.start_date).getTime() + 1) / (1000 * 60 * 60 * 24));
+                                    return (
+                                        <span className="mx-2 text-xs px-2 py-0.5 bg-gray-100 rounded-full">
+                                            {dayCount} day{dayCount !== 1 ? 's' : ''}
+                                        </span>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
@@ -246,10 +273,6 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                                 </div>
                             ) : mediaError || galleryImages.length === 0 ? (
-                                // <div className="col-span-3 flex flex-col items-center justify-center bg-muted/20 rounded-lg p-6">
-                                //     <ImageIcon className="h-10 w-10 text-muted-foreground mb-2" />
-                                //     <p className="text-muted-foreground">No images available</p>
-                                // </div>
                                 <div></div>
                             ) : (
                                 <>
@@ -266,7 +289,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                             />
                                         </div>
                                     )}
-                                    
+
                                     {/* Second image (if available) */}
                                     {galleryImages.length > 1 && (
                                         <div
@@ -280,7 +303,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                             />
                                         </div>
                                     )}
-                                    
+
                                     {/* Third image (if available) */}
                                     {galleryImages.length > 2 && (
                                         <div
@@ -294,7 +317,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                             />
                                         </div>
                                     )}
-                                    
+
                                     {/* Fill empty spaces if not enough images */}
                                     {galleryImages.length === 1 && (
                                         <>
@@ -302,11 +325,11 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                             <div className="bg-muted rounded-lg"></div>
                                         </>
                                     )}
-                                    
+
                                     {galleryImages.length === 2 && (
                                         <div className="bg-muted rounded-lg"></div>
                                     )}
-                                    
+
                                     {/* View All button - only if there are images */}
                                     {galleryImages.length > 0 && (
                                         <Button
@@ -385,44 +408,11 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                             </Card>
                         )}
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Performance Metrics</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-3 gap-6 mb-6">
-                                    <div>
-                                        <p className="text-sm text-gray-500">Impressions</p>
-                                        <p className="text-xl font-semibold">856,423</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Clicks</p>
-                                        <p className="text-xl font-semibold">32,856</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Conversions</p>
-                                        <p className="text-xl font-semibold">1,243</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">CTR</p>
-                                        <p className="text-xl font-semibold">3.84%</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Cost per Lead</p>
-                                        <p className="text-xl font-semibold">€42.65</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">ROI</p>
-                                        <p className="text-xl font-semibold">247%</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <ActivityTabs 
+                        {/* Activity Tabs commented out for now */}
+                        {/* <ActivityTabs 
                             timelineActivities={timelineActivities} 
                             attachments={currentAction.attachments}
-                        />
+                        /> */}
                     </div>
 
                     {/* Sidebar (1/3) */}
@@ -439,45 +429,24 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                 <p className="text-sm text-gray-500 mt-2">Total Budget Spent</p>
                             </div>
                         </div>
-                        
-                        {/* Using the new ChannelDistributionCard component */}
-                        <ChannelDistributionCard 
+
+                        {/* Using the new CampaignStatusCard component */}
+
+
+                        {/* Channel Distribution Card */}
+                        <ChannelDistributionCard
                             spent={currentAction.spent}
                             actionId={currentAction.id}
                             initialDistribution={currentAction.channel_distribution}
                             onUpdate={handleChannelDistributionUpdate}
                         />
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Campaign Status</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pb-6">
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center">
-                                            <Calendar className="h-5 w-5 text-gray-500 mr-3" />
-                                            <span>Days </span>
-                                        </div>
-                                        <span className="font-medium">{daysRemaining} days</span>
-                                    </div>
-                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center">
-                                            <BarChart2 className="h-5 w-5 text-gray-500 mr-3" />
-                                            <span>Progress</span>
-                                        </div>
-                                        <span className="font-medium">{percentUsed}%</span>
-                                    </div>
-                                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center">
-                                            <PieChart className="h-5 w-5 text-gray-500 mr-3" />
-                                            <span>ROI</span>
-                                        </div>
-                                        <span className="font-medium">247%</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <CampaignStatusCard
+                            actionId={currentAction.id}
+                            endDate={currentAction.end_date}
+                            status={currentAction.status}
+                            initialMetrics={currentAction.performance_metrics || defaultMetrics}
+                            onUpdate={handlePerformanceMetricsUpdate}
+                        />
                     </div>
                 </div>
             </div>

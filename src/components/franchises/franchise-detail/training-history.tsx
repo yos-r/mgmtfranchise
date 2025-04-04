@@ -100,7 +100,7 @@ export function TrainingHistory({ franchise }) {
                     </Badge>
                   </TableCell>
                   <TableCell className="body-1">
-                    {format(new Date(training.date), "MMM d, yyyy")}
+                    {format(new Date(training.date), "dd/MM/yyyy")}
                   </TableCell>
                   <TableCell className="body-1">{training.duration}</TableCell>
                   <TableCell className="body-1">{training.trainer}</TableCell>

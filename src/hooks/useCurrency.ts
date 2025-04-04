@@ -26,7 +26,7 @@ export const CURRENCY_PRESETS = {
     code: 'USD',
     symbol: '$',
     position: 'before',
-    decimalPlaces: 2,
+    decimalPlaces: 0,
     thousandsSeparator: ',',
     decimalSeparator: '.'
   },
@@ -34,7 +34,7 @@ export const CURRENCY_PRESETS = {
     code: 'GBP',
     symbol: '£',
     position: 'before',
-    decimalPlaces: 2,
+    decimalPlaces: 0,
     thousandsSeparator: ',',
     decimalSeparator: '.'
   },
@@ -50,7 +50,7 @@ export const CURRENCY_PRESETS = {
     code: 'CNY',
     symbol: '¥',
     position: 'before',
-    decimalPlaces: 2,
+    decimalPlaces: 0,
     thousandsSeparator: ',',
     decimalSeparator: '.'
   }

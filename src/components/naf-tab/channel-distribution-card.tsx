@@ -8,9 +8,10 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { useCurrency } from "@/hooks/useCurrency";
+
 interface DistributionChannel {
   name: string;
-  amount: number
+  amount: number;
   percentage: number;
 }
 
@@ -35,10 +36,10 @@ export function ChannelDistributionCard({
   initialDistribution = { "social media": 35, "email": 25, "search ads": 30, "website": 10 },
   onUpdate
 }: ChannelDistributionCardProps) {
-  const {formatCurrency}=useCurrency();
+  const { formatCurrency } = useCurrency();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [distribution, setDistribution] = useState<Record<string, number, number>>(initialDistribution);
+  const [distribution, setDistribution] = useState<Record<string, number>>(initialDistribution);
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const { toast } = useToast();
@@ -61,18 +62,23 @@ export function ChannelDistributionCard({
     }
   }, [isEditing, distribution]);
 
-  // Convert distribution object to array for rendering
+  // Convert distribution object to array for rendering with calculated amounts
   const distributionArray: DistributionChannel[] = Object.entries(distribution).map(
-    ([name, percentage, amount]) => ({
-      name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize first letter
-      percentage, amount: spent * percentage / 100
-    })
+    ([name, percentage]) => {
+      const amount = (spent * percentage) / 100;
+      return {
+        name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize first letter
+        percentage,
+        amount
+      };
+    }
   );
 
   // Format data for pie chart
   const chartData = distributionArray.map(item => ({
     name: item.name,
-    value: item.percentage
+    value: item.percentage,
+    amount: item.amount
   }));
 
   // Handle input value change
@@ -238,7 +244,7 @@ export function ChannelDistributionCard({
 
   // Custom active shape for pie chart
   const renderActiveShape = (props) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload } = props;
 
     return (
       <g>
@@ -272,13 +278,17 @@ export function ChannelDistributionCard({
     setActiveIndex(undefined);
   };
 
-  // Custom tooltip formatter to show both name and value
+  // Custom tooltip formatter to show both percentage and amount
   const customTooltipFormatter = (value, name, entry) => {
+    const amount = (spent * value) / 100;
     return [
-      `${value}%`,
+      `${value}% (${formatCurrency(amount)})`,
       entry.payload.name
     ];
   };
+
+  // Calculate total of current distribution
+  const currentTotal = Object.values(distribution).reduce((sum, val) => sum + val, 0);
 
   return (
     <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -286,16 +296,21 @@ export function ChannelDistributionCard({
         <div className="flex justify-between items-center">
           <CardTitle>Channel Distribution</CardTitle>
           {isEditing ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="text-sm border-0"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save
-            </Button>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-medium ${currentTotal !== 100 ? 'text-red-500' : 'text-green-600'}`}>
+                Total: {currentTotal}%
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="text-sm border-0"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+            </div>
           ) : (
             <Button
               variant="ghost"
@@ -368,23 +383,27 @@ export function ChannelDistributionCard({
                   <span className="h-3 w-3 mr-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}></span>
                   {channel.name}
                 </span>
-                {isEditing ? (
-                  <div className="w-16">
-                    <Input
-                      type="text"
-                      value={inputValues[channel.name.toLowerCase()] || '0'}
-                      onChange={(e) => handleInputChange(channel.name, e.target.value)}
-                      onBlur={applyInputChanges}
-                      className="h-6 text-sm text-right pr-1"
-                      suffix="%"
-                    />
-                  </div>
-                ) : (
-                  <span className="text-sm font-medium">
-                    <span class="mr-2 text-gray-600">{formatCurrency(channel.amount)}</span>
-                    {Math.round(channel.percentage)}%
+                <div className="flex items-center">
+                  <span className="text-sm text-gray-600 mr-3">
+                    {/* {formatCurrency(channel.amount)} */}
                   </span>
-                )}
+                  {isEditing ? (
+                    <div className="w-16">
+                      <Input
+                        type="text"
+                        value={inputValues[channel.name.toLowerCase()] || '0'}
+                        onChange={(e) => handleInputChange(channel.name, e.target.value)}
+                        onBlur={applyInputChanges}
+                        className="h-6 text-sm text-right pr-1"
+                        suffix="%"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-sm font-medium w-10 text-right">
+                      {Math.round(channel.percentage)}%
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="relative pt-1">
                 {/* Always show the slider, but it's only interactive in display mode */}

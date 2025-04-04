@@ -363,7 +363,7 @@ const AgencesWidget2 = ({area }:any) => {
                             </div>
                             <div>
                                 <h4 className="font-medium">Données complètes</h4>
-                                <p className="text-xs text-gray-500">Abonnez-vous pour télécharger toutes les transactions</p>
+                                <p className="text-xs text-gray-500">Abonnez-vous pour télécharger les statistiques des agences immobilières et du marché</p>
                             </div>
                         </div>
                         

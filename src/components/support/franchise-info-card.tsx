@@ -44,102 +44,99 @@ export default function FranchiseInfoCard({ franchise, consultant, agents: initi
 
   return (
     <Card className="overflow-hidden">
-      <div className="flex items-center justify-between p-6 pb-0">
-        <div className="flex items-center space-x-4">
-          {franchise.logo ? (
-            <img
-              src={franchise.logo}
-              alt={franchise.name}
-              className="h-16 w-16 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
-              <Building2 className="h-8 w-8 text-muted-foreground" />
-            </div>
-          )}
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold">{franchise.name}</h1>
-              {franchise.status === 'terminated' && (
-                <Badge variant="destructive">Terminated</Badge>
-              )}
-            </div>
-            <p className="text-muted-foreground">{franchise.company_name}</p>
-          </div>
-        </div>
-      </div>
-
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="flex-1">
-            <h3 className="text-lg font-medium mb-3">Franchise Details</h3>
-
-            <div className="space-y-2">
-              {franchise.company_name && franchise.company_name !== franchise.name && (
-                <div className="flex items-center">
-                  <Building className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">{franchise.company_name}</span>
-                </div>
-              )}
-
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
-                <span className="text-sm">{franchise.address}</span>
-              </div>
-
-              {franchise.tax_id && (
-                <div className="flex items-center">
-                  <span className="w-4 h-4 mr-2 flex justify-center items-center text-xs rounded bg-muted text-muted-foreground">
-                    #
-                  </span>
-                  <span className="text-sm">Tax ID: {franchise.tax_id}</span>
-                </div>
-              )}
-            </div>
-
-            <Separator className="my-4" />
-
-            <h3 className="text-lg font-medium mb-3">Owner Information</h3>
-            <div className="flex items-start space-x-3">
-              {franchise.owner_avatar ? (
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={franchise.owner_avatar} alt={franchise.owner_name} />
-                  <AvatarFallback>{getInitials(franchise.owner_name)}</AvatarFallback>
-                </Avatar>
+      <div className="flex">
+        <div>
+          <div className="flex items-center justify-between p-6 pb-0">
+            <div className="flex items-center space-x-4">
+              {franchise.logo ? (
+                <img
+                  src={franchise.logo}
+                  alt={franchise.name}
+                  className="h-16 w-16 rounded-lg object-cover"
+                />
               ) : (
-                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                  <User className="h-5 w-5 text-muted-foreground" />
+                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                  <Building2 className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}
-
               <div>
-                <div className="font-medium">{franchise.owner_name}</div>
-                <div className="flex flex-col space-y-1 mt-1">
-                  {franchise.owner_email && (
-                    <a
-                      href={`mailto:${franchise.owner_email}`}
-                      className="text-xs text-gray-600 hover:underline flex items-center"
-                    >
-                      <Mail className="h-3 w-3 mr-1" />
-                      {franchise.owner_email}
-                    </a>
-                  )}
-
-                  {franchise.owner_phone && (
-                    <a
-                      href={`tel:${franchise.owner_phone}`}
-                      className="text-xs text-darkgold hover:underline flex items-center"
-                    >
-                      <Phone className="h-3 w-3 mr-1" />
-                      {franchise.owner_phone}
-                    </a>
+                <div className="flex items-center space-x-2">
+                  <h1 className="text-2xl font-bold">{franchise.name}</h1>
+                  {franchise.status === 'terminated' && (
+                    <Badge variant="destructive">Terminated</Badge>
                   )}
                 </div>
+                <p className="text-muted-foreground">{franchise.company_name}</p>
               </div>
             </div>
           </div>
-
-          <div className="flex-1">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1">
+                <h3 className="text-lg font-medium mb-3">Franchise Details</h3>
+                <div className="space-y-2">
+                  {franchise.company_name && franchise.company_name !== franchise.name && (
+                    <div className="flex items-center">
+                      <Building className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-sm">{franchise.company_name}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm">{franchise.address}</span>
+                  </div>
+                  {franchise.tax_id && (
+                    <div className="flex items-center">
+                      <span className="w-4 h-4 mr-2 flex justify-center items-center text-xs rounded bg-muted text-muted-foreground">
+                        #
+                      </span>
+                      <span className="text-sm">Tax ID: {franchise.tax_id}</span>
+                    </div>
+                  )}
+                </div>
+                <Separator className="my-4" />
+                <h3 className="text-lg font-medium mb-3">Owner Information</h3>
+                <div className="flex items-start space-x-3">
+                  {franchise.owner_avatar ? (
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={franchise.owner_avatar} alt={franchise.owner_name} />
+                      <AvatarFallback>{getInitials(franchise.owner_name)}</AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <User className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-medium">{franchise.owner_name}</div>
+                    <div className="flex flex-col space-y-1 mt-1">
+                      {franchise.owner_email && (
+                        <a
+                          href={`mailto:${franchise.owner_email}`}
+                          className="text-xs text-gray-600 hover:underline flex items-center"
+                        >
+                          <Mail className="h-3 w-3 mr-1" />
+                          {franchise.owner_email}
+                        </a>
+                      )}
+                      {franchise.owner_phone && (
+                        <a
+                          href={`tel:${franchise.owner_phone}`}
+                          className="text-xs text-darkgold hover:underline flex items-center"
+                        >
+                          <Phone className="h-3 w-3 mr-1" />
+                          {franchise.owner_phone}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+        
+            </div>
+          </CardContent>
+        </div>
+        <div className="flex-1 py-6 px-6">
             <div className="mb-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-medium flex items-center">
@@ -217,8 +214,7 @@ export default function FranchiseInfoCard({ franchise, consultant, agents: initi
               </div>
             </div>
           </div>
-        </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }

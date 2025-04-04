@@ -429,12 +429,12 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center space-x-3">
           <Button variant="ghost" onClick={onBack} className="mr-2 p-0 h-9 w-9">
-          <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-                {currentEvent.title}
-              </h1>
+              {currentEvent.title}
+            </h1>
             <div className="flex items-center text-sm text-muted-foreground mt-1">
               <Calendar className="mr-1 h-3.5 w-3.5" />
               <span>                {format(new Date(currentEvent.date), "MMMM d, yyyy")}
@@ -605,87 +605,95 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
 
         {/* Right Section (1/3 on desktop) */}
         <div className="space-y-6">
-          {/* Session Rating */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Session Rating</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center">
-                <div className="text-4xl font-bold text-primary mb-2">
-                  {ratingSession || 0}/5
+          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+
+            <CardContent className="space-y-3 mt-3">
+              {/* Session Rating Section */}
+              <div className="p-2 rounded-lg bg-gray-50/0">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-base font-medium">Session Rating</h3>
+                  <div className="text-2xl font-bold text-primary">
+                    {ratingSession || 0}<span className="text-lg text-gray-500">/5</span>
+                  </div>
                 </div>
-                <div className="flex items-center mb-4">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Button
-                      key={star}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRatingChangeSession(star)}
-                      className="p-1"
-                    >
-                      <Star
-                        className={`h-6 w-6 ${star <= ratingSession ? "text-relentlessgold fill-relentlessgold" : "text-muted-foreground"
-                          }`}
-                      />
-                    </Button>
-                  ))}
+
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-center">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Button
+                        key={star}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRatingChangeSession(star)}
+                        className="p-1"
+                      >
+                        <Star
+                          className={`h-6 w-6 ${star <= ratingSession
+                              ? "text-relentlessgold fill-relentlessgold"
+                              : "text-muted-foreground"
+                            }`}
+                        />
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={ratingSession ? (ratingSession / 5) * 100 : 0}
+                      className="h-2 flex-grow"
+                    />
+                    <span className="text-xs text-gray-500 min-w-8 text-right">
+                      {ratingSession ? `${Math.round((ratingSession / 5) * 100)}%` : "0%"}
+                    </span>
+                  </div>
                 </div>
-                <Progress
-                  value={ratingSession ? (ratingSession / 5) * 100 : 0}
-                  className="h-2 w-full"
-                />
+              </div>
+
+              {/* Trainer Rating Section */}
+              <div className="p-4 rounded-lg bg-gray-50/0">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-base font-medium">
+                    Trainer Rating
+                    <span className="text-sm font-normal text-gray-500 ml-2">
+                      {currentEvent.trainer}
+                    </span>
+                  </h3>
+                  <div className="text-2xl font-bold text-primary">
+                    {rating || 0}<span className="text-lg text-gray-500">/5</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-center">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Button
+                        key={star}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRatingChange(star)}
+                        className="p-1"
+                      >
+                        <Star
+                          className={`h-6 w-6 ${star <= rating
+                              ? "text-relentlessgold fill-relentlessgold"
+                              : "text-muted-foreground"
+                            }`}
+                        />
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={rating ? (rating / 5) * 100 : 0}
+                      className="h-2 flex-grow"
+                    />
+                    <span className="text-xs text-gray-500 min-w-8 text-right">
+                      {rating ? `${Math.round((rating / 5) * 100)}%` : "0%"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
-
-          {/* Trainer Rating */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Trainer Rating - {currentEvent.trainer}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center">
-                <div className="text-4xl font-bold text-primary mb-2">
-                  {rating || 0}/5
-                </div>
-                <div className="flex items-center mb-4">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Button
-                      key={star}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRatingChange(star)}
-                      className="p-1"
-                    >
-                      <Star
-                        className={`h-6 w-6 ${star <= rating ? "text-relentlessgold fill-relentlessgold" : "text-muted-foreground"
-                          }`}
-                      />
-                    </Button>
-                  ))}
-                </div>
-                <Progress
-                  value={rating ? (rating / 5) * 100 : 0}
-                  className="h-2 w-full"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Learning Materials */}
-          <TrainingMaterials eventId={event.id}></TrainingMaterials>
-
-          <InternalNotesCard
-            eventId={currentEvent.id}
-            initialNotes={currentEvent.notes || ""}
-            noteBy={currentEvent.note_by || ""}
-          />
-
-
-          {/* Attendance Statistics */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center">
@@ -726,6 +734,19 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
               </div>
             </CardContent>
           </Card>
+
+          {/* Learning Materials */}
+          <TrainingMaterials eventId={event.id}></TrainingMaterials>
+
+          <InternalNotesCard
+            eventId={currentEvent.id}
+            initialNotes={currentEvent.notes || ""}
+            noteBy={currentEvent.note_by || ""}
+          />
+
+
+          {/* Attendance Statistics */}
+          
         </div>
       </div>
 

@@ -1,12 +1,28 @@
-import { MapPin, Phone, Mail, Calendar } from "lucide-react";
+import { MapPin, Phone, Mail, Calendar, BarChart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/auth";
 
 interface FranchiseCardProps {
   franchise: any;
-  onSelect: (franchise: any) => void; // Changed to pass the entire franchise object
+  onSelect: (franchise: any) => void;
 }
+
+// Function to determine the conformity color
+export const getConformityColor = (conformity) => {
+  if (conformity >= 80) return "bg-green-500";
+  if (conformity >= 60) return "bg-yellow-500";
+  return "bg-red-500";
+};
+
+// Function to determine the conformity text color
+export const getConformityTextColor = (conformity) => {
+  if (conformity >= 80) return "text-green-600";
+  if (conformity >= 60) return "text-yellow-600";
+  return "text-red-600";
+};
 
 export function getStatusColor(status: string) {
   switch (status) {
@@ -35,11 +51,47 @@ export function getPerformanceBadge(performance: string) {
 }
 
 export function FranchiseCard({ franchise, onSelect }: FranchiseCardProps) {
+  const [conformity, setConformity] = useState<number | null>(null);
+
   // Function to format dates
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     return format(new Date(dateString), 'MMM d, yyyy');
   };
+
+  // Fetch conformity data
+  useEffect(() => {
+    const fetchConformityData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('support_visits')
+          .select('conformity')
+          .eq('franchise_id', franchise.id);
+        
+        if (error) {
+          console.error("Error fetching conformity data:", error);
+          return;
+        }
+        
+        // Calculate average conformity
+        if (data && data.length > 0) {
+          const validConformityValues = data
+            .filter(visit => visit.conformity !== null && visit.conformity !== undefined)
+            .map(visit => visit.conformity);
+            
+          if (validConformityValues.length > 0) {
+            const total = validConformityValues.reduce((sum, value) => sum + value, 0);
+            const average = Math.round(total / validConformityValues.length);
+            setConformity(average);
+          }
+        }
+      } catch (err) {
+        console.error("Exception fetching conformity data:", err);
+      }
+    };
+    
+    fetchConformityData();
+  }, [franchise.id]);
 
   // Function to calculate contract start date (first contract)
   const getStartDate = () => {
@@ -125,6 +177,29 @@ export function FranchiseCard({ franchise, onSelect }: FranchiseCardProps) {
           <div className="flex items-center text-sm">
             <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
             <span>{franchise.address}</span>
+          </div>
+          
+          {/* Conformity Indicator */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">Conformity</p>
+              <BarChart className="h-3 w-3 text-muted-foreground" />
+            </div>
+            {conformity !== null && conformity !== undefined ? (
+              <div className="flex items-center gap-2">
+                <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={`${getConformityColor(conformity)} h-1.5 rounded-full`}
+                    style={{ width: `${conformity}%` }}
+                  />
+                </div>
+                <span className={`text-xs font-medium ${getConformityTextColor(conformity)}`}>
+                  {conformity}%
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground">Not available</span>
+            )}
           </div>
           
           <div className="grid grid-cols-2 gap-4">

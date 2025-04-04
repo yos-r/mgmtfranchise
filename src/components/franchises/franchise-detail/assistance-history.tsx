@@ -166,7 +166,7 @@ export function AssistanceHistory({ franchise }) {
                         {visit.team_members?.first_name +' '+ visit.team_members?.last_name || "Unknown consultant"}
                       </TableCell>
                       <TableCell className="body-1">
-                        {format(new Date(visit.date), "MMM d, yyyy")}
+                        {format(new Date(visit.date), "dd/MM/yyyy")}
                       </TableCell>
                       <TableCell className="body-1">{visit.duration}</TableCell>
                       <TableCell>

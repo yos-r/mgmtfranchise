@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, 
   Legend
 } from 'recharts';
-
+import { useCurrency } from '@/hooks/useCurrency';
 // Generate mock data for 24 months of revenue
 const generateRevenueData = () => {
   const currentDate = new Date();
@@ -23,7 +23,7 @@ const generateRevenueData = () => {
 
 export const RevenueOverviewChart: React.FC = () => {
   const revenueData = generateRevenueData();
-
+  const {formatCurrency}=useCurrency();
   return (
     <div className="w-full h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -37,7 +37,7 @@ export const RevenueOverviewChart: React.FC = () => {
             interval="preserveStartEnd"
           />
           <YAxis 
-            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
+            tickFormatter={(value) => `${formatCurrency((value / 1000))}K`}
             tick={{ fontSize: 10 }}
             width={40}
           />

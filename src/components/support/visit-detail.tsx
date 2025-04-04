@@ -26,6 +26,7 @@ import VisitDocuments from "./visit-documents";
 import VisitSummary from "./visit-summary";
 import VisitChecklist from "./visit-checklist";
 import FranchiseInfoCard from "./franchise-info-card";
+import VisitInternalNotes from "./visit-internal-notes"; // Import the new internal notes component
 
 export default function VisitDetail({ assistanceId, onBack }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +38,7 @@ export default function VisitDetail({ assistanceId, onBack }) {
   // Mock agents data (static as requested)
   const [agents] = useState(["Jean Martin", "Sophie Bernard", "Thomas Klein"]);
   
-  // Edit observations state
+  // Edit observations state - we'll keep this for compatibility but it will be replaced by the internal notes component
   const [isEditingObservations, setIsEditingObservations] = useState(false);
   const [observations, setObservations] = useState("");
   
@@ -107,6 +108,7 @@ export default function VisitDetail({ assistanceId, onBack }) {
     }
   };
 
+  // This function is kept for backward compatibility but no longer used directly
   const updateVisitObservations = async () => {
     try {
       const { error } = await supabase
@@ -246,59 +248,10 @@ export default function VisitDetail({ assistanceId, onBack }) {
             />
           )}
           
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle>Visit Comments</CardTitle>
-                {!isEditingObservations ? (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setIsEditingObservations(true)}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
-                ) : (
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => {
-                        setIsEditingObservations(false);
-                        setObservations(visit.observations || "");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={updateVisitObservations}
-                    >
-                      Save
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {!isEditingObservations ? (
-                <div className="whitespace-pre-wrap text-sm">
-                  {observations || "No observations"}
-                </div>
-              ) : (
-                <Textarea
-                  value={observations || ""}
-                  onChange={(e) => setObservations(e.target.value)}
-                  className="min-h-32"
-                  placeholder="Add your observations here..."
-                />
-              )}
-            </CardContent>
-          </Card>
+          {/* Replace the old observations card with the new internal notes component */}
+         
           
-          {/* Action Plans Component */}
-          
+          {/* Action Plans Component is already included above */}
         </div>
         
         <div className="lg:col-span-1 space-y-6">
@@ -314,6 +267,11 @@ export default function VisitDetail({ assistanceId, onBack }) {
           <VisitDocuments 
             visitId={assistanceId} 
             isAdmin={true}
+          />
+           <VisitInternalNotes 
+            visitId={assistanceId}
+            initialNotes={visit.observations || ""}
+            notesBy={visit.observations_by || ""}
           />
         </div>
       </div>
