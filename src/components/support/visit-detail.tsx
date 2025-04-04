@@ -429,15 +429,16 @@ export default function VisitDetail({ assistanceId, onBack }) {
         </div>
         
         <div className="lg:col-span-1 space-y-6">
-          <VisitChecklist 
-            visitId={assistanceId} 
-            onConformityChange={handleConformityChange} 
-          />
-          <VisitSummary 
+        <VisitSummary 
             franchise={franchise} 
             getStatusBadgeClass={getStatusBadgeClass} 
             assistance={assistanceWithConformity} 
           />
+          <VisitChecklist 
+            visitId={assistanceId} 
+            onConformityChange={handleConformityChange} 
+          />
+          
           <VisitDocuments 
             visitId={assistanceId} 
             isAdmin={true}
