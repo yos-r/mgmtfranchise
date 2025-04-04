@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Trash2,
   MoreHorizontal,
+  Edit,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +38,10 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
   const [newActionDeadline, setNewActionDeadline] = useState("");
   const [actionStatus, setActionStatus] = useState("pending");
   const [isAddingAction, setIsAddingAction] = useState(false);
+  const [isEditingAction, setIsEditingAction] = useState(false);
+  const [currentAction, setCurrentAction] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case "completed":
@@ -123,6 +127,50 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
     }
   };
 
+  const handleUpdateActionPlan = async () => {
+    if (!currentAction || !currentAction.action.trim() || !currentAction.deadline) return;
+    
+    try {
+      const updateData = {
+        action: currentAction.action,
+        deadline: currentAction.deadline,
+        status: currentAction.status,
+      };
+      
+      const { data, error } = await supabase
+        .from('support_action_plans')
+        .update(updateData)
+        .eq('id', currentAction.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Update the action in the list
+      setActionPlans(actionPlans.map(action => 
+        action.id === currentAction.id ? data : action
+      ));
+      
+      // Close the edit dialog
+      setIsEditingAction(false);
+      setCurrentAction(null);
+      
+      toast({
+        title: "Success",
+        description: "Action plan updated successfully.",
+      });
+      
+      if (onActionUpdated) onActionUpdated();
+    } catch (error) {
+      console.error("Error updating action plan:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update action plan. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleUpdateActionStatus = async (id, status) => {
     try {
       const { error } = await supabase
@@ -184,6 +232,16 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
     setNewActionDeadline("");
     setActionStatus("pending");
     setIsAddingAction(false);
+  };
+
+  const openEditDialog = (action) => {
+    setCurrentAction({
+      id: action.id,
+      action: action.action,
+      deadline: format(new Date(action.deadline), "yyyy-MM-dd"),
+      status: action.status
+    });
+    setIsEditingAction(true);
   };
 
   return (
@@ -259,6 +317,78 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
         </div>
       </CardHeader>
       <CardContent>
+        {/* Edit Action Dialog */}
+        {currentAction && (
+          <Dialog open={isEditingAction} onOpenChange={setIsEditingAction}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Action Plan</DialogTitle>
+                <DialogDescription>
+                  Update the details of this action plan.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label htmlFor="edit-action" className="text-sm font-medium">
+                    Action
+                  </label>
+                  <Textarea
+                    id="edit-action"
+                    value={currentAction.action}
+                    onChange={(e) => setCurrentAction({
+                      ...currentAction,
+                      action: e.target.value
+                    })}
+                    placeholder="Describe the action to be taken..."
+                    className="resize-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="edit-deadline" className="text-sm font-medium">
+                    Deadline
+                  </label>
+                  <Input
+                    id="edit-deadline"
+                    type="date"
+                    value={currentAction.deadline}
+                    onChange={(e) => setCurrentAction({
+                      ...currentAction,
+                      deadline: e.target.value
+                    })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="edit-status" className="text-sm font-medium">
+                    Status
+                  </label>
+                  <select 
+                    id="edit-status"
+                    className="w-full p-2 border rounded"
+                    value={currentAction.status}
+                    onChange={(e) => setCurrentAction({
+                      ...currentAction,
+                      status: e.target.value
+                    })}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setIsEditingAction(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateActionPlan}>
+                  Update Action
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
         {isLoading ? (
           <div className="py-6 text-center text-muted-foreground">
             Loading action plans...
@@ -268,6 +398,9 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Action</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Updated at</TableHead>
+
                 <TableHead>Deadline</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-[100px] text-right">Actions</TableHead>
@@ -278,6 +411,12 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
                 actionPlans.map((action) => (
                   <TableRow key={action.id}>
                     <TableCell className="font-medium">{action.action}</TableCell>
+                    <TableCell>
+                      {format(new Date(action.created_at), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(action.updated_at), "dd/MM/yyyy")}
+                    </TableCell>
                     <TableCell>
                       {format(new Date(action.deadline), "dd/MM/yyyy")}
                     </TableCell>
@@ -295,6 +434,10 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditDialog(action)}>
+                            <Edit className="mr-2 h-4 w-4 text-blue-500" />
+                            Edit Action
+                          </DropdownMenuItem>
                           {action.status !== "completed" && (
                             <DropdownMenuItem onClick={() => handleUpdateActionStatus(action.id, "completed")}>
                               <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />

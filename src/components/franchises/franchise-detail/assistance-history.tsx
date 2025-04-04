@@ -177,7 +177,7 @@ export function AssistanceHistory({ franchise }) {
                               ? "bg-blue-100 text-blue-800" 
                               : "bg-yellow-100 text-yellow-800"
                         }>
-                          {visit.status}
+                        {visit.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -205,7 +205,7 @@ export function AssistanceHistory({ franchise }) {
                           onClick={() => handleViewReport(visit)}
                         >
                           <Eye className="h-4 w-4 mr-2" />
-                          View Report
+                          View 
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -442,6 +442,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                         
                         {/* Using the new ChannelDistributionCard component */}
                         <ChannelDistributionCard 
+                            spent={currentAction.spent}
                             actionId={currentAction.id}
                             initialDistribution={currentAction.channel_distribution}
                             onUpdate={handleChannelDistributionUpdate}
@@ -456,7 +457,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                     <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                         <div className="flex items-center">
                                             <Calendar className="h-5 w-5 text-gray-500 mr-3" />
-                                            <span>Days Remaining</span>
+                                            <span>Days </span>
                                         </div>
                                         <span className="font-medium">{daysRemaining} days</span>
                                     </div>

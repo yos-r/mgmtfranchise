@@ -230,6 +230,13 @@ export default function VisitDetail({ assistanceId, onBack }) {
             consultant={consultant}
             agents={agents}
           />
+          {franchise && (
+            <VisitActionPlans 
+              franchiseId={franchise.id} 
+              getStatusBadgeClass={getStatusBadgeClass} 
+              onActionUpdated={handleDataUpdated}
+            />
+          )}
           
           {/* Visit History Component */}
           {franchise && (
@@ -291,13 +298,7 @@ export default function VisitDetail({ assistanceId, onBack }) {
           </Card>
           
           {/* Action Plans Component */}
-          {franchise && (
-            <VisitActionPlans 
-              franchiseId={franchise.id} 
-              getStatusBadgeClass={getStatusBadgeClass} 
-              onActionUpdated={handleDataUpdated}
-            />
-          )}
+          
         </div>
         
         <div className="lg:col-span-1 space-y-6">

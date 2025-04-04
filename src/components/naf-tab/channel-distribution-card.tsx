@@ -6,13 +6,16 @@ import { Edit, Save, PieChart } from "lucide-react";
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from "recharts";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-
+import { Input } from "@/components/ui/input";
+import { useCurrency } from "@/hooks/useCurrency";
 interface DistributionChannel {
   name: string;
+  amount: number
   percentage: number;
 }
 
 interface ChannelDistributionCardProps {
+  spent: number;
   actionId: string;
   initialDistribution?: Record<string, number>;
   onUpdate?: (updatedDistribution: Record<string, number>) => void;
@@ -20,23 +23,24 @@ interface ChannelDistributionCardProps {
 
 // More elegant color palette
 const CHART_COLORS = [
-  "#BEAF87", 
-  "#746649", 
-  "#252526", 
-  "#ded7c3", // Indigo
-//   "#ded7c3"  // Pink
+  "#edb103",
+  "#BEAF87",
+  "#ef4436",
+  "#0866ff", // Indigo
 ];
 
-export function ChannelDistributionCard({ 
-  actionId, 
+export function ChannelDistributionCard({
+  spent,
+  actionId,
   initialDistribution = { "social media": 35, "email": 25, "search ads": 30, "website": 10 },
-  onUpdate 
+  onUpdate
 }: ChannelDistributionCardProps) {
+  const {formatCurrency}=useCurrency();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [distribution, setDistribution] = useState<Record<string, number>>(initialDistribution);
+  const [distribution, setDistribution] = useState<Record<string, number, number>>(initialDistribution);
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
-  const [adjustedValues, setAdjustedValues] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   // Effect to initialize distribution from props
@@ -46,11 +50,22 @@ export function ChannelDistributionCard({
     }
   }, [initialDistribution]);
 
+  // Initialize input values when editing mode changes
+  useEffect(() => {
+    if (isEditing) {
+      const initialInputs: Record<string, string> = {};
+      Object.entries(distribution).forEach(([key, value]) => {
+        initialInputs[key.toLowerCase()] = Math.round(value).toString();
+      });
+      setInputValues(initialInputs);
+    }
+  }, [isEditing, distribution]);
+
   // Convert distribution object to array for rendering
   const distributionArray: DistributionChannel[] = Object.entries(distribution).map(
-    ([name, percentage]) => ({
+    ([name, percentage, amount]) => ({
       name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize first letter
-      percentage
+      percentage, amount: spent * percentage / 100
     })
   );
 
@@ -60,115 +75,129 @@ export function ChannelDistributionCard({
     value: item.percentage
   }));
 
-  // Create a remaining distribution pool and adjust other channels when one changes
-  const handleSliderChange = (name: string, value: number) => {
+  // Handle input value change
+  const handleInputChange = (name: string, value: string) => {
     const lowerName = name.toLowerCase();
-    
-    // Store the new value in adjustedValues first
-    setAdjustedValues(prev => ({
+
+    // Only allow numbers
+    const numValue = value.replace(/[^0-9]/g, '');
+
+    // Update input value
+    setInputValues(prev => ({
       ...prev,
-      [lowerName]: value
+      [lowerName]: numValue
     }));
 
-    // Calculate the difference from the previous value
-    const previousValue = distribution[lowerName];
-    const difference = value - previousValue;
-    
-    if (difference === 0) return;
+    // Also update the distribution directly for real-time visual feedback
+    // but don't adjust other values automatically
+    setDistribution(prev => ({
+      ...prev,
+      [lowerName]: parseInt(numValue) || 0
+    }));
+  };
 
-    // Get other channels to distribute the difference
-    const otherChannels = Object.entries(distribution)
-      .filter(([channelName]) => channelName !== lowerName);
-    
-    if (otherChannels.length === 0) {
-      setDistribution({ [lowerName]: value });
-      return;
-    }
+  // Apply input changes without automatic adjustment
+  const applyInputChanges = () => {
+    let newDistribution = { ...distribution };
 
-    // Calculate the sum of other channels
-    const otherSum = otherChannels.reduce((sum, [_, val]) => sum + val, 0);
-    
-    // If we're increasing this channel, decrease others proportionally
-    if (difference > 0) {
-      const newDistribution = { ...distribution, [lowerName]: value };
-      
-      // Distribute the reduction proportionally among other channels
-      otherChannels.forEach(([channelName, channelValue]) => {
-        // Calculate proportional reduction
-        const proportion = channelValue / otherSum;
-        const reduction = difference * proportion;
-        newDistribution[channelName] = Math.max(0, channelValue - reduction);
-      });
-      
-      // Round values and ensure they sum to 100
-      const roundedDistribution = adjustForTotal(newDistribution);
-      setDistribution(roundedDistribution);
-    } 
-    // If we're decreasing this channel, increase others proportionally
-    else {
-      const newDistribution = { ...distribution, [lowerName]: value };
-      
-      // Distribute the increase proportionally among other channels
-      otherChannels.forEach(([channelName, channelValue]) => {
-        // Calculate proportional increase
-        const proportion = channelValue / otherSum;
-        const increase = Math.abs(difference) * proportion;
-        newDistribution[channelName] = channelValue + increase;
-      });
-      
-      // Round values and ensure they sum to 100
-      const roundedDistribution = adjustForTotal(newDistribution);
-      setDistribution(roundedDistribution);
-    }
+    // Convert all inputs to numbers
+    Object.entries(inputValues).forEach(([key, value]) => {
+      const numValue = parseInt(value) || 0;
+      newDistribution[key] = numValue;
+    });
+
+    // Update distribution with raw values (no adjustment)
+    setDistribution(newDistribution);
   };
 
   // Adjust values to ensure they sum to 100
   const adjustForTotal = (dist: Record<string, number>): Record<string, number> => {
     const result: Record<string, number> = {};
-    
-    // Round to integers first
-    Object.entries(dist).forEach(([key, value]) => {
-      result[key] = Math.round(value);
-    });
-    
-    // Calculate the total after rounding
-    const total = Object.values(result).reduce((sum, val) => sum + val, 0);
-    
-    // Adjust for rounding errors if needed
-    if (total !== 100) {
-      // Find the channel with the highest value to adjust
-      const [maxChannel] = Object.entries(result)
-        .sort((a, b) => b[1] - a[1])[0];
-      
-      result[maxChannel] += (100 - total);
+    const total = Object.values(dist).reduce((sum, val) => sum + val, 0);
+
+    if (total === 0) {
+      // If all values are 0, distribute evenly
+      const channels = Object.keys(dist);
+      const equalValue = 100 / channels.length;
+      channels.forEach(key => {
+        result[key] = equalValue;
+      });
+    } else {
+      // Scale values to sum to 100
+      Object.entries(dist).forEach(([key, value]) => {
+        result[key] = Math.round((value / total) * 100);
+      });
+
+      // Handle rounding errors to ensure total is exactly 100
+      const newTotal = Object.values(result).reduce((sum, val) => sum + val, 0);
+      if (newTotal !== 100) {
+        // Find the channel with the highest value to adjust
+        const [maxChannel] = Object.entries(result)
+          .sort((a, b) => b[1] - a[1])[0];
+
+        result[maxChannel] += (100 - newTotal);
+      }
     }
-    
+
     return result;
   };
 
-  // Apply changes to finalize the slider interaction
-  const applyChanges = (name: string) => {
-    const value = adjustedValues[name.toLowerCase()] || distribution[name.toLowerCase()];
-    
-    // Calculate total of all channels after change
-    const newDistribution = { ...distribution, [name.toLowerCase()]: value };
-    const total = Object.values(newDistribution).reduce((sum, val) => sum + val, 0);
-    
-    // If total is not 100, adjust other values to make it 100
-    if (Math.abs(total - 100) > 0.1) {
-      // Adjust other channels proportionally
-      const adjustedDistribution = adjustForTotal(newDistribution);
-      setDistribution(adjustedDistribution);
-    } else {
-      setDistribution(newDistribution);
+  // Save distribution to Supabase with verification
+  const handleSave = async () => {
+    // First apply any pending changes
+    applyInputChanges();
+
+    // Calculate total to verify
+    const total = Object.values(distribution).reduce((sum, val) => sum + val, 0);
+
+    // Check if total is 100%
+    if (total !== 100) {
+      // Notify user about incorrect total
+      toast({
+        title: "Warning",
+        description: `Distribution total is ${total}%, not 100%. Would you like to adjust automatically?`,
+        variant: "warning",
+        action: (
+          <div className="flex space-x-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              // Adjust values to 100%
+              const adjusted = adjustForTotal(distribution);
+              setDistribution(adjusted);
+
+              // Update input values
+              const updatedInputs: Record<string, string> = {};
+              Object.entries(adjusted).forEach(([key, value]) => {
+                updatedInputs[key.toLowerCase()] = Math.round(value).toString();
+              });
+              setInputValues(updatedInputs);
+
+              // Notify about adjustment
+              toast({
+                title: "Adjusted",
+                description: "Distribution has been automatically adjusted to 100%.",
+                variant: "default",
+              });
+            }}>
+              Adjust
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => {
+              // Proceed with saving the unbalanced distribution
+              saveDistributionToSupabase();
+            }}>
+              Save anyway
+            </Button>
+          </div>
+        )
+      });
+      return;
     }
-    
-    // Clear adjusted values
-    setAdjustedValues({});
+
+    // If total is 100%, proceed with saving
+    saveDistributionToSupabase();
   };
 
-  // Save distribution to Supabase
-  const handleSave = async () => {
+  // Function to save the distribution to Supabase
+  const saveDistributionToSupabase = async () => {
     setIsSaving(true);
     try {
       // Format distribution for Supabase JSONB column
@@ -182,18 +211,18 @@ export function ChannelDistributionCard({
         .eq('id', actionId);
 
       if (error) throw error;
-      
+
       // Notify parent component
       if (onUpdate) {
         onUpdate(formattedDistribution);
       }
-      
+
       toast({
         title: "Success",
         description: "Channel distribution updated successfully.",
         variant: "default",
       });
-      
+
       setIsEditing(false);
     } catch (error: any) {
       console.error("Error updating channel distribution:", error);
@@ -210,7 +239,7 @@ export function ChannelDistributionCard({
   // Custom active shape for pie chart
   const renderActiveShape = (props) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
-    
+
     return (
       <g>
         <Sector
@@ -246,7 +275,7 @@ export function ChannelDistributionCard({
   // Custom tooltip formatter to show both name and value
   const customTooltipFormatter = (value, name, entry) => {
     return [
-      `${value}%`, 
+      `${value}%`,
       entry.payload.name
     ];
   };
@@ -257,22 +286,22 @@ export function ChannelDistributionCard({
         <div className="flex justify-between items-center">
           <CardTitle>Channel Distribution</CardTitle>
           {isEditing ? (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleSave}
               disabled={isSaving}
-              className="text- border 0"
+              className="text-sm border-0"
             >
               <Save className="h-4 w-4 mr-2" />
               Save
             </Button>
           ) : (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setIsEditing(true)}
-              className="text- px-1 "
+              className="text-sm px-1"
             >
               <Edit className="h-4 w-4 mr-2 text-obsessedgrey" />
               Edit
@@ -301,26 +330,26 @@ export function ChannelDistributionCard({
                 nameKey="name"
               >
                 {chartData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={CHART_COLORS[index % CHART_COLORS.length]} 
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={CHART_COLORS[index % CHART_COLORS.length]}
                     stroke="#fff"
                     strokeWidth={1}
                   />
                 ))}
               </Pie>
-              <Tooltip 
+              <Tooltip
                 formatter={customTooltipFormatter}
-                contentStyle={{ 
-                  borderRadius: '6px', 
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)', 
+                contentStyle={{
+                  borderRadius: '6px',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
                   border: 'none',
                   padding: '8px 12px'
                 }}
               />
-              <Legend 
-                verticalAlign="bottom" 
-                align="center" 
+              <Legend
+                verticalAlign="bottom"
+                align="center"
                 layout="horizontal"
                 iconSize={10}
                 iconType="circle"
@@ -330,7 +359,7 @@ export function ChannelDistributionCard({
           </ResponsiveContainer>
         </div>
 
-        {/* Distribution List with Sliders */}
+        {/* Distribution List with Sliders and/or Input Fields */}
         <div className="space-y-5">
           {distributionArray.map((channel, index) => (
             <div key={index} className="space-y-2">
@@ -339,32 +368,36 @@ export function ChannelDistributionCard({
                   <span className="h-3 w-3 mr-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}></span>
                   {channel.name}
                 </span>
-                <span className="text-sm font-medium">
-                  {Math.round(channel.percentage)}%
-                </span>
+                {isEditing ? (
+                  <div className="w-16">
+                    <Input
+                      type="text"
+                      value={inputValues[channel.name.toLowerCase()] || '0'}
+                      onChange={(e) => handleInputChange(channel.name, e.target.value)}
+                      onBlur={applyInputChanges}
+                      className="h-6 text-sm text-right pr-1"
+                      suffix="%"
+                    />
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium">
+                    <span class="mr-2 text-gray-600">{formatCurrency(channel.amount)}</span>
+                    {Math.round(channel.percentage)}%
+                  </span>
+                )}
               </div>
-              {isEditing ? (
-                <div className="relative pt-1">
-                  <Slider
-                    value={[adjustedValues[channel.name.toLowerCase()] || channel.percentage]}
-                    max={100}
-                    step={1}
-                    className="w-full"
-                    onValueChange={(values) => handleSliderChange(channel.name, values[0])}
-                    onValueCommit={() => applyChanges(channel.name)}
-                  />
-                </div>
-              ) : (
+              <div className="relative pt-1">
+                {/* Always show the slider, but it's only interactive in display mode */}
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full rounded-full transition-all duration-300 ease-in-out" 
-                    style={{ 
+                  <div
+                    className="h-full rounded-full transition-all duration-300 ease-in-out"
+                    style={{
                       width: `${channel.percentage}%`,
                       backgroundColor: CHART_COLORS[index % CHART_COLORS.length]
                     }}
                   />
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
