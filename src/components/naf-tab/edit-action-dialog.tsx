@@ -33,7 +33,7 @@ interface MarketingAction {
   end_date: string;
   description: string;
   images?: { url: string; name: string }[];
-  youtube_url?: string;
+  video_url?: string;
   attachments?: { name: string; url: string; type: string; size: string }[];
 }
 
@@ -76,7 +76,7 @@ export function EditActionDialog({
         startDate: action.start_date?.split('T')[0] || '',
         endDate: action.end_date?.split('T')[0] || '',
         description: action.description || '',
-        youtubeUrl: action.youtube_url || '',
+        youtubeUrl: action.video_url || '',
       });
 
       // Set existing images if any
@@ -243,9 +243,9 @@ export function EditActionDialog({
       }
 
       // Update YouTube URL if it has changed
-      if (formData.youtubeUrl !== action.youtube_url) {
+      if (formData.youtubeUrl !== action.video_url) {
         // Delete old YouTube URL record if it exists
-        if (action.youtube_url) {
+        if (action.video_url) {
           await supabase
             .from('marketing_action_media')
             .delete()
@@ -267,10 +267,10 @@ export function EditActionDialog({
           if (youtubeError) {
             console.error("Error saving YouTube URL:", youtubeError);
           } else {
-            updatedAction.youtube_url = formData.youtubeUrl;
+            updatedAction.video_url = formData.youtubeUrl;
           }
         } else {
-          updatedAction.youtube_url = undefined;
+          updatedAction.video_url = undefined;
         }
       }
 
@@ -374,7 +374,7 @@ export function EditActionDialog({
             />
           </div>
           <div className="grid gap-2">
-            <Label>YouTube Video URL</Label>
+            <Label> Video URL</Label>
             <Input
               placeholder="https://www.youtube.com/watch?v=..."
               value={formData.youtubeUrl}

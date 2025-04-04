@@ -13,7 +13,8 @@ import {
     PieChart,
     BarChart2,
     ArrowRight,
-    ImageIcon
+    ImageIcon,
+    Banknote
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,16 +34,12 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger
-} from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { EditActionDialog } from "./edit-action-dialog";
 import ImageGallery from "./image-gallery";
+import ActivityTabs from "./activity-tabs";
+import ChannelDistributionCard from "./channel-distribution-card";
 
 interface MarketingAction {
     id: string;
@@ -55,8 +52,9 @@ interface MarketingAction {
     end_date: string;
     description: string;
     images?: { url: string; name: string }[];
-    youtube_url?: string;
+    video_url?: string;
     attachments?: { name: string; url: string; type: string; size: string }[];
+    channel_distribution?: Record<string, number>;
 }
 
 interface ActionDetailProps {
@@ -103,6 +101,14 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
         // Notify parent component
         onUpdate(updatedAction);
         setIsEditing(false);
+    };
+
+    const handleChannelDistributionUpdate = (updatedDistribution: Record<string, number>) => {
+        // Update local state with new distribution
+        setCurrentAction(prev => ({
+            ...prev,
+            channel_distribution: updatedDistribution
+        }));
     };
 
     const getStatusBadge = (status: string) => {
@@ -155,14 +161,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
         setInitialImageIndex(index);
         setGalleryOpen(true);
     };
-    // Placeholder data for distribution channels
-    const distributionChannels = [
-        { name: "Social Media", percentage: 35 },
-        { name: "Email", percentage: 25 },
-        { name: "Search Ads", percentage: 30 },
-        { name: "Website", percentage: 10 }
-    ];
-
+    
     // Placeholder data for timeline activities
     const timelineActivities = [
         { date: "April 2, 2025 - 10:23 AM", content: "Sarah Johnson updated the campaign status to \"Active\"" },
@@ -172,11 +171,8 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
         { date: "March 20, 2025 - 2:15 PM", content: "Email sequence approved" }
     ];
 
-    // Convert images to a proper format for display
-    // const displayImages = currentAction.images || [];
-
     return (
-        <div className=" ">
+        <div className="">
             <div className="container mx-auto py-6 space-y-6">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center space-x-2">
@@ -189,13 +185,10 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                             </h1>
                             <div className="flex items-center text-sm text-muted-foreground mt-1">
                                 <Calendar className="mr-1 h-3.5 w-3.5" />
-                                <span>                {format(new Date(currentAction.start_date), "MMMM d, yyyy")}
-                                </span>
+                                <span>{format(new Date(currentAction.start_date), "MMMM d, yyyy")}</span>
                                 <ArrowRight className="w-3 mx-2"></ArrowRight>
                                 <Calendar className="mr-1 h-3.5 w-3.5" />
-                                <span>                {format(new Date(currentAction.end_date), "MMMM d, yyyy")}
-                                </span>
-
+                                <span>{format(new Date(currentAction.end_date), "MMMM d, yyyy")}</span>
                             </div>
                         </div>
                     </div>
@@ -207,13 +200,6 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                         >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="flex items-center"
-                        >
-                            <Save className="mr-2 h-4 w-4" />
-                            Clone
                         </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -243,67 +229,9 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                     </div>
                 </div>
 
-                {/* Bento Grid for Images */}
-                {/* {displayImages.length > 0 && (
-                    <div className="grid grid-cols-4 grid-rows-2 gap-4 mb-6 h-80">
-                        {displayImages.length > 0 && (
-                            <div className="col-span-2 row-span-2 bg-gray-200 rounded-lg overflow-hidden relative">
-                                <img
-                                    src={displayImages[0].url}
-                                    alt={displayImages[0].name}
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                                    onClick={() => setSelectedImage(displayImages[0].url)}
-                                />
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-3">
-                                    <p className="font-medium text-sm">Main Campaign Visual</p>
-                                </div>
-                            </div>
-                        )}
-                        {displayImages.length > 1 && (
-                            <div className="col-span-2 row-span-1 bg-gray-200 rounded-lg overflow-hidden relative">
-                                <img
-                                    src={displayImages[1].url}
-                                    alt={displayImages[1].name}
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                                    onClick={() => setSelectedImage(displayImages[1].url)}
-                                />
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-3">
-                                    <p className="font-medium text-sm">Email Header</p>
-                                </div>
-                            </div>
-                        )}
-                        {displayImages.length > 2 && (
-                            <div className="col-span-1 row-span-1 bg-gray-200 rounded-lg overflow-hidden relative">
-                                <img
-                                    src={displayImages[2].url}
-                                    alt={displayImages[2].name}
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                                    onClick={() => setSelectedImage(displayImages[2].url)}
-                                />
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-3">
-                                    <p className="font-medium text-sm">LinkedIn</p>
-                                </div>
-                            </div>
-                        )}
-                        {displayImages.length > 3 && (
-                            <div className="col-span-1 row-span-1 bg-gray-200 rounded-lg overflow-hidden relative">
-                                <img
-                                    src={displayImages[3].url}
-                                    alt={displayImages[3].name}
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                                    onClick={() => setSelectedImage(displayImages[3].url)}
-                                />
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-3">
-                                    <p className="font-medium text-sm">Twitter</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )} */}
-
                 <div className="flex gap-6">
                     {/* Main Content (2/3) */}
-                    <div className="w-2/3  space-y-6">
+                    <div className="w-2/3 space-y-6">
                         {/* Bento Grid for Images */}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 aspect-video relative overflow-hidden rounded-lg">
                             <div
@@ -376,23 +304,12 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
 
                                 <div className="mb-4">
                                     <p className="text-sm font-medium text-gray-500 mb-1">Description:</p>
-                                    <p className="text-gray-700">{currentAction.description}</p>
-                                </div>
-
-                                <div className="mb-4">
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Distribution Channel:</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {distributionChannels.map((channel, index) => (
-                                            <span key={index} className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
-                                                {channel.name}
-                                            </span>
-                                        ))}
-                                    </div>
+                                    <p className="text-gray-700">{currentAction.description || "No description provided."}</p>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {currentAction.youtube_url && (
+                        {currentAction.video_url && (
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Campaign Video</CardTitle>
@@ -401,14 +318,14 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                     <div className="aspect-video rounded-lg overflow-hidden">
                                         <iframe
                                             className="w-full h-full"
-                                            src={getYouTubeEmbedUrl(currentAction.youtube_url)}
+                                            src={getYouTubeEmbedUrl(currentAction.video_url)}
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                             allowFullScreen
                                         />
                                     </div>
                                     <div className="flex justify-end mt-3">
                                         <Button variant="outline" size="sm" asChild>
-                                            <a href={currentAction.youtube_url} target="_blank" rel="noopener noreferrer">
+                                            <a href={currentAction.video_url} target="_blank" rel="noopener noreferrer">
                                                 <ExternalLink className="mr-2 h-4 w-4" />
                                                 Open in YouTube
                                             </a>
@@ -449,136 +366,36 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                         <p className="text-xl font-semibold">247%</p>
                                     </div>
                                 </div>
-                                <div className="flex justify-center">
-                                    <div className="h-48 w-full flex items-center justify-center text-gray-400">
-                                        <img src="/api/placeholder/400/200" alt="Performance Chart" />
-                                    </div>
-                                </div>
                             </CardContent>
                         </Card>
 
-                        <Card>
-                            <Tabs defaultValue="activity">
-                                <TabsList className="w-full border-b rounded-none bg-transparent">
-                                    <TabsTrigger
-                                        value="activity"
-                                        className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none"
-                                    >
-                                        Activity
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value="comments"
-                                        className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none"
-                                    >
-                                        Comments
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value="attachments"
-                                        className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none"
-                                    >
-                                        Attachments
-                                    </TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="activity">
-                                    <CardContent className="pt-6">
-                                        <div className="space-y-6">
-                                            {timelineActivities.map((activity, index) => (
-                                                <div
-                                                    key={index}
-                                                    className={`pl-6 ${index < timelineActivities.length - 1 ? 'border-l-2 border-gray-200' : ''} relative`}
-                                                >
-                                                    <div className="absolute top-0 left-0 w-3 h-3 -ml-1.5 bg-blue-500 rounded-full"></div>
-                                                    <p className="text-xs text-gray-500">{activity.date}</p>
-                                                    <p className="mt-1">{activity.content}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </TabsContent>
-                                <TabsContent value="comments">
-                                    <CardContent className="pt-6">
-                                        <p className="text-gray-500 text-center py-8">No comments yet.</p>
-                                    </CardContent>
-                                </TabsContent>
-                                <TabsContent value="attachments">
-                                    <CardContent className="pt-6">
-                                        {currentAction.attachments && currentAction.attachments.length > 0 ? (
-                                            <div className="space-y-3">
-                                                {currentAction.attachments.map((attachment, index) => (
-                                                    <div key={index} className="flex items-center p-3 border border-gray-200 rounded-lg">
-                                                        <div className="text-2xl mr-3">
-                                                            {attachment.type.includes('pdf') ? '📄' :
-                                                                attachment.type.includes('excel') || attachment.type.includes('spreadsheet') ? '📊' :
-                                                                    attachment.type.includes('video') ? '🎬' : '📎'}
-                                                        </div>
-                                                        <div className="flex-grow">
-                                                            <p className="font-medium">{attachment.name}</p>
-                                                            <p className="text-xs text-gray-500">{attachment.size}</p>
-                                                        </div>
-                                                        <Button variant="ghost" size="sm" asChild>
-                                                            <a href={attachment.url} download>
-                                                                <Download className="h-4 w-4" />
-                                                            </a>
-                                                        </Button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-gray-500 text-center py-8">No attachments added.</p>
-                                        )}
-                                    </CardContent>
-                                </TabsContent>
-                            </Tabs>
-                        </Card>
+                        <ActivityTabs 
+                            timelineActivities={timelineActivities} 
+                            attachments={currentAction.attachments}
+                        />
                     </div>
 
                     {/* Sidebar (1/3) */}
                     <div className="w-1/3 space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Budget</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="mb-4">
-                                    <p className="text-gray-500 text-sm">Total Budget</p>
-                                    {/* <p className="text-2xl font-semibold">€{currentAction.budget.toLocaleString()}</p> */}
-                                </div>
-                                <div className="space-y-1 mb-4">
-                                    <div className="flex justify-between">
-                                        <p className="text-sm">Spent</p>
-                                        <p className="text-sm">€{currentAction.spent.toLocaleString()} ({percentUsed}%)</p>
-                                    </div>
-                                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-blue-500 rounded-full"
-                                            style={{ width: `${percentUsed}%` }}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="h-48 flex items-center justify-center text-gray-400">
-                                    <img src="/api/placeholder/200/200" alt="Budget Breakdown" />
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Channel Distribution</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3 mb-6">
-                                    {distributionChannels.map((channel, index) => (
-                                        <div key={index} className="flex justify-between items-center">
-                                            <span className="text-sm">{channel.name}</span>
-                                            <span className="text-sm font-medium">{channel.percentage}%</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="h-48 flex items-center justify-center text-gray-400">
-                                    <img src="/api/placeholder/200/200" alt="Channel Distribution" />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <div className="flex flex-col justify-between p-5 bg-white border rounded-lg shadow-sm h-44 hover:shadow-md transition-shadow duration-200">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-xs font-medium text-obsessedgrey bg-relentlessgold/30 px-3 py-1.5 rounded-full">
+                                    Budget
+                                </span>
+                                <Banknote className="h-5 w-5 text-[#252526]" />
+                            </div>
+                            <div className="flex flex-col items-center justify-center flex-grow">
+                                <p className="text-5xl font-bold text-obsessedgrey tracking-tight">€{currentAction.spent.toLocaleString('fr-FR')}</p>
+                                <p className="text-sm text-gray-500 mt-2">Total Budget Spent</p>
+                            </div>
+                        </div>
+                        
+                        {/* Using the new ChannelDistributionCard component */}
+                        <ChannelDistributionCard 
+                            actionId={currentAction.id}
+                            initialDistribution={currentAction.channel_distribution}
+                            onUpdate={handleChannelDistributionUpdate}
+                        />
 
                         <Card>
                             <CardHeader>
@@ -614,33 +431,12 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                 </div>
             </div>
 
-            {selectedImage && (
-                <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-                    <DialogContent className="max-w-4xl p-1">
-                        <div className="relative">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-2 right-2 bg-black/50 text-white hover:bg-black/70 z-10"
-                                onClick={() => setSelectedImage(null)}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                            <img
-                                src={selectedImage || ''}
-                                alt="Preview"
-                                className="w-full h-auto rounded-lg"
-                            />
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            )}
-<ImageGallery
-        images={demoImages}
-        initialIndex={initialImageIndex}
-        isOpen={galleryOpen}
-        onClose={() => setGalleryOpen(false)}
-      />
+            <ImageGallery
+                images={demoImages}
+                initialIndex={initialImageIndex}
+                isOpen={galleryOpen}
+                onClose={() => setGalleryOpen(false)}
+            />
             <EditActionDialog
                 action={currentAction}
                 open={isEditing}

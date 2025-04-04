@@ -33,7 +33,7 @@ interface MarketingAction {
   end_date: string;
   description: string;
   images?: { url: string; name: string }[];
-  youtube_url?: string;
+  video_url?: string;
   attachments?: { name: string; url: string; type: string; size: string }[];
 }
 
@@ -54,7 +54,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
     startDate: '',
     endDate: '',
     description: '',
-    youtubeUrl: '',
+    videoUrl: '',
   });
 
   // Reset form when dialog closes
@@ -74,7 +74,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
       startDate: '',
       endDate: '',
       description: '',
-      youtubeUrl: '',
+      videoUrl: '',
     });
     setImages([]);
   };
@@ -197,20 +197,20 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
       }
 
       // Add YouTube URL if provided
-      if (formData.youtubeUrl) {
+      if (formData.videoUrl) {
         const { error: youtubeError } = await supabase
           .from('marketing_action_media')
           .insert({
             action_id: actionData.id,
             name: 'YouTube Video',
-            url: formData.youtubeUrl,
+            url: formData.videoUrl,
             type: 'youtube'
           });
 
         if (youtubeError) {
           console.error("Error saving YouTube URL:", youtubeError);
         } else {
-          newAction.youtube_url = formData.youtubeUrl;
+          newAction.video_url = formData.videoUrl;
         }
       }
 
@@ -296,11 +296,11 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
             />
           </div>
           <div className="grid gap-2">
-            <Label>YouTube Video URL</Label>
+            <Label> Video URL</Label>
             <Input
               placeholder="https://www.youtube.com/watch?v=..."
-              value={formData.youtubeUrl}
-              onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
+              value={formData.videoUrl}
+              onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
             />
           </div>
           <div className="grid gap-2">
