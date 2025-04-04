@@ -654,7 +654,7 @@ export function PaymentsHistory({ franchise }: any) {
             <DialogHeader>
               <DialogTitle>Payment Details</DialogTitle>
               <DialogDescription>
-                {selectedPayment?.period || (selectedPayment?.due_date && format(new Date(selectedPayment.due_date), 'MMM yyyy'))}
+                {selectedPayment?.period || (selectedPayment?.due_date && format(new Date(selectedPayment.due_date), 'dd/MM/yyyy'))}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -683,12 +683,12 @@ export function PaymentsHistory({ franchise }: any) {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Due Date</Label>
-                  <p>{selectedPayment?.due_date && format(new Date(selectedPayment.due_date), 'MMM d, yyyy')}</p>
+                  <p>{selectedPayment?.due_date && format(new Date(selectedPayment.due_date), 'dd/MM/yyyy')}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Payment Date</Label>
                   <p>{selectedPayment?.payment_date 
-                    ? format(new Date(selectedPayment.payment_date), 'MMM d, yyyy')
+                    ? format(new Date(selectedPayment.payment_date), 'dd/MM/yyyy')
                     : '-'}</p>
                 </div>
                 <div>

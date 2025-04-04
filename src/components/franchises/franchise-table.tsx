@@ -96,7 +96,7 @@ export function FranchiseTable({ franchises, onFranchiseSelect, isLoading = fals
   // Function to format dates
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
-    return format(new Date(dateString), 'MMM d, yyyy');
+    return format(new Date(dateString), 'dd/MM/yyyy');
   };
 
   // Function to calculate contract start date (first contract)

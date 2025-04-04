@@ -540,8 +540,8 @@ export function NAFTab() {
                         <span>{formatCurrency(action.spent)}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{format(new Date(action.start_date), 'MMM d, yyyy')}</TableCell>
-                    <TableCell>{format(new Date(action.end_date), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>{format(new Date(action.start_date), 'dd/MM/yyyy')}</TableCell>
+                    <TableCell>{format(new Date(action.end_date), 'dd/MM/yyyy')}</TableCell>
                     <TableCell>
                       <Badge
                         className={

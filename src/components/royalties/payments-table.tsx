@@ -476,7 +476,7 @@ export function PaymentsTable({
                         try {
                           const date = new Date(payment.due_date);
                           return !isNaN(date.getTime())
-                            ? format(date, 'MMM d, yyyy')
+                            ? format(date, 'dd/MM/yyyy')
                             : "-";
                         } catch (e) {
                           console.error("Error formatting date:", payment.due_date);
@@ -491,7 +491,7 @@ export function PaymentsTable({
                         try {
                           const date = new Date(payment.payment_date);
                           return !isNaN(date.getTime())
-                            ? format(date, 'MMM d, yyyy')
+                            ? format(date, 'dd/MM/yyyy')
                             : "-";
                         } catch (e) {
                           return "-";
