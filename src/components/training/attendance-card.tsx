@@ -378,14 +378,14 @@ export function AttendanceCard({ event, onAttendanceUpdate }) {
                   Save Changes
                 </Button>
               )}
-              <Button 
+              {/* <Button 
                 variant="outline" 
                 onClick={openAddDialog}
                 className="button-2"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add Franchise
-              </Button>
+              </Button> */}
             </div>
           </div>
         </CardHeader>

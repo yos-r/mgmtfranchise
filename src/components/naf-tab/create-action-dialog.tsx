@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Badge } from "@/components/ui/badge";
 
 interface MarketingAction {
   id: string;
@@ -31,7 +32,7 @@ interface MarketingAction {
   status: string;
   start_date: string;
   end_date: string;
-  description: string;
+  // description: string;
   images?: { url: string; name: string }[];
   video_url?: string;
   attachments?: { name: string; url: string; type: string; size: string }[];
@@ -53,7 +54,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
     spent: '',
     startDate: '',
     endDate: '',
-    description: '',
+    // description: '',
     videoUrl: '',
   });
 
@@ -73,7 +74,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
       spent: '',
       startDate: '',
       endDate: '',
-      description: '',
+      // description: '',
       videoUrl: '',
     });
     setImages([]);
@@ -90,6 +91,11 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
 
   const removeImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
+  };
+
+  // Function to get a truncated file name
+  const getTruncatedName = (name) => {
+    return name.length > 15 ? `${name.substring(0, 12)}...${name.substring(name.lastIndexOf('.'))}` : name;
   };
 
   const handleSubmit = async () => {
@@ -116,7 +122,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
           spent: parseFloat(formData.spent),
           start_date: formData.startDate,
           end_date: formData.endDate,
-          description: formData.description,
+          // description: formData.description,
           status: 'planned',
           // spent: 0,
         })
@@ -135,7 +141,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
         status: actionData.status,
         start_date: actionData.start_date,
         end_date: actionData.end_date,
-        description: actionData.description,
+        // description: actionData.description,
         images: [],
         attachments: []
       };
@@ -296,7 +302,7 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
             />
           </div>
           <div className="grid gap-2">
-            <Label> Video URL</Label>
+            <Label>Video URL</Label>
             <Input
               placeholder="https://www.youtube.com/watch?v=..."
               value={formData.videoUrl}
@@ -304,49 +310,64 @@ export function CreateActionDialog({ open, onOpenChange, onSuccess }: CreateActi
             />
           </div>
           <div className="grid gap-2">
-            <Label>Images</Label>
-            <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors">
-              <input {...getInputProps()} />
-              <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-              <p className="mt-2">Drop images here or click to upload</p>
+            <div className="flex justify-between items-center">
+              <Label>Images</Label>
+              {images.length > 0 && (
+                <Badge variant="outline">{images.length} images</Badge>
+              )}
             </div>
+            
+            {/* Add New Images */}
+            <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-2 text-center cursor-pointer hover:border-primary/50 transition-colors">
+              <input {...getInputProps()} />
+              <Upload className="h-6 w-6 mx-auto text-muted-foreground" />
+              <p className="text-sm mt-1">Drop images here or click to upload</p>
+            </div>
+            
+            {/* New Images Preview - Compact Layout */}
             {images.length > 0 && (
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {images.map((file, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        removeImage(index);
-                      }}
+              <div className="mt-1">
+                <Label className="text-xs text-muted-foreground">Images to Upload</Label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {images.map((file, index) => (
+                    <div 
+                      key={`new-${index}`} 
+                      className="relative bg-muted rounded-md p-1 flex items-center group"
                     >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    <p className="text-sm text-muted-foreground mt-1 truncate" title={file.name}>
-                      {file.name.length > 20 ? `${file.name.substring(0, 20)}...` : file.name}
-                    </p>
-                  </div>
-                ))}
+                      <div className="w-6 h-6 flex-shrink-0 mr-1">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="w-6 h-6 object-cover rounded"
+                        />
+                      </div>
+                      <span className="text-xs">{getTruncatedName(file.name)}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 ml-1"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          removeImage(index);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-          <div className="grid gap-2">
+          {/* <div className="grid gap-2">
             <Label>Description</Label>
             <Input
               placeholder="Brief description of the marketing action"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
-          </div>
+          </div> */}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>

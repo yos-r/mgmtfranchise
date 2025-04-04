@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import {
     ArrowLeft,
@@ -14,7 +14,8 @@ import {
     BarChart2,
     ArrowRight,
     ImageIcon,
-    Banknote
+    Banknote,
+    Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +42,9 @@ import ImageGallery from "./image-gallery";
 import ActivityTabs from "./activity-tabs";
 import ChannelDistributionCard from "./channel-distribution-card";
 
+// Import the useMarketingMedia hook
+import { useMarketingMedia } from "./marketing-media-loader";
+
 interface MarketingAction {
     id: string;
     title: string;
@@ -65,11 +69,36 @@ interface ActionDetailProps {
 }
 
 export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: ActionDetailProps) {
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [currentAction, setCurrentAction] = useState<MarketingAction>(action);
     const { toast } = useToast();
+    
+    // Use the hook to fetch media for this action
+    const { media, youtubeUrl, loading: mediaLoading, error: mediaError } = useMarketingMedia(currentAction.id);
+    
+    // State for gallery
+    const [galleryOpen, setGalleryOpen] = useState(false);
+    const [initialImageIndex, setInitialImageIndex] = useState(0);
+
+    // Update the action with media when it loads
+    useEffect(() => {
+        if (media.length > 0 || youtubeUrl) {
+            setCurrentAction(prev => ({
+                ...prev,
+                images: media.map(item => ({ url: item.url, name: item.name })),
+                video_url: youtubeUrl || prev.video_url
+            }));
+        }
+    }, [media, youtubeUrl]);
+
+    // Convert media to format needed by ImageGallery
+    const galleryImages = media.map((item, index) => ({
+        id: index,
+        src: item.url,
+        alt: item.name,
+        thumb: item.url
+    }));
 
     const handleDelete = async () => {
         setIsDeleting(true);
@@ -127,40 +156,18 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
     };
 
     const getYouTubeEmbedUrl = (url: string) => {
+        if (!url) return '';
         const videoId = url.split('v=')[1]?.split('&')[0];
         return `https://www.youtube.com/embed/${videoId}`;
     };
-
-    const percentUsed = Math.round((currentAction.spent / currentAction.budget) * 100);
-    const daysRemaining = Math.max(0, Math.ceil((new Date(currentAction.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
-    const demoImages = [
-        {
-            id: 1,
-            src: "https://images.lecho.be/view?iid=Elvis:13HKKLfZ4gz9zWkTOS_GIW&context=ONLINE&ratio=16/9&width=1280&u=1728984394000",
-            alt: "Training session",
-            thumb: "https://images.lecho.be/view?iid=Elvis:13HKKLfZ4gz9zWkTOS_GIW&context=ONLINE&ratio=16/9&width=1280&u=1728984394000"
-        },
-        {
-            id: 2,
-            src: "https://scontent.ftun1-2.fna.fbcdn.net/v/t1.6435-9/51954196_1792183914221695_8845188260792631296_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=127cfc&_nc_ohc=rvHPr9jSO08Q7kNvgHVBhY4&_nc_oc=AdnS2ABy3tDosCjgffY0ns8UTMmIU9qPEj-rLkgPN-ytTI58mU3KiVcACHY3u6nv17CfqrGJP458vxBz-hh4vZ91&_nc_zt=23&_nc_ht=scontent.ftun1-2.fna&_nc_gid=usZiQ4K_gTdxAF3uKI_9Fg&oh=00_AYEC31kmy-berr6xTJ-NZ8g-laueWFbq0_l2v7kzldzuYQ&oe=6815E963",
-            alt: "Group activity",
-            thumb: "https://scontent.ftun1-2.fna.fbcdn.net/v/t1.6435-9/51954196_1792183914221695_8845188260792631296_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=127cfc&_nc_ohc=rvHPr9jSO08Q7kNvgHVBhY4&_nc_oc=AdnS2ABy3tDosCjgffY0ns8UTMmIU9qPEj-rLkgPN-ytTI58mU3KiVcACHY3u6nv17CfqrGJP458vxBz-hh4vZ91&_nc_zt=23&_nc_ht=scontent.ftun1-2.fna&_nc_gid=usZiQ4K_gTdxAF3uKI_9Fg&oh=00_AYEC31kmy-berr6xTJ-NZ8g-laueWFbq0_l2v7kzldzuYQ&oe=6815E963"
-        },
-        {
-            id: 3,
-            src: "https://www.ilboursa.com/api/image/ImageNewsGet?id=4EE74981-8479-44DA-BBD4-DD6BC1EF775D",
-            alt: "Presentation",
-            thumb: "https://www.ilboursa.com/api/image/ImageNewsGet?id=4EE74981-8479-44DA-BBD4-DD6BC1EF775D"
-        }
-    ];
-    // State for custom gallery
-    const [galleryOpen, setGalleryOpen] = useState(false);
-    const [initialImageIndex, setInitialImageIndex] = useState(0);
 
     const openGallery = (index) => {
         setInitialImageIndex(index);
         setGalleryOpen(true);
     };
+
+    const percentUsed = Math.round((currentAction.spent / currentAction.budget) * 100);
+    const daysRemaining = Math.max(0, Math.ceil((new Date(currentAction.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
     
     // Placeholder data for timeline activities
     const timelineActivities = [
@@ -232,48 +239,88 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                 <div className="flex gap-6">
                     {/* Main Content (2/3) */}
                     <div className="w-2/3 space-y-6">
-                        {/* Bento Grid for Images */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 aspect-video relative overflow-hidden rounded-lg">
-                            <div
-                                className="col-span-2 row-span-2 bg-muted rounded-lg overflow-hidden cursor-pointer"
-                                onClick={() => openGallery(0)}
-                            >
-                                <img
-                                    src={demoImages[0].src}
-                                    alt={demoImages[0].alt}
-                                    className="w-full h-full object-cover hover:opacity-90 transition-opacity"
-                                />
-                            </div>
-                            <div
-                                className="bg-muted rounded-lg overflow-hidden cursor-pointer"
-                                onClick={() => openGallery(1)}
-                            >
-                                <img
-                                    src={demoImages[1].src}
-                                    alt={demoImages[1].alt}
-                                    className="w-full h-full object-cover hover:opacity-90 transition-opacity"
-                                />
-                            </div>
-                            <div
-                                className="bg-muted rounded-lg overflow-hidden cursor-pointer"
-                                onClick={() => openGallery(2)}
-                            >
-                                <img
-                                    src={demoImages[2].src}
-                                    alt={demoImages[2].alt}
-                                    className="w-full h-full object-cover hover:opacity-90 transition-opacity"
-                                />
-                            </div>
-
-                            <Button
-                                variant="secondary"
-                                className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm"
-                                onClick={() => openGallery(0)}
-                            >
-                                <ImageIcon className="h-4 w-4 mr-2" />
-                                View All Photos
-                            </Button>
-                        </div>
+                        {/* Bento Grid for Images - Dynamic from database */}
+                        {galleryImages.length > 0 && <div className="grid grid-cols-2 md:grid-cols-3 gap-3 aspect-video relative overflow-hidden rounded-lg">
+                            {mediaLoading ? (
+                                <div className="col-span-3 flex items-center justify-center bg-muted rounded-lg">
+                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : mediaError || galleryImages.length === 0 ? (
+                                // <div className="col-span-3 flex flex-col items-center justify-center bg-muted/20 rounded-lg p-6">
+                                //     <ImageIcon className="h-10 w-10 text-muted-foreground mb-2" />
+                                //     <p className="text-muted-foreground">No images available</p>
+                                // </div>
+                                <div></div>
+                            ) : (
+                                <>
+                                    {/* First image (large) */}
+                                    {galleryImages.length > 0 && (
+                                        <div
+                                            className="col-span-2 row-span-2 bg-muted rounded-lg overflow-hidden cursor-pointer"
+                                            onClick={() => openGallery(0)}
+                                        >
+                                            <img
+                                                src={galleryImages[0].src}
+                                                alt={galleryImages[0].alt}
+                                                className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                                            />
+                                        </div>
+                                    )}
+                                    
+                                    {/* Second image (if available) */}
+                                    {galleryImages.length > 1 && (
+                                        <div
+                                            className="bg-muted rounded-lg overflow-hidden cursor-pointer"
+                                            onClick={() => openGallery(1)}
+                                        >
+                                            <img
+                                                src={galleryImages[1].src}
+                                                alt={galleryImages[1].alt}
+                                                className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                                            />
+                                        </div>
+                                    )}
+                                    
+                                    {/* Third image (if available) */}
+                                    {galleryImages.length > 2 && (
+                                        <div
+                                            className="bg-muted rounded-lg overflow-hidden cursor-pointer"
+                                            onClick={() => openGallery(2)}
+                                        >
+                                            <img
+                                                src={galleryImages[2].src}
+                                                alt={galleryImages[2].alt}
+                                                className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                                            />
+                                        </div>
+                                    )}
+                                    
+                                    {/* Fill empty spaces if not enough images */}
+                                    {galleryImages.length === 1 && (
+                                        <>
+                                            <div className="bg-muted rounded-lg"></div>
+                                            <div className="bg-muted rounded-lg"></div>
+                                        </>
+                                    )}
+                                    
+                                    {galleryImages.length === 2 && (
+                                        <div className="bg-muted rounded-lg"></div>
+                                    )}
+                                    
+                                    {/* View All button - only if there are images */}
+                                    {galleryImages.length > 0 && (
+                                        <Button
+                                            variant="secondary"
+                                            className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm"
+                                            onClick={() => openGallery(0)}
+                                        >
+                                            <ImageIcon className="h-4 w-4 mr-2" />
+                                            View All Photos ({galleryImages.length})
+                                        </Button>
+                                    )}
+                                </>
+                            )}
+                        </div>}
 
                         <Card>
                             <CardHeader className="pb-3 border-b">
@@ -302,14 +349,17 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                     </div>
                                 </div>
 
-                                <div className="mb-4">
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Description:</p>
-                                    <p className="text-gray-700">{currentAction.description || "No description provided."}</p>
-                                </div>
+                                {currentAction.description && (
+                                    <div className="mb-4">
+                                        <p className="text-sm font-medium text-gray-500 mb-1">Description:</p>
+                                        <p className="text-gray-700">{currentAction.description}</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 
-                        {currentAction.video_url && (
+                        {/* YouTube Video - Using dynamically loaded URL */}
+                        {youtubeUrl && (
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Campaign Video</CardTitle>
@@ -318,14 +368,14 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                                     <div className="aspect-video rounded-lg overflow-hidden">
                                         <iframe
                                             className="w-full h-full"
-                                            src={getYouTubeEmbedUrl(currentAction.video_url)}
+                                            src={getYouTubeEmbedUrl(youtubeUrl)}
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                             allowFullScreen
                                         />
                                     </div>
                                     <div className="flex justify-end mt-3">
                                         <Button variant="outline" size="sm" asChild>
-                                            <a href={currentAction.video_url} target="_blank" rel="noopener noreferrer">
+                                            <a href={youtubeUrl} target="_blank" rel="noopener noreferrer">
                                                 <ExternalLink className="mr-2 h-4 w-4" />
                                                 Open in YouTube
                                             </a>
@@ -431,8 +481,9 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
                 </div>
             </div>
 
+            {/* Pass the dynamic galleryImages to the ImageGallery component */}
             <ImageGallery
-                images={demoImages}
+                images={galleryImages}
                 initialIndex={initialImageIndex}
                 isOpen={galleryOpen}
                 onClose={() => setGalleryOpen(false)}
