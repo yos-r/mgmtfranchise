@@ -54,7 +54,7 @@ const eventSchema = z.object({
   date: z.string().min(1, "Please select a date"),
   time: z.string().min(1, "Please select a time"),
   duration: z.string().min(1, "Please enter a duration"),
-  description: z.string().optional(),
+  // description: z.string().optional(),
   selectedFranchises: z.array(z.string()).min(1, "Please select at least one franchise"),
 });
 
@@ -124,7 +124,7 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
           date: values.date,
           time: values.time,
           duration: values.duration,
-          description: values.description,
+          // description: values.description,
           status: "scheduled",
         })
         .select()
@@ -291,7 +291,7 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
               />
             </div>
 
-            <FormField
+            {/* <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
@@ -303,7 +303,7 @@ export function CreateEventDialog({ onEventCreated }: CreateEventDialogProps) {
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
 
             <FormField
               control={form.control}
