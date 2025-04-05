@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
 export default function VisitChecklist({ visitId, onConformityChange }) {
   const [checklist, setChecklist] = useState(null);
-  const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
+  const [activeCategory, setActiveCategory] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdated, setIsUpdated] = useState(false);
   const { toast } = useToast();
@@ -42,6 +42,7 @@ export default function VisitChecklist({ visitId, onConformityChange }) {
       }
 
       setChecklist(data.checklist);
+      setActiveCategory(data.checklist.categories[0]?.id);
       
       // Notify parent about conformity value if it exists
       if (data.conformity !== null) {
@@ -50,8 +51,6 @@ export default function VisitChecklist({ visitId, onConformityChange }) {
         // Use overallScore from checklist if conformity is not set
         onConformityChange?.(data.checklist.overallScore);
       }
-      
-      setActiveCategoryIndex(0);
     } catch (error) {
       console.error("Error fetching checklist:", error);
       toast({
@@ -154,20 +153,6 @@ export default function VisitChecklist({ visitId, onConformityChange }) {
     return getConformityColor(completion);
   };
 
-  const navigateCategory = (direction) => {
-    if (!checklist || !checklist.categories) return;
-    
-    let newIndex = activeCategoryIndex + direction;
-    
-    if (newIndex < 0) {
-      newIndex = checklist.categories.length - 1;
-    } else if (newIndex >= checklist.categories.length) {
-      newIndex = 0;
-    }
-    
-    setActiveCategoryIndex(newIndex);
-  };
-
   if (isLoading) {
     return (
       <Card>
@@ -188,7 +173,6 @@ export default function VisitChecklist({ visitId, onConformityChange }) {
     );
   }
 
-  const activeCategory = checklist.categories[activeCategoryIndex];
   const conformityColor = getConformityColor(checklist.overallScore);
 
   return (
@@ -222,74 +206,57 @@ export default function VisitChecklist({ visitId, onConformityChange }) {
           </div>
         </div>
 
-        <div className="flex flex-col space-y-3">
-          {/* Minimalist Tab Navigation with Arrows */}
-          <div className="flex items-center justify-between">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigateCategory(-1)}
-              className="h-8 w-8"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-medium">{activeCategory.name}</h3>
-              <div className={`px-1.5 py-0.5 text-xs rounded-full text-white ${getCategoryColor(activeCategory.id)}`}>
-                {getCategoryCompletion(activeCategory.id)}%
-              </div>
-            </div>
-            
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigateCategory(1)}
-              className="h-8 w-8"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          {/* Small indicators for all categories */}
-          <div className="flex justify-center space-x-1 py-1">
-            {checklist.categories.map((category, index) => (
-              <button
-                key={category.id}
-                onClick={() => setActiveCategoryIndex(index)}
-                className={`w-2 h-2 rounded-full ${
-                  index === activeCategoryIndex 
-                    ? getCategoryColor(category.id)
-                    : "bg-muted-foreground/30"
-                }`}
-                aria-label={`Go to ${category.name}`}
-              />
-            ))}
-          </div>
-          
-          {/* Category Content */}
-          <div className="pt-1">
-            <div className="space-y-1">
-              {activeCategory.items.map(item => (
-                <div key={item.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50">
-                  <Checkbox 
-                    id={`${activeCategory.id}-${item.id}`} 
-                    checked={item.checked}
-                    onCheckedChange={(checked) => 
-                      handleChecklistChange(activeCategory.id, item.id, !!checked)
-                    }
-                  />
-                  <label 
-                    htmlFor={`${activeCategory.id}-${item.id}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
-                  >
-                    {item.name}
-                  </label>
+        <Tabs 
+          value={activeCategory} 
+          onValueChange={setActiveCategory}
+          className="w-full"
+        >
+          {/* Tabs List */}
+          <TabsList className="w-full grid grid-flow-col h-14 ">
+            {checklist.categories.map(category => (
+              <TabsTrigger 
+                key={category.id} 
+                value={category.id}
+                className="flex flex-col"
+              >
+                <span>{category.name}</span>
+                <div 
+                  className={`px-1.5 py-0.5 text-xs rounded-full text-white ${getCategoryColor(category.id)}`}
+                >
+                  {getCategoryCompletion(category.id)}%
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {/* Tabs Content */}
+          {checklist.categories.map(category => (
+            <TabsContent key={category.id} value={category.id} className="pt-4">
+              <div className="space-y-1">
+                {category.items.map(item => (
+                  <div 
+                    key={item.id} 
+                    className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50"
+                  >
+                    <Checkbox 
+                      id={`${category.id}-${item.id}`} 
+                      checked={item.checked}
+                      onCheckedChange={(checked) => 
+                        handleChecklistChange(category.id, item.id, !!checked)
+                      }
+                    />
+                    <label 
+                      htmlFor={`${category.id}-${item.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+                    >
+                      {item.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
       </CardContent>
     </Card>
   );

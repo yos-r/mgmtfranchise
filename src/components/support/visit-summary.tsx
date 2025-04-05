@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const getStatusBadgeClass = (status) => {
   switch (status) {
     case "completed":
-      return "bg-green-100 text-green-800";
+      return "bg-green-300 text-green-800";
     case "cancelled":
     case "canceled":
       return "bg-red-100 text-red-800";
@@ -26,7 +26,7 @@ const getStatusBadgeClass = (status) => {
 };
 
 const getConformityColor = (score) => {
-  if (score >= 80) return "bg-green-500";
+  if (score >= 80) return "bg-green-700";
   if (score >= 60) return "bg-yellow-500";
   return "bg-red-500";
 };
