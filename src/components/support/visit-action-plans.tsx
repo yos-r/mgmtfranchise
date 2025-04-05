@@ -7,6 +7,9 @@ import {
   Trash2,
   MoreHorizontal,
   Edit,
+  FileText,
+  User,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,11 +39,22 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
   const [actionPlans, setActionPlans] = useState([]);
   const [newAction, setNewAction] = useState("");
   const [newActionDeadline, setNewActionDeadline] = useState("");
+  const [newActionNote, setNewActionNote] = useState("");
   const [actionStatus, setActionStatus] = useState("pending");
   const [isAddingAction, setIsAddingAction] = useState(false);
   const [isEditingAction, setIsEditingAction] = useState(false);
   const [currentAction, setCurrentAction] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isViewingNotes, setIsViewingNotes] = useState(false);
+  const [currentNotes, setCurrentNotes] = useState({ 
+    action: "", 
+    note: "", 
+    note_by: "",
+    note_created_at: ""
+  });
+  
+  // Store the current user
+  const [currentUser, setCurrentUser] = useState(null);
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
@@ -62,8 +76,20 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
   useEffect(() => {
     if (franchiseId) {
       fetchActionPlans();
+      getCurrentUser();
     }
   }, [franchiseId]);
+  
+  // Get the current authenticated user
+  const getCurrentUser = async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      setCurrentUser(user);
+    } catch (error) {
+      console.error("Error getting current user:", error);
+    }
+  };
 
   const fetchActionPlans = async () => {
     setIsLoading(true);
@@ -93,11 +119,19 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
     if (!newAction.trim() || !newActionDeadline || !franchiseId) return;
     
     try {
+      // Prepare note data only if a note is provided
+      const noteData = newActionNote.trim() ? {
+        note: newActionNote,
+        note_by: currentUser?.email || null,
+        note_created_at: new Date().toISOString(),
+      } : {};
+      
       const newActionPlan = {
         franchise_id: franchiseId,
         action: newAction,
         deadline: newActionDeadline,
         status: actionStatus,
+        ...noteData
       };
       
       const { data, error } = await supabase
@@ -131,10 +165,38 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
     if (!currentAction || !currentAction.action.trim() || !currentAction.deadline) return;
     
     try {
+      // Check if the note was changed
+      const originalAction = actionPlans.find(action => action.id === currentAction.id);
+      const isNoteChanged = originalAction.note !== currentAction.note;
+      
+      // Prepare note data
+      const noteData = {};
+      
+      // If the note was changed and is not empty, update note metadata
+      if (isNoteChanged && currentAction.note.trim()) {
+        noteData.note = currentAction.note;
+        noteData.note_by = currentUser?.email || null;
+        noteData.note_created_at = new Date().toISOString();
+      } 
+      // If the note was changed to empty, clear all note fields
+      else if (isNoteChanged && !currentAction.note.trim()) {
+        noteData.note = null;
+        noteData.note_by = null;
+        noteData.note_created_at = null;
+      }
+      // If the note wasn't changed, don't update note metadata
+      else {
+        noteData.note = originalAction.note;
+        noteData.note_by = originalAction.note_by;
+        noteData.note_created_at = originalAction.note_created_at;
+      }
+      
       const updateData = {
         action: currentAction.action,
         deadline: currentAction.deadline,
         status: currentAction.status,
+        updated_at: new Date(),
+        ...noteData
       };
       
       const { data, error } = await supabase
@@ -175,13 +237,16 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
     try {
       const { error } = await supabase
         .from('support_action_plans')
-        .update({ status })
+        .update({ 
+          status,
+          updated_at: new Date()
+        })
         .eq('id', id);
       
       if (error) throw error;
       
       setActionPlans(actionPlans.map(action => 
-        action.id === id ? { ...action, status } : action
+        action.id === id ? { ...action, status, updated_at: new Date().toISOString() } : action
       ));
       
       toast({
@@ -230,6 +295,7 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
   const resetActionForm = () => {
     setNewAction("");
     setNewActionDeadline("");
+    setNewActionNote("");
     setActionStatus("pending");
     setIsAddingAction(false);
   };
@@ -239,9 +305,20 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
       id: action.id,
       action: action.action,
       deadline: format(new Date(action.deadline), "yyyy-MM-dd"),
-      status: action.status
+      status: action.status,
+      note: action.note || ""
     });
     setIsEditingAction(true);
+  };
+
+  const openNotesDialog = (action) => {
+    setCurrentNotes({
+      action: action.action,
+      note: action.note || "No notes available",
+      note_by: action.note_by || "",
+      note_created_at: action.note_created_at || ""
+    });
+    setIsViewingNotes(true);
   };
 
   return (
@@ -285,6 +362,18 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
                     type="date"
                     value={newActionDeadline}
                     onChange={(e) => setNewActionDeadline(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="note" className="text-sm font-medium">
+                    Note (Optional)
+                  </label>
+                  <Textarea
+                    id="note"
+                    value={newActionNote}
+                    onChange={(e) => setNewActionNote(e.target.value)}
+                    placeholder="Add any notes or additional information..."
+                    className="resize-none"
                   />
                 </div>
                 <div className="space-y-2">
@@ -358,6 +447,21 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
                   />
                 </div>
                 <div className="space-y-2">
+                  <label htmlFor="edit-note" className="text-sm font-medium">
+                    Note
+                  </label>
+                  <Textarea
+                    id="edit-note"
+                    value={currentAction.note}
+                    onChange={(e) => setCurrentAction({
+                      ...currentAction,
+                      note: e.target.value
+                    })}
+                    placeholder="Add any notes or additional information..."
+                    className="resize-none"
+                  />
+                </div>
+                <div className="space-y-2">
                   <label htmlFor="edit-status" className="text-sm font-medium">
                     Status
                   </label>
@@ -389,6 +493,42 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
           </Dialog>
         )}
 
+        {/* View Notes Dialog */}
+        <Dialog open={isViewingNotes} onOpenChange={setIsViewingNotes}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Action Notes</DialogTitle>
+              <DialogDescription>
+                {currentNotes.action}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 p-4 bg-gray-50 rounded-md">
+              <p className="whitespace-pre-wrap">{currentNotes.note}</p>
+            </div>
+            {currentNotes.note_by && currentNotes.note_created_at && (
+              <div className="mt-2 flex items-center justify-end text-sm text-gray-500">
+                <div className="flex items-center mr-3">
+                  <User className="h-3.5 w-3.5 mr-1" />
+                  <span>{currentNotes.note_by}</span>
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="h-3.5 w-3.5 mr-1" />
+                  <span>
+                    {new Date(currentNotes.note_created_at).toLocaleDateString()} 
+                    {" "}
+                    {new Date(currentNotes.note_created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </span>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button onClick={() => setIsViewingNotes(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {isLoading ? (
           <div className="py-6 text-center text-muted-foreground">
             Loading action plans...
@@ -398,11 +538,11 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Action</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Updated at</TableHead>
-
+                <TableHead>Created</TableHead>
+                <TableHead>Updated</TableHead>
                 <TableHead>Deadline</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Notes</TableHead>
                 <TableHead className="w-[100px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -424,6 +564,21 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
                       <Badge className={getStatusBadgeClass(action.status)}>
                         {action.status.replace('_', ' ')}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {action.note ? (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => openNotesDialog(action)}
+                          className="p-0 h-auto"
+                        >
+                          <FileText className="h-4 w-4 text-gray-500" />
+                          <span className="sr-only">View Notes</span>
+                        </Button>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -471,7 +626,7 @@ export default function VisitActionPlans({ franchiseId, onActionUpdated }) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                     No action plans yet
                   </TableCell>
                 </TableRow>
