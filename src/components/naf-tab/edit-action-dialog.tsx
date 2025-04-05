@@ -32,7 +32,7 @@ interface MarketingAction {
   status: string;
   start_date: string;
   end_date: string;
-  // description: string;
+  description: string;
   images?: { url: string; name: string }[];
   video_url?: string;
   attachments?: { name: string; url: string; type: string; size: string }[];
@@ -62,7 +62,7 @@ export function EditActionDialog({
     status: '',
     startDate: '',
     endDate: '',
-    // description: '',
+    description: '',
     youtubeUrl: '',
   });
 
@@ -76,7 +76,7 @@ export function EditActionDialog({
         status: action.status || 'planned',
         startDate: action.start_date?.split('T')[0] || '',
         endDate: action.end_date?.split('T')[0] || '',
-        // description: action.description || '',
+        description: action.description || '',
         youtubeUrl: action.video_url || '',
       });
 
@@ -140,7 +140,7 @@ export function EditActionDialog({
           status: formData.status,
           start_date: formData.startDate,
           end_date: formData.endDate,
-          // description: formData.description,
+          description: formData.description,
         })
         .eq('id', action.id)
         .select()
@@ -157,7 +157,7 @@ export function EditActionDialog({
         status: actionData.status,
         start_date: actionData.start_date,
         end_date: actionData.end_date,
-        // description: actionData.description,
+        description: actionData.description,
         images: [...existingImages],
       };
 
@@ -468,14 +468,14 @@ export function EditActionDialog({
               </div>
             )}
           </div>
-          {/* <div className="grid gap-2">
+          <div className="grid gap-2">
             <Label>Description</Label>
             <Input
               placeholder="Brief description of the marketing action"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
-          </div> */}
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
