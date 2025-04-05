@@ -10,20 +10,39 @@ import { SettingsLayout } from "./settings-layout";
 import { TeamForm } from "./team-form";
 import { useState, useEffect } from "react";
 import { supabase } from '@/lib/supabase';
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 
-interface SettingsPageProps {
-  setCurrentSection: React.Dispatch<React.SetStateAction<"main" | "settings">>;
-}
-
-export const SettingsPage: React.FC<SettingsPageProps> = ({ setCurrentSection }) => {
-  const [settingsSection, setSettingsSection] = useState<string>('profile');
+export const SettingsPage = () => {
+  const navigate = useNavigate();
+  const params = useParams();
+  const location = useLocation();
+  
+  // Get the section from the URL if available, default to 'profile'
+  const [settingsSection, setSettingsSection] = useState<string>(
+    params.section || location.state?.section || 'profile'
+  );
+  
   const [companyName, setCompanyName] = useState<string>("CENTURY 21");
   const [companyLogo, setCompanyLogo] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const handleSectionChange = (section: string) => {
     setSettingsSection(section);
+    // Update the URL to reflect the current section
+    navigate(`/settings/${section}`, { replace: true });
   };
+
+  const handleBackClick = () => {
+    // Navigate back to the main dashboard
+    navigate('/');
+  };
+
+  useEffect(() => {
+    // Update section based on URL params if they change
+    if (params.section && params.section !== settingsSection) {
+      setSettingsSection(params.section);
+    }
+  }, [params.section]);
 
   useEffect(() => {
     // Function to fetch company settings
@@ -96,16 +115,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ setCurrentSection })
           <div className="ml-auto flex items-center space-x-4">
             <Button
               variant="ghost"
-              onClick={() => setCurrentSection('main')}
+              onClick={handleBackClick}
               className="button-1"
             >
-              ← Retour
+              ← Back to Dashboard
             </Button>
             <ThemeToggle />
           </div>
         </div>
       </div>
-      <SettingsLayout onSectionChange={handleSectionChange}>
+      <SettingsLayout 
+        currentSection={settingsSection} 
+        onSectionChange={handleSectionChange}
+      >
         {settingsSection === 'profile' && <ProfileForm />}
         {settingsSection === 'company' && <CompanyForm />}
         {settingsSection === 'team' && <TeamForm />}

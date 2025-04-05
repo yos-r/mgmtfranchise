@@ -6,15 +6,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
-export default function InternalNotesCard({ eventId, initialNotes = "", noteBy = "" }) {
-  const [internalNotes, setInternalNotes] = useState(initialNotes);
+interface InternalNotesCardProps {
+  eventId: string;
+  initialNotes?: string;
+  noteBy?: string;
+  onSave?: (notes: string, noteBy: string) => void;
+}
+
+export default function InternalNotesCard({ 
+  eventId, 
+  initialNotes = "", 
+  noteBy = "",
+  onSave 
+}: InternalNotesCardProps) {
+  // Use local state for immediate UI updates
+  const [localNotes, setLocalNotes] = useState(initialNotes);
   const [isNotesUpdated, setIsNotesUpdated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [lastEditedBy, setLastEditedBy] = useState(noteBy);
+  const [user, setUser] = useState<any>(null);
+  const [localLastEditedBy, setLocalLastEditedBy] = useState(noteBy);
   const { toast } = useToast();
 
+  // Get current user when component mounts
   useEffect(() => {
-    // Get the current authenticated user
     const getCurrentUser = async () => {
       const { data } = await supabase.auth.getSession();
       
@@ -26,18 +39,17 @@ export default function InternalNotesCard({ eventId, initialNotes = "", noteBy =
     getCurrentUser();
   }, []);
 
-  // Update notes when initialNotes prop changes
+  // Update local state when props change
   useEffect(() => {
-    setInternalNotes(initialNotes);
+    setLocalNotes(initialNotes);
   }, [initialNotes]);
 
-  // Update lastEditedBy when noteBy prop changes
   useEffect(() => {
-    setLastEditedBy(noteBy);
+    setLocalLastEditedBy(noteBy);
   }, [noteBy]);
 
   const handleInternalNotesChange = (e) => {
-    setInternalNotes(e.target.value);
+    setLocalNotes(e.target.value);
     setIsNotesUpdated(true);
   };
 
@@ -46,18 +58,27 @@ export default function InternalNotesCard({ eventId, initialNotes = "", noteBy =
       // Get user email from the authenticated user
       const userEmail = user?.email || "Unknown user";
       
+      // If parent provided a save handler, use it (direct mutation approach)
+      if (onSave) {
+        onSave(localNotes, userEmail);
+        setIsNotesUpdated(false);
+        setLocalLastEditedBy(userEmail);
+        return;
+      }
+      
+      // Otherwise use the direct database update
       const { error } = await supabase
         .from('training_events')
         .update({
-          notes: internalNotes,
-          note_by: userEmail // Save the email of the authenticated user
+          notes: localNotes,
+          note_by: userEmail
         })
         .eq('id', eventId);
 
       if (error) throw error;
 
-      // Update the last edited by value
-      setLastEditedBy(userEmail);
+      // Update local state
+      setLocalLastEditedBy(userEmail);
       
       toast({
         title: "Notes updated",
@@ -83,10 +104,10 @@ export default function InternalNotesCard({ eventId, initialNotes = "", noteBy =
             Internal Notes
           </CardTitle>
         </div>
-        {lastEditedBy && (
+        {localLastEditedBy && (
           <div className="flex items-center text-xs text-muted-foreground mt-1">
             <User className="h-3 w-3 mr-1" />
-            <span>Last edited by: {lastEditedBy}</span>
+            <span>Last edited by: {localLastEditedBy}</span>
           </div>
         )}
       </CardHeader>
@@ -94,7 +115,7 @@ export default function InternalNotesCard({ eventId, initialNotes = "", noteBy =
         <Textarea
           placeholder="Add internal notes about this event..."
           className="min-h-[100px]"
-          value={internalNotes}
+          value={localNotes}
           onChange={handleInternalNotesChange}
         />
       </CardContent>

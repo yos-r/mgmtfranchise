@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { FranceRegionsMap } from "./france-region-map";
 import TopPerformingRegionsCard from "./top-performing-regions-card";
 import { useCurrency } from "@/hooks/useCurrency";
+import { NavbarLayout } from "@/components/navbar/navbar-layout";
+// import { NavigationTabs } from "@/components/navigation/navigation-tabs";
+import { NavigationTabs } from "../navigation-tabs";
 interface OverviewStats {
   totalFranchises: number;
   monthlyRevenue: number;
@@ -190,188 +193,158 @@ export function OverviewTab() {
     };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-4 w-4" />
+  const OverviewContent = () => {
+    if (loading) {
+      return (
+        <div className="space-y-6">
+          <div className="mb-6">
+            <h2 className="tagline-1">Dashboard Overview</h2>
+            <p className="body-lead text-muted-foreground">
+              Key performance indicators at a glance
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-24 mb-2" />
+                  <Skeleton className="h-4 w-32" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+            <Card className="col-span-3">
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-8 w-24 mb-2" />
-                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-[200px] w-full" />
               </CardContent>
             </Card>
-          ))}
-        </div>
 
+            <Card className="col-span-3">
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="mb-6">
+          <h2 className="tagline-1">Dashboard Overview</h2>
+          <p className="body-lead text-muted-foreground">
+            Key performance indicators at a glance
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="tagline-3">
+                {t('totalFranchises')}
+              </CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="numbers text-2xl font-bold">{stats?.totalFranchises}</div>
+              <p className="legal text-muted-foreground">
+                +{stats?.newFranchises} from last 30 days
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="tagline-3">
+                {t('monthlyRevenue')}
+              </CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="numbers text-2xl font-bold">{formatCurrency(stats?.monthlyRevenue)}</div>
+              <p className="legal text-muted-foreground">
+                Including marketing contributions
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="tagline-3">
+                Support Visits
+              </CardTitle>
+              <Award className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="numbers text-2xl font-bold">{stats?.assistanceVisits}</div>
+              <p className="legal text-muted-foreground">
+                From last 30 days
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="tagline-3">
+                {t('activeSupport')}
+              </CardTitle>
+              <TicketCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="numbers text-2xl font-bold">{stats?.activeTickets}</div>
+              <p className="legal text-muted-foreground">
+                {stats?.ticketResolutionRate.toFixed(0)}% resolution rate
+              </p>
+            </CardContent>
+          </Card>
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
           <Card className="col-span-3">
             <CardHeader>
-              <Skeleton className="h-6 w-48" />
+              <CardTitle className="tagline-2">{t('revenueOverview')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-[200px] w-full" />
+              <RevenueOverviewChart />
             </CardContent>
           </Card>
 
           <Card className="col-span-3">
             <CardHeader>
-              <Skeleton className="h-6 w-48" />
+              <CardTitle className="tagline-2">Franchise Growth</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex justify-between items-center">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
-                ))}
-              </div>
+              <FranchiseGrowthChart />
             </CardContent>
           </Card>
         </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+          {/* This section is commented out in the original code */}
+        </div>
       </div>
     );
-  }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">
-              {t('totalFranchises')}
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{stats?.totalFranchises}</div>
-            <p className="legal text-muted-foreground">
-              +{stats?.newFranchises}   from last 30 days
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">
-              {t('monthlyRevenue')}
-            </CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{formatCurrency(stats?.monthlyRevenue)}</div>
-            <p className="legal text-muted-foreground">
-              Including marketing contributions
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">
-              Support Visits
-            </CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{stats?.assistanceVisits}</div>
-            <p className="legal text-muted-foreground">
-              From last 30 days
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="tagline-3">
-              {t('activeSupport')}
-            </CardTitle>
-            <TicketCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="numbers text-2xl font-bold">{stats?.activeTickets}</div>
-            <p className="legal text-muted-foreground">
-              {stats?.ticketResolutionRate.toFixed(0)}% resolution rate
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle className="tagline-2">{t('revenueOverview')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RevenueOverviewChart />
-          </CardContent>
-        </Card>
-        {/* <TopPerformingRegionsCard/> */}
-
-
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle className="tagline-2">Franchise Growth</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FranchiseGrowthChart />
-          </CardContent>
-        </Card>
-        {/* <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle className="tagline-2">Upcoming Franchise Training / Support Visits</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { name: "Franchise Lyon East", action: "Contract renewed", date: "2 days from now" },
-                { name: "Franchise Marseille Central", action: "Payment received", date: "3 days ago" },
-                { name: "Franchise Paris North", action: "New location opened", date: "1 week ago" },
-                { name: "Franchise Nantes", action: "Training completed", date: "2 weeks ago" },
-                { name: "Franchise Strasbourg", action: "Support request resolved", date: "3 weeks ago" }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div>
-                    <p className="body-1 font-medium">{activity.name}</p>
-                    <p className="text-sm text-muted-foreground">{activity.action}</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{activity.date}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card> */}
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        {/* <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle className="tagline-2">Top Performing Regions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {["Paris", "Lyon", "Marseille", "Bordeaux", "Toulouse"].map(
-                (region) => (
-                  <div
-                    key={region}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="body-1">{region}</span>
-                    <span className="numbers text-muted-foreground">
-                      €{Math.floor(Math.random() * 900000 + 100000)}
-                    </span>
-                  </div>
-                )
-              )}
-            </div>
-          </CardContent>
-        </Card> */}
-        {/* <FranceRegionsMap /> */}
-
-
-
-      </div>
-    </div>
+    <NavbarLayout>
+      <NavigationTabs className="mb-6" />
+      <OverviewContent />
+    </NavbarLayout>
   );
 }

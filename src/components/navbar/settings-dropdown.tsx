@@ -1,26 +1,20 @@
 import React from 'react';
-import { 
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuItem 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Settings2 } from 'lucide-react';
 import { signOut } from '@/lib/auth'; // Adjust the import path as needed
+import { useNavigate } from 'react-router-dom';
 
-//  the props : functions setCurrentSection and setSettingsSection
-interface SettingsDropdownProps {
-  setCurrentSection: (section: 'main' | 'settings') => void;
-  setSettingsSection: (section: 'profile' | 'company' | 'team' | 'appearance' | 'notifications' | 'security') => void;
-}
+export const SettingsDropdown = () => {
+  const navigate = useNavigate();
 
-export const SettingsDropdown: React.FC<SettingsDropdownProps> = ({ 
-  setCurrentSection, 
-  setSettingsSection 
-}) => {
   const settingsSections = [
     { label: 'Profil', section: 'profile' },
     // { label: 'Entreprise', section: 'company' },
@@ -30,12 +24,11 @@ export const SettingsDropdown: React.FC<SettingsDropdownProps> = ({
     { label: 'Sécurité', section: 'security' }
   ];
 
-  const handleSectionChange = (section: 'profile' | 'company' | 'team' | 'appearance' | 'notifications' | 'security') => {
-    setCurrentSection('settings');
-    setSettingsSection(section);
+  // Navigate directly to the settings page with the appropriate section
+  const handleSectionChange = (section: string) => {
+    navigate(`/settings/${section}`);
   };
-  
-
+    
   const handleSignOut = () => {
     signOut();
   };
@@ -62,7 +55,7 @@ export const SettingsDropdown: React.FC<SettingsDropdownProps> = ({
         ))}
         
         <DropdownMenuItem 
-          onClick={handleSignOut} 
+          onClick={handleSignOut}
           className="body-1 cursor-pointer"
         >
           Se déconnecter

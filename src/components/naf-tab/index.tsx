@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Wallet,
   TrendingUp,
@@ -8,7 +9,6 @@ import {
   Receipt,
   Plus,
   Eye,
-  Euro,
   Calendar,
   Info,
   Banknote,
@@ -42,6 +42,8 @@ import { MarketingActionDetail } from "./marketing-action-detail";
 import { CreateActionDialog } from "./create-action-dialog";
 import { supabase } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NavbarLayout } from "@/components/navbar/navbar-layout";
+import { NavigationTabs } from "../navigation-tabs";
 
 interface MarketingAction {
   id: string;
@@ -65,6 +67,10 @@ interface BudgetData {
 }
 
 export function NAFTab() {
+  const navigate = useNavigate();
+  const params = useParams();
+  const actionId = params.actionId;
+  
   const {formatCurrency}=useCurrency();
   const [isLoading, setIsLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -85,6 +91,13 @@ export function NAFTab() {
     { length: new Date().getFullYear() - 2020 + 1 },
     (_, i) => (2020 + i).toString()
   ).reverse();
+
+  // Update URL when selecting an action
+  const handleSelectAction = (action: MarketingAction) => {
+    setSelectedAction(action);
+    // Update URL without reloading the page
+    navigate(`/naf/action/${action.id}`, { replace: true });
+  };
 
   async function calculateMarketingBudget(franchiseId = null, year = null) {
     try {
@@ -238,12 +251,73 @@ export function NAFTab() {
     }
   };
 
+  // Load specific action data if actionId is provided
+  const loadSingleAction = async (id: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('marketing_actions')
+        .select(`
+          *,
+          marketing_action_media (
+            id,
+            name,
+            url,
+            type
+          ),
+          marketing_action_attachments (
+            id,
+            name,
+            url,
+            type,
+            size
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const formattedAction = {
+          ...data,
+          images: data.marketing_action_media
+            ?.filter((media: any) => media.type === 'image')
+            .map((media: any) => ({
+              url: media.url,
+              name: media.name
+            })),
+          youtube_url: data.marketing_action_media
+            ?.find((media: any) => media.type === 'youtube')
+            ?.url,
+          attachments: data.marketing_action_attachments
+        };
+        
+        setSelectedAction(formattedAction);
+      }
+    } catch (err) {
+      console.error("Exception loading action details:", err);
+      toast({
+        title: "Error",
+        description: "Failed to load marketing action details",
+        variant: "destructive",
+      });
+      navigate('/naf');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Load data when component mounts or year changes
   useEffect(() => {
-    setIsLoading(true);
-    loadMarketingActions();
-    loadBudgetData();
-  }, [selectedYear]);
+    if (actionId) {
+      loadSingleAction(actionId);
+    } else {
+      setIsLoading(true);
+      loadMarketingActions();
+      loadBudgetData();
+    }
+  }, [actionId, selectedYear]);
 
   // Handle creating a new action
   const handleActionCreated = (newAction: MarketingAction) => {
@@ -272,26 +346,22 @@ export function NAFTab() {
   const handleActionDeleted = (actionId: string) => {
     setMarketingActions(prev => prev.filter(action => action.id !== actionId));
     setSelectedAction(null);
+    navigate('/naf', { replace: true });
     toast({
       title: "Action deleted",
       description: "The marketing action has been deleted successfully",
     });
   };
+  
+  // Handle back to list
+  const handleBackToList = () => {
+    setSelectedAction(null);
+    navigate('/naf', { replace: true });
+  };
 
   const activeActions = marketingActions.filter(action => action).length;
   const totalSpent = marketingActions.reduce((sum, action) => sum + (action.spent || 0), 0);
   const ytdSpentPercentage = budgetData.totalBudget > 0 ? Math.round((totalSpent / budgetData.totalBudget) * 100) : 0;
-
-  if (selectedAction) {
-    return (
-      <MarketingActionDetail 
-        action={selectedAction} 
-        onBack={() => setSelectedAction(null)} 
-        onDelete={handleActionDeleted}
-        onUpdate={handleActionUpdated}
-      />
-    );
-  }
 
   // Card skeleton component
   const CardSkeleton = () => (
@@ -318,7 +388,23 @@ export function NAFTab() {
     </TableRow>
   );
 
-  return (
+  // Conditionally render ActionDetail if an action is selected
+  if (selectedAction) {
+    return (
+      <NavbarLayout>
+        <NavigationTabs className="mt-4" />
+        <MarketingActionDetail 
+          action={selectedAction} 
+          onBack={handleBackToList} 
+          onDelete={handleActionDeleted}
+          onUpdate={handleActionUpdated}
+        />
+      </NavbarLayout>
+    );
+  }
+
+  // NAF Content component to be rendered inside the NavbarLayout
+  const NAFContent = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -560,7 +646,7 @@ export function NAFTab() {
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
-                        onClick={() => setSelectedAction(action)}
+                        onClick={() => handleSelectAction(action)}
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
@@ -581,5 +667,12 @@ export function NAFTab() {
         </CardContent>
       </Card>
     </div>
+  );
+
+  return (
+    <NavbarLayout>
+      <NavigationTabs className="mb-6" />
+      <NAFContent />
+    </NavbarLayout>
   );
 }

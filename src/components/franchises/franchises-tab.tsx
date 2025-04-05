@@ -1,4 +1,4 @@
-import { FileText, LayoutGrid, MapIcon, Plus, Building2, AlertCircle, Map, Filter, Search, X, Euro, Calendar, AlertTriangle, TrendingUp, Network, Hourglass, Sparkle, CrossIcon } from "lucide-react";
+import { FileText, LayoutGrid, Map, Plus, Building2, AlertCircle, Filter, Search, X, Network, Hourglass, Sparkle } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { FranchiseCard } from "./franchise-card";
@@ -14,25 +14,33 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { ExitIcon } from "@radix-ui/react-icons";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface FranchisesTabsProps {
-    viewMode: string;
-    setViewMode: React.Dispatch<React.SetStateAction<"list" | "grid" | "map">>;
-}
+import { useNavigate, useParams } from "react-router-dom";
+import { NavbarLayout } from "@/components/navbar/navbar-layout";
+// import { NavigationTabs } from "@/components/navigation/navigation-tabs";
+import { NavigationTabs } from "../navigation-tabs";
 
 // Define filter types
 type FilterOption = "expiringFranchises" | "newFranchises" | "terminatedFranchises";
 
-export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: FranchisesTabsProps) {
+export function FranchisesTab() {
+    const navigate = useNavigate();
+    const params = useParams();
+    const franchiseId = params.franchiseId;
+    
+    const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
     const [franchises, setFranchises] = useState<any[]>([]);
     const [filteredFranchises, setFilteredFranchises] = useState<any[]>([]);
-    const [isAddingFranchise, setIsAddingFranchise] = useState(false);
+    const [isAddingFranchise, setIsAddingFranchise] = useState(window.location.pathname.endsWith('/add'));
     const [selectedFranchise, setSelectedFranchise] = useState<any | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [statsLoading, setStatsLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState<FilterOption[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
+    
+    const handleVisitSelect = (visit: any) => {
+        navigate('/support', { state: { selectedVisit: visit } });
+    };
 
     // Calculate franchise statistics
     const stats = useMemo(() => {
@@ -96,17 +104,12 @@ export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: Franchis
             });
         }).length;
         const active = franchises.filter(franchise => {
-            // If franchise status is directly marked as terminated
-            // if (franchise.status === 'terminated') return true;
-            
             // Check if all contracts are terminated
             const contracts = franchise.franchise_contracts || [];
             if (contracts.length === 0) return false;
             
             return contracts.every(contract => 
                 contract.terminated === 'no'  || !contract.terminated
-                // contract.terminated === 'yes' || 
-                // contract.terminated === true
             );
         }).length;
         // Calculate terminated franchises
@@ -137,6 +140,19 @@ export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: Franchis
     const handleFranchiseUpdated = () => {
         // Refresh the contracts list
         setRefreshKey(prev => prev + 1);
+    };
+    
+    // Function to handle selecting a franchise and updating the URL
+    const handleSelectFranchise = (franchise: any) => {
+        setSelectedFranchise(franchise);
+        // Update URL without reloading the page
+        navigate(`/franchises/${franchise.id}`, { replace: true });
+    };
+    
+    // Function to go back to franchise list
+    const handleBackToList = () => {
+        setSelectedFranchise(null);
+        navigate('/franchises', { replace: true });
     };
 
     // Apply filters and search to the franchises
@@ -219,30 +235,61 @@ export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: Franchis
         }
     };
 
+    // Load specific franchise data if franchiseId is provided
+    const loadSingleFranchise = async (id: string) => {
+        setIsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('franchises')
+                .select('*,franchise_contracts(*)')
+                .eq('id', id)
+                .single();
+
+            if (!error && data) {
+                setSelectedFranchise(data);
+            } else if (error) {
+                console.error("Error loading franchise details:", error);
+                // Navigate back to franchises list if franchise not found
+                navigate('/franchises');
+            }
+        } catch (err) {
+            console.error("Exception loading franchise details:", err);
+            navigate('/franchises');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        loadFranchises();
+        // If we have a franchiseId in the URL, load that specific franchise
+        if (franchiseId) {
+            loadSingleFranchise(franchiseId);
+        } else {
+            // Otherwise load all franchises
+            loadFranchises();
+            
+            const channel = supabase
+                .channel('franchise_changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'franchises' }, () => {
+                    console.log("Franchises updated, reloading...");
+                    loadFranchises();
+                })
+                .subscribe();
 
-        const channel = supabase
-            .channel('franchise_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'franchises' }, () => {
-                console.log("Franchises updated, reloading...");
-                loadFranchises();
-            })
-            .subscribe();
+            const channel2 = supabase
+                .channel('franchise_contracts_changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'franchise_contracts' }, () => {
+                    console.log("Franchises contracts updated, reloading...");
+                    loadFranchises();
+                })
+                .subscribe();
 
-        const channel2 = supabase
-            .channel('franchise_contracts_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'franchise_contracts' }, () => {
-                console.log("Franchises contracts updated, reloading...");
-                loadFranchises();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-            supabase.removeChannel(channel2);
-        };
-    }, [refreshKey]);
+            return () => {
+                supabase.removeChannel(channel);
+                supabase.removeChannel(channel2);
+            };
+        }
+    }, [refreshKey, franchiseId]);
 
     // Apply filters and search when they change
     useEffect(() => {
@@ -265,24 +312,6 @@ export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: Franchis
     const clearSearch = () => {
         setSearchQuery("");
     };
-
-    if (isAddingFranchise) {
-        return (
-            <AddFranchise onCancel={() => setIsAddingFranchise(false)} />
-        )
-    }
-
-    if (selectedFranchise) {
-        return (
-            <FranchiseDetail
-                onVisitSelect={onVisitSelect}
-                loadFranchises={loadFranchises}
-                franchise={selectedFranchise}
-                onDelete={() => setSelectedFranchise(null)}
-                onUpdate={handleFranchiseUpdated}
-            />
-        );
-    }
 
     // Card skeleton component
     const CardSkeleton = () => (
@@ -353,24 +382,14 @@ export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: Franchis
                         Clear All
                     </Button>
                 )}
-                <Button onClick={() => setIsAddingFranchise(true)} className="button-1">
+                <Button onClick={() => {
+                    setIsAddingFranchise(true);
+                    navigate('/franchises/add', { replace: true });
+                }} className="button-1">
                     <Plus className="mr-2 h-4 w-4" />
                     {activeFilters.length > 0 || searchQuery ? "Add New Franchise" : "Add Your First Franchise"}
                 </Button>
             </div>
-        </div>
-    );
-
-    // Loading state component
-    const LoadingState = () => (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="animate-pulse rounded-full bg-muted p-6 mb-4">
-                <AlertCircle className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Loading Franchises</h3>
-            <p className="text-muted-foreground max-w-md">
-                Please wait while we load your franchise network...
-            </p>
         </div>
     );
 
@@ -406,8 +425,9 @@ export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: Franchis
         </div>
     );
 
-    return (
-        <div>
+    // Standalone content to be rendered inside the NavbarLayout
+    const FranchisesContent = () => (
+        <>
             <div className="mb-6">
                 <h2 className="tagline-1">Franchises</h2>
                 <p className="body-lead text-muted-foreground">
@@ -565,7 +585,10 @@ export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: Franchis
                             </div>
 
                             {/* Add Franchise Button */}
-                            <Button className="button-1" onClick={() => setIsAddingFranchise(true)}>
+                            <Button className="button-1" onClick={() => {
+                                setIsAddingFranchise(true);
+                                navigate('/franchises/add', { replace: true });
+                            }}>
                                 <Plus className="mr-2 h-4 w-4" />
                                 {t('addFranchise')}
                             </Button>
@@ -623,22 +646,72 @@ export function FranchisesTab({ viewMode, setViewMode, onVisitSelect }: Franchis
                     ) : filteredFranchises.length === 0 ? (
                         <EmptyState />
                     ) : viewMode === 'map' ? (
-                        <FranchiseMap franchises={filteredFranchises} onSelect={setSelectedFranchise} />
+                        <FranchiseMap franchises={filteredFranchises} onSelect={handleSelectFranchise} />
                     ) : viewMode === 'grid' ? (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {filteredFranchises.map((franchise) => (
                                 <FranchiseCard
                                     key={franchise.id}
                                     franchise={franchise}
-                                    onSelect={setSelectedFranchise}
+                                    onSelect={handleSelectFranchise}
                                 />
                             ))}
                         </div>
                     ) : (
-                        <FranchiseTable franchises={filteredFranchises} onFranchiseSelect={setSelectedFranchise} onVisitSelect={onVisitSelect} />
+                        <FranchiseTable franchises={filteredFranchises} onFranchiseSelect={handleSelectFranchise} onVisitSelect={handleVisitSelect} />
                     )}
                 </CardContent>
             </Card>
-        </div>
+        </>
+    );
+
+    if (isAddingFranchise) {
+        return (
+            <NavbarLayout>
+                <NavigationTabs className="mb-6" />
+                <div className="mb-6">
+                    <Button 
+                        variant="ghost" 
+                        className="flex items-center mb-4" 
+                        onClick={() => {
+                            setIsAddingFranchise(false);
+                            navigate('/franchises', { replace: true });
+                        }}
+                    >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Back to Franchises
+                    </Button>
+                    <AddFranchise onCancel={() => {
+                        setIsAddingFranchise(false);
+                        navigate('/franchises', { replace: true });
+                    }} />
+                </div>
+            </NavbarLayout>
+        );
+    }
+
+    if (selectedFranchise) {
+        return (
+            <NavbarLayout>
+                <NavigationTabs className="mb-6" />
+                <div className="mb-6">
+                    
+                    <FranchiseDetail
+                        onVisitSelect={handleVisitSelect}
+                        loadFranchises={loadFranchises}
+                        franchise={selectedFranchise}
+                        onDelete={handleBackToList}
+                        onUpdate={handleFranchiseUpdated}
+                    />
+                </div>
+            </NavbarLayout>
+        );
+    }
+
+    return (
+        <NavbarLayout>
+            <NavigationTabs className="mb-6" />
+            <FranchisesContent />
+        </NavbarLayout>
     );
 }

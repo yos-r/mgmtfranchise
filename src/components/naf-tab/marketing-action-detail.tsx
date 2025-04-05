@@ -201,7 +201,7 @@ export function MarketingActionDetail({ action, onBack, onDelete, onUpdate }: Ac
 
     return (
         <div className="">
-            <div className="container mx-auto py-6 space-y-6">
+            <div className="container mx-auto pt-0 py-6 space-y-6">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center space-x-2">
                         <Button variant="ghost" onClick={onBack} className="p-2">

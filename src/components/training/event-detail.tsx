@@ -4,16 +4,10 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  Users,
-  Star,
-  FileText,
   Edit,
   Trash2,
-  Download,
-  FileIcon,
   BarChart3,
-  Lock,
-  Image as ImageIcon,
+  ImageIcon,
   User,
   X,
   ChevronLeft,
@@ -21,14 +15,11 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
-  Notebook,
-  Pen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,14 +31,45 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { EditEventDialog } from "./edit-event-dialog";
-// import { NotesCard } from "./notes-card";
 import { AttendanceCard } from "./attendance-card";
 import TrainingMaterials from "./training_materials";
 import InternalNotesCard from "./internal_notes";
+import EventRatings from "./event-ratings";
+import EventInfo from "./event-info";
+
+// Define interface for TrainingEvent based on database schema
+interface TrainingEvent {
+  id: string;
+  title: string;
+  type: string;
+  date: string;
+  time: string;
+  duration: string;
+  description: string | null;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+  trainer: string | null;
+  trainer_rating: number | null;
+  notes: string | null;
+  session_rating: number | null;
+  note_by: string | null;
+  // Add relationships that might be included in queries
+  training_attendance?: Array<{
+    id: string;
+    event_id: string;
+    franchise_id: string;
+    attended: boolean;
+    franchises?: {
+      id: string;
+      name: string;
+      // Add other fields from franchises as needed
+    }
+  }>;
+}
 
 // Sample images for the bento grid
 const demoImages = [
@@ -75,13 +97,6 @@ const demoImages = [
     alt: "Workshop",
     thumb: "https://media.istockphoto.com/id/1061632686/photo/hes-got-a-wealth-of-experience-to-share.jpg?s=612x612&w=0&k=20&c=VidySX8N-sMmzMod-GJdgrCcMAjdlYsl_B5IHZSrOVQ="
   },
-];
-
-// Sample learning materials
-const learningMaterials = [
-  { id: 1, name: "Course Handbook.pdf", size: "2.4 MB", type: "pdf" },
-  { id: 2, name: "Presentation Slides.pptx", size: "5.1 MB", type: "pptx" },
-  { id: 3, name: "Exercise Worksheet.docx", size: "1.2 MB", type: "docx" },
 ];
 
 // Custom Image Gallery Component
@@ -242,17 +257,14 @@ const ImageGallery = ({ images, initialIndex = 0, isOpen, onClose }) => {
 };
 
 interface EventDetailProps {
-  event: any;
+  event: TrainingEvent;
   onBack: () => void;
   isAdmin?: boolean;
 }
 
 export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps) {
   const { toast } = useToast();
-  const [currentEvent, setCurrentEvent] = useState(event);
-  const [rating, setRating] = useState(event.trainer_rating || 0);
-  const [ratingSession, setRatingSession] = useState(event.session_rating || 0);
-  const [internalNotes, setInternalNotes] = useState(event.internal_notes || "");
+  const [currentEvent, setCurrentEvent] = useState<TrainingEvent>(event);
   const [isNotesUpdated, setIsNotesUpdated] = useState(false);
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -262,75 +274,60 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [initialImageIndex, setInitialImageIndex] = useState(0);
 
-  const handleRatingChange = async (newRating: number) => {
-    setRating(newRating);
+  // Sync with event props when they change
+  useEffect(() => {
+    setCurrentEvent(event);
+  }, [event]);
 
+  // Separated handlers for trainer and session ratings
+  const handleTrainerRatingChange = (rating: number) => {
+    console.log("handleTrainerRatingChange called with:", rating);
+
+
+    currentEvent.trainer_rating = rating
+
+    toast({
+      title: "Trainer rating updated",
+      description: "The trainer rating has been saved successfully",
+    });
+  };
+
+  const handleSessionRatingChange = (rating: number) => {
+    console.log("handleSessionRatingChange called with:", rating);
+
+    // Immediately update the local state first for immediate UI feedback
+    // setCurrentEvent(prev => ({
+    //   ...prev,
+    //   session_rating: rating
+    // }));
+    currentEvent.session_rating = rating
+
+    toast({
+      title: "Session rating updated",
+      description: "The session rating has been saved successfully",
+    });
+  };
+
+  const saveInternalNotes = async (notes: string, noteBy?: string) => {
     try {
       const { error } = await supabase
         .from('training_events')
         .update({
-          trainer_rating: newRating
+          notes: notes,
+          note_by: noteBy || currentEvent.note_by
         })
         .eq('id', currentEvent.id);
 
       if (error) throw error;
 
-      toast({
-        title: "Rating updated",
-        description: "The trainer rating has been updated successfully",
-      });
-    } catch (error) {
-      console.error("Error updating rating:", error);
-      toast({
-        title: "Update failed",
-        description: "Failed to update the trainer rating",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleRatingChangeSession = async (newRating: number) => {
-    setRatingSession(newRating);
-
-    try {
-      const { error } = await supabase
-        .from('training_events')
-        .update({
-          session_rating: newRating
-        })
-        .eq('id', currentEvent.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Rating session updated",
-        description: "The session rating has been updated successfully",
-      });
-    } catch (error) {
-      console.error("Error updating rating:", error);
-      toast({
-        title: "Update failed",
-        description: "Failed to update the session rating",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleInternalNotesChange = (e) => {
-    setInternalNotes(e.target.value);
-    setIsNotesUpdated(true);
-  };
-
-  const saveInternalNotes = async () => {
-    try {
-      const { error } = await supabase
-        .from('training_events')
-        .update({
-          notes: internalNotes
-        })
-        .eq('id', currentEvent.id);
-
-      if (error) throw error;
+      // Update currentEvent to keep it in sync
+      // setCurrentEvent(prev => ({
+      //   ...prev,
+      //   notes: notes,
+      //   note_by: noteBy || prev.note_by
+      // }));
+      currentEvent.notes = notes || currentEvent.notes;
+      currentEvent.note_by = noteBy || currentEvent.note_by
 
       toast({
         title: "Notes updated",
@@ -375,7 +372,6 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
   };
 
   const handleAttendanceUpdate = async () => {
-    // Refresh the event data to get updated attendance list
     try {
       const { data, error } = await supabase
         .from('training_events')
@@ -392,7 +388,8 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
       if (error) throw error;
 
       if (data) {
-        setCurrentEvent(data);
+        // Update the entire currentEvent state with fresh data
+        setCurrentEvent(data as TrainingEvent);
       }
     } catch (error) {
       console.error("Error refreshing event data:", error);
@@ -410,21 +407,14 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
   const absentCount = attendeeCount - presentCount;
   const attendanceRate = attendeeCount > 0 ? Math.round((presentCount / attendeeCount) * 100) : 0;
 
-  const handleDownload = (materialId) => {
-    toast({
-      title: "Download started",
-      description: "Your download will begin shortly",
-    });
-  };
-
   // Function to open gallery at specific index
-  const openGallery = (index) => {
+  const openGallery = (index: number) => {
     setInitialImageIndex(index);
     setGalleryOpen(true);
   };
 
   return (
-    <div className="container  py-6 space-y-6">
+    <div className="container pt-0 py-6 space-y-6">
       {/* Header with Back Button and Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center space-x-3">
@@ -437,30 +427,14 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
             </h1>
             <div className="flex items-center text-sm text-muted-foreground mt-1">
               <Calendar className="mr-1 h-3.5 w-3.5" />
-              <span>                {format(new Date(currentEvent.date), "MMMM d, yyyy")}
-              </span>
+              <span>{format(new Date(currentEvent.date), "MMMM d, yyyy")}</span>
               <Clock className="ml-3 mr-1 h-3.5 w-3.5" />
               <span>{currentEvent.time}</span>
               <span className="mx-2">•</span>
-              <span> {currentEvent.duration}</span>
+              <span>{currentEvent.duration}</span>
             </div>
           </div>
-          {/* <div className="flex flex-col">
-            <h1 className="text-2xl font-bold truncate">{currentEvent.title}</h1>
-            <CardDescription className="inline-flex items-center space-x-2">
-              <span className="flex items-center">
-                <Calendar className=" w-4 mr-2" />
-                {format(new Date(currentEvent.date), "MMMM d, yyyy")}
-              </span>
-              <span className="flex items-center">
-                <Clock className="w-4 mr-1" />
-                {currentEvent.time} • {currentEvent.duration}
-              </span>
-            </CardDescription>
-          </div> */}
         </div>
-
-
 
         <div className="flex items-center gap-2">
           <Button
@@ -546,154 +520,24 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
             </Button>
           </div>
 
-          {/* Training Event Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-xl">{currentEvent.title}</CardTitle>
-                  <CardDescription>
-                    {format(new Date(currentEvent.date), "MMMM d, yyyy")} • {currentEvent.time} • {currentEvent.duration}
-                  </CardDescription>
-                </div>
-                <Badge variant="outline" className={
-                  currentEvent.status === 'scheduled'
-                    ? "bg-blue-100 text-blue-800"
-                    : currentEvent.status === 'completed'
-                      ? "bg-green-100 text-green-800"
-                      : "bg-yellow-100 text-yellow-800"
-                }>
-                  {currentEvent.status?.charAt(0).toUpperCase() + currentEvent.status?.slice(1)}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Date
-                  </div>
-                  <p>{format(new Date(currentEvent.date), "MMMM d, yyyy")}</p>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4 mr-2" />
-                    Duration
-                  </div>
-                  <p>{currentEvent.duration}</p>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <User className="h-4 w-4 mr-2" />
-                    Trainer
-                  </div>
-                  <p>{currentEvent.trainer || 'Not assigned'}</p>
-                </div>
-              </div>
-
-
-            </CardContent>
-          </Card>
-
-          {/* Attendance Card */}
+          <EventInfo currentEvent={currentEvent} eventId={currentEvent} />
+          
           <AttendanceCard
             event={currentEvent}
             onAttendanceUpdate={handleAttendanceUpdate}
           />
         </div>
 
-        {/* Right Section (1/3 on desktop) */}
         <div className="space-y-6">
-          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+          <EventRatings
+            eventId={currentEvent.id}
+            trainerRating={currentEvent.trainer_rating}
+            sessionRating={currentEvent.session_rating}
+            trainerName={currentEvent.trainer || undefined}
+            onTrainerRatingChange={handleTrainerRatingChange}
+            onSessionRatingChange={handleSessionRatingChange}
+          />
 
-            <CardContent className="space-y-3 mt-3">
-              {/* Session Rating Section */}
-              <div className="p-2 rounded-lg bg-gray-50/0">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-base font-medium">Session Rating</h3>
-                  <div className="text-2xl font-bold text-primary">
-                    {ratingSession || 0}<span className="text-lg text-gray-500">/5</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-center">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Button
-                        key={star}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRatingChangeSession(star)}
-                        className="p-1"
-                      >
-                        <Star
-                          className={`h-6 w-6 ${star <= ratingSession
-                              ? "text-relentlessgold fill-relentlessgold"
-                              : "text-muted-foreground"
-                            }`}
-                        />
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Progress
-                      value={ratingSession ? (ratingSession / 5) * 100 : 0}
-                      className="h-2 flex-grow"
-                    />
-                    <span className="text-xs text-gray-500 min-w-8 text-right">
-                      {ratingSession ? `${Math.round((ratingSession / 5) * 100)}%` : "0%"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Trainer Rating Section */}
-              <div className="p-4 rounded-lg bg-gray-50/0">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-base font-medium">
-                    Trainer Rating
-                    <span className="text-sm font-normal text-gray-500 ml-2">
-                      {currentEvent.trainer}
-                    </span>
-                  </h3>
-                  <div className="text-2xl font-bold text-primary">
-                    {rating || 0}<span className="text-lg text-gray-500">/5</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-center">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Button
-                        key={star}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRatingChange(star)}
-                        className="p-1"
-                      >
-                        <Star
-                          className={`h-6 w-6 ${star <= rating
-                              ? "text-relentlessgold fill-relentlessgold"
-                              : "text-muted-foreground"
-                            }`}
-                        />
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Progress
-                      value={rating ? (rating / 5) * 100 : 0}
-                      className="h-2 flex-grow"
-                    />
-                    <span className="text-xs text-gray-500 min-w-8 text-right">
-                      {rating ? `${Math.round((rating / 5) * 100)}%` : "0%"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center">
@@ -735,32 +579,43 @@ export function EventDetail({ event, onBack, isAdmin = true }: EventDetailProps)
             </CardContent>
           </Card>
 
-          {/* Learning Materials */}
-          <TrainingMaterials eventId={event.id}></TrainingMaterials>
+          <TrainingMaterials eventId={currentEvent.id} />
 
           <InternalNotesCard
             eventId={currentEvent.id}
             initialNotes={currentEvent.notes || ""}
             noteBy={currentEvent.note_by || ""}
+            onSave={(notes, noteBy) => {
+              // Direct mutation (works without re-rendering issues)
+              currentEvent.notes = notes;
+              currentEvent.note_by = noteBy;
+
+              // Also update the database
+              supabase
+                .from('training_events')
+                .update({
+                  notes: notes,
+                  note_by: noteBy
+                })
+                .eq('id', currentEvent.id)
+                .then(() => {
+                  toast({
+                    title: "Notes updated",
+                    description: "Internal notes have been saved",
+                  });
+                });
+            }}
           />
-
-
-          {/* Attendance Statistics */}
-          
         </div>
       </div>
 
-      {/* Edit Event Dialog */}
       <EditEventDialog
         event={currentEvent}
         open={isEditing}
         onOpenChange={setIsEditing}
-        onSuccess={() => {
-          handleAttendanceUpdate();
-        }}
+        onSuccess={handleAttendanceUpdate}
       />
 
-      {/* Custom Image Gallery */}
       <ImageGallery
         images={demoImages}
         initialIndex={initialImageIndex}

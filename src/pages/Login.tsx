@@ -25,7 +25,7 @@ export function LoginPage() {
 
     try {
       await signIn(email, password);
-      navigate('/');
+      navigate('/overview');
     } catch (error) {
       toast({
         title: "Authentication error",

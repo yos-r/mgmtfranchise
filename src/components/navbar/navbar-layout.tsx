@@ -6,26 +6,25 @@ import { ThemeToggle } from '../theme-toggle';
 import { LanguageToggle } from '../language-toggle';
 import { CurrencyToggle } from '../currency-toggle';
 import { supabase } from '@/lib/supabase';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface NavbarLayoutProps {
   children: ReactNode;
-  setCurrentSection: React.Dispatch<React.SetStateAction<"main" | "settings">>;
-  setSettingsSection?: React.Dispatch<React.SetStateAction<"security" | "profile" | "company" | "team" | "appearance" | "notifications">>;
-  onBackClick?: () => void;
-  backButtonText?: string;
   title?: string;
 }
 
 export const NavbarLayout: React.FC<NavbarLayoutProps> = ({
   children,
-  setCurrentSection,
-  setSettingsSection,
-  onBackClick,
-  backButtonText = '← Back to Dashboard',
   title
 }) => {
   const [companyName, setCompanyName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [currentSection, setCurrentSection] = useState<"main" | "settings">("main");
+  const [settingsSection, setSettingsSection] = useState<"security" | "profile" | "company" | "team" | "appearance" | "notifications">("profile");
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+  const showBackButton = location.pathname !== '/' && location.pathname !== '/overview';
 
   useEffect(() => {
     // Function to fetch company name from app_settings
@@ -58,6 +57,18 @@ export const NavbarLayout: React.FC<NavbarLayoutProps> = ({
     fetchCompanyName();
   }, []);
 
+  // Handle settings section changes internally
+  const handleSettingsSectionChange = (section: "security" | "profile" | "company" | "team" | "appearance" | "notifications") => {
+    setSettingsSection(section);
+    setCurrentSection("settings");
+    navigate('/settings');
+  };
+
+  // Handle back button click
+  const handleBackClick = () => {
+    navigate('/');
+  };
+
   // Compute the full title
   const fullTitle = title || `${companyName} Franchise Management`;
 
@@ -82,18 +93,17 @@ export const NavbarLayout: React.FC<NavbarLayoutProps> = ({
             </h1>
           </div>
           <div className="ml-auto flex items-center space-x-4">
-            {onBackClick && (
+            {/* {showBackButton && (
               <Button
                 variant="ghost"
-                onClick={onBackClick}
+                onClick={handleBackClick}
                 className="button-1"
               >
-                {backButtonText}
+                ← Back to Dashboard
               </Button>
-            )}
+            )} */}
             <SettingsDropdown
-              setCurrentSection={setCurrentSection}
-              setSettingsSection={setSettingsSection}
+              
             />
             <ThemeToggle />
             <LanguageToggle />
